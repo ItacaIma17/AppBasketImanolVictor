@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/screens/DetallesPartido.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
@@ -19,7 +20,7 @@ class TarjetaPartido extends StatefulWidget {
 }
 
 class _TarjetaPartidoState extends State<TarjetaPartido> {
-  String? _userRole;
+  Role? _userRole;
 
   @override
   void initState() {
@@ -30,7 +31,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
   void _cargarRolUsuario() async {
     final usuario = await AutenticacionService.obtenerUsuarioActual();
     setState(() {
-      _userRole = usuario?.rol;
+      _userRole = usuario?.role;
     });
   }
 

@@ -4,6 +4,8 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 
+import '../../models/usuario.dart';
+
 class DesignacionesPage extends StatefulWidget {
   const DesignacionesPage({super.key});
 
@@ -40,7 +42,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
               Usuario usuario = snapshot.data!;
 
               // Verificar si el usuario es árbitro
-              final rolNormalizado = usuario.rol.toLowerCase();
+              final rolNormalizado = usuario.role;
               if (rolNormalizado != 'arbitro' && rolNormalizado != 'árbitro') {
                 return _buildNoValido();
               }
@@ -252,7 +254,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            '${usuario.nombre} ${usuario.apellidos}',
+            '${usuario.nombre} ${usuario.apellido}',
             textAlign: TextAlign.center, // CENTRADO
             style: const TextStyle(
               color: AppColors.blanco,

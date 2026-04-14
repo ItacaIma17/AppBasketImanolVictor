@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/EstadisticasPartido.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/MarcadorPartido.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetallePartidoPage extends StatefulWidget {
   final Map<String, dynamic> partido;
-  final String? userRole;
+  final Role? userRole;
 
   const DetallePartidoPage({
     super.key,
@@ -155,7 +156,7 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
   /// Acta del Partido - Simplificada
   /// Solo 2 acciones: SUBIR (árbitros) y VER (todos)
   Widget _buildActaPartido() {
-    final rolNormalizado = (widget.userRole ?? '').toLowerCase();
+    final rolNormalizado = widget.userRole;
     final bool esArbitro = rolNormalizado == 'arbitro' || rolNormalizado == 'árbitro';
 
     return Container(

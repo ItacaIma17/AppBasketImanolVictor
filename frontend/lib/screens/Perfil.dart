@@ -5,6 +5,8 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
+import '../models/role.dart';
+import '../models/usuario.dart';
 import 'Inicio/InicioSesion.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -136,7 +138,7 @@ class _PerfilPageState extends State<PerfilPage> {
               const SizedBox(height: 16),
               _buildFilaInfo(
                 label: 'Apellidos',
-                valor: usuario.apellidos,
+                valor: usuario.apellido ?? 'No especificado',
                 icono: Icons.person_outline,
               ),
               const SizedBox(height: 16),
@@ -161,10 +163,10 @@ class _PerfilPageState extends State<PerfilPage> {
             children: [
               _buildFilaInfo(
                 label: 'Rol',
-                valor: usuario.rol,
-                icono: _getIconoRol(usuario.rol),
+                valor: usuario.role.displayName, // ← CORREGIDO
+                icono: _getIconoRol(usuario.role), // ← CORREGIDO
               ),
-              if (usuario.licencia != null) ...[
+              if (usuario.tieneLicencia) ...[
                 const SizedBox(height: 16),
                 _buildFilaInfo(
                   label: 'Número de Licencia',
@@ -183,8 +185,8 @@ class _PerfilPageState extends State<PerfilPage> {
               FutureBuilder<int>(
                 future: Future.value(
                   FavoritosManager().equiposFavoritos.length +
-                  FavoritosManager().jugadoresFavoritos.length +
-                  FavoritosManager().categoriasFavoritas.length,
+                      FavoritosManager().jugadoresFavoritos.length +
+                      FavoritosManager().categoriasFavoritas.length,
                 ),
                 builder: (context, snapshot) {
                   int totalFavoritos = snapshot.data ?? 0;
@@ -264,7 +266,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // CENTRADO
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 100,
@@ -275,7 +277,7 @@ class _PerfilPageState extends State<PerfilPage> {
             ),
             child: Center(
               child: Text(
-                usuario.nombre.isNotEmpty ? usuario.nombre[0] : '?',
+                usuario.iniciales, // ← CORREGIDO: usar iniciales
                 style: const TextStyle(
                   color: AppColors.blanco,
                   fontSize: 48,
@@ -286,8 +288,8 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            '${usuario.nombre} ${usuario.apellidos}',
-            textAlign: TextAlign.center, // CENTRADO
+            usuario.nombreCompleto, // ← CORREGIDO: usar nombreCompleto
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.blanco,
               fontSize: 22,
@@ -296,8 +298,8 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            usuario.rol,
-            textAlign: TextAlign.center, // CENTRADO
+            usuario.role.displayName, // ← CORREGIDO: usar displayName
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.blanco,
               fontSize: 14,
@@ -420,15 +422,18 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  IconData _getIconoRol(String rol) {
+  // CORREGIDO: recibe Role en lugar de String
+  IconData _getIconoRol(Role rol) {
     switch (rol) {
-      case 'Jugador':
+      case Role.JUGADOR:
         return Icons.sports_basketball;
-      case 'Entrenador':
+      case Role.ENTRENADOR:
         return Icons.school;
-      case 'Árbitro':
+      case Role.ARBITRO:
         return Icons.gavel;
-      default:
+      case Role.ADMIN:
+        return Icons.admin_panel_settings;
+      case Role.USUARIO:
         return Icons.person;
     }
   }
@@ -448,11 +453,13 @@ class _PerfilPageState extends State<PerfilPage> {
             TextButton(
               onPressed: () async {
                 await AutenticacionService.cerrarSesion();
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const InicioSesionPage()),
-                );
+                if (mounted) {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const InicioSesionPage()),
+                  );
+                }
               },
               child: const Text(
                 'Cerrar Sesión',

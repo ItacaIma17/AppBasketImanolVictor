@@ -1,3 +1,4 @@
+// Presentacion/Config/JwtAuthenticationFilter.java
 package Presentacion.Config;
 
 import Aplicacion.Services.CustomUserDetailsService;
@@ -25,18 +26,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
     private final UserRepository userRepository;
 
+    // Lista de endpoints públicos que NO deben ser procesados por este filtro
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
-            // ── Usuarios ──────────────────────────────────
             "/api/usuarios/registro",
             "/api/usuarios/verificar",
             "/api/usuarios/reenviar-codigo",
             "/api/usuarios/login",
             "/api/usuarios/refresh",
-
-            // ── Creación sin token ─────────────────────────
             "/api/entrenadores/crear",
             "/api/arbitros/crear",
-            "/api/jugadores/crear"
+            "/api/jugadores/crear",
+            "/api/equipos/listar",
+            "/api/ligas/listar",
+            "/api/jugadores/listar",
+            "/api/entrenadores/listar",
+            "/api/arbitros/listar"
     );
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
@@ -50,9 +54,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+        // Si el path es público, NO filtrar (dejar pasar sin validar token)
         return PUBLIC_ENDPOINTS.stream().anyMatch(path::startsWith);
     }
-
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -61,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
-        System.out.println("Procesando filtro JWT para endpoint protegido: " + requestURI);
+        System.out.println("filtro JWT para endpoint: " + requestURI);
 
         String token = jwtTokenProvider.getTokenFromRequest(request);
 
@@ -75,12 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtTokenProvider.getUsernameFromToken(token);
 
             if (username == null || username.isEmpty()) {
-                System.out.println("No se pudo extraer username del token");
+                System.out.println("⚠️ No se pudo extraer username del token");
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            System.out.println("Username extraído del token: " + username);
+            System.out.println("📧 Username extraído del token: " + username);
 
             Usuario usuario = userRepository.findByUsername(username);
 
@@ -90,7 +94,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Validar el token (ahora no requiere comparar con usuario.getToken())
             if (jwtTokenProvider.validateToken(token)) {
                 System.out.println("Token válido para usuario: " + username);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);

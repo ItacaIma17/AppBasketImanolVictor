@@ -331,7 +331,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     }
 
     // Intentar iniciar sesión usando el servicio
-    bool loginExitoso = await AutenticacionService.iniciarSesion(
+    bool loginExitoso = await AutenticacionService.login(
       emailCtrl.text,
       passCtrl.text,
     );

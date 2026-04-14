@@ -1,181 +1,375 @@
+// lib/services/autenticacion_service.dart
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
-
-class Usuario {
-  final String nombre;
-  final String apellidos;
-  final String email;
-  final String password;
-  final String rol;
-  final String? licencia;
-  final String username;
-  final int? edad;
-
-  Usuario({
-    required this.nombre,
-    required this.apellidos,
-    required this.email,
-    required this.password,
-    required this.rol,
-    required this.username,
-    this.licencia,
-    this.edad,
-  });
-
-  // Convertir a JSON para enviar al backend (Registro) - Usa 'apellido' singular
-  Map<String, dynamic> toJsonRegistro() {
-    return {
-      'nombre': nombre,
-      'email': email,
-      'password': password,
-      'rol': rol,
-      'username': username,
-      'edad': edad ?? 18,
-    };
-  }
-
-  // Convertir a JSON para almacenamiento local
-  Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'apellidos': apellidos,
-      'email': email,
-      'password': password,
-      'rol': rol,
-      'username': username,
-      'licencia': licencia,
-      'edad': edad,
-    };
-  }
-
-  // Construir desde JSON - Maneja 'apellido' del backend
-  factory Usuario.fromJson(Map<String, dynamic> json) {
-    return Usuario(
-      nombre: json['nombre'] ?? '',
-      apellidos: json['apellido'] ?? json['apellidos'] ?? '',
-      email: json['email'] ?? '',
-      password: json['password'] ?? '',
-      rol: json['rol'] ?? 'Aficionado',
-      username: json['username'] ?? '',
-      licencia: json['licencia'],
-      edad: json['edad'],
-    );
-  }
-}
+import '../models/DTOS/Login/loginRequest.dart';
+import '../models/DTOS/Login/loginResponse.dart';
+import '../models/DTOS/Registro/registroBaseDTO.dart';
+import '../models/role.dart';
+import '../models/usuario.dart';
 
 class AutenticacionService {
-  static const String _usuarioActualKey = 'usuario_actual';
-  static const String _tokenKey = 'jwt_token';
+  static String get baseUrl => AppConfig.apiUrl;
 
-  // Registrar un nuevo usuario
-  static Future<bool> registrarUsuario(Usuario usuario) async {
+  static String? _token;
+  static String? _refreshToken;
+  static Usuario? _usuarioActual;
+
+  static String? get token => _token;
+  static String? get refreshToken => _refreshToken;
+  static Usuario? get usuarioActual => _usuarioActual;
+
+  static Map<String, String> get _headers {
+    final headers = {'Content-Type': 'application/json'};
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token';
+    }
+    return headers;
+  }
+
+  // ============================================================
+  // INICIALIZACIÓN
+  // ============================================================
+
+  static Future<void> init() async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.registroEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(usuario.toJsonRegistro()),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      _token = prefs.getString('auth_token');
+      _refreshToken = prefs.getString('refresh_token');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Usuario registrado exitosamente');
-        return true;
-      } else {
-        print('Error en registro: ${response.statusCode}');
-        print('Respuesta: ${response.body}');
-        return false;
+      if (_token != null && _refreshToken != null) {
+        final userJson = prefs.getString('usuario_actual');
+        if (userJson != null && userJson.isNotEmpty) {
+          try {
+            _usuarioActual = Usuario.fromJson(json.decode(userJson));
+            print('✅ Sesión restaurada para: ${_usuarioActual?.username}');
+          } catch (e) {
+            print('Error restaurando usuario: $e');
+            await _limpiarSesion();
+          }
+        }
       }
     } catch (e) {
-      print('Error al registrar: $e');
-      return false;
+      print('Error en init: $e');
     }
   }
 
-  // Iniciar sesión - IMPORTANTE: usa 'username', no 'email'
-  static Future<bool> iniciarSesion(String username, String password) async {
+  static Future<void> _limpiarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('refresh_token');
+    await prefs.remove('usuario_actual');
+    _token = null;
+    _refreshToken = null;
+    _usuarioActual = null;
+  }
+
+  // ============================================================
+  // LOGIN CORREGIDO
+  // ============================================================
+
+  static Future<bool> login(String username, String password) async {
     try {
+      print('📡 Intentando login para: $username');
+      print('📡 URL: $baseUrl/usuarios/login');
+
+      final request = LoginRequest(username: username, password: password);
       final response = await http.post(
-        Uri.parse(ApiConfig.loginEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
-      );
+        Uri.parse('$baseUrl/usuarios/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(request.toJson()),
+      ).timeout(const Duration(seconds: 30));
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        // Guardar token JWT
-        final prefs = await SharedPreferences.getInstance();
-        if (data['token'] != null) {
-          await prefs.setString(_tokenKey, data['token']);
+        if (response.body.isEmpty) {
+          print('❌ Respuesta vacía del servidor');
+          return false;
         }
 
-        // Guardar usuario actual
-        await prefs.setString(_usuarioActualKey, jsonEncode(data));
+        final data = json.decode(response.body);
 
-        print('Sesión iniciada correctamente');
-        return true;
+        // Validar que los datos necesarios existen
+        if (data['token'] == null || data['refreshToken'] == null) {
+          print('❌ Token o refreshToken no encontrados en respuesta');
+          return false;
+        }
+
+        _token = data['token'];
+        _refreshToken = data['refreshToken'];
+
+        // Obtener username de la respuesta o decodificar del token
+        String usernameActual = data['username'] ?? username;
+
+        // Cargar usuario actual
+        final cargado = await cargarUsuarioActual(usernameActual);
+
+        if (cargado != null) {
+          await _guardarSesion();
+          print('✅ Login exitoso para: ${_usuarioActual?.username}');
+          return true;
+        } else {
+          print('❌ No se pudo cargar el usuario');
+          return false;
+        }
       } else {
-        print('Error en login: ${response.statusCode}');
-        print('Respuesta: ${response.body}');
+        String errorMsg = 'Error desconocido';
+        try {
+          if (response.body.isNotEmpty) {
+            final error = json.decode(response.body);
+            errorMsg = error['message'] ?? 'Credenciales incorrectas';
+          }
+        } catch (e) {
+          errorMsg = 'Credenciales incorrectas';
+        }
+        print('❌ Login error: $errorMsg');
         return false;
       }
     } catch (e) {
-      print('Error al iniciar sesión: $e');
+      print('❌ Login exception: $e');
       return false;
     }
   }
 
-  // Obtener usuario actual desde SharedPreferences
-  static Future<Usuario?> obtenerUsuarioActual() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? usuarioJson = prefs.getString(_usuarioActualKey);
+  // ============================================================
+  // CARGAR USUARIO ACTUAL CORREGIDO
+  // ============================================================
 
-      if (usuarioJson == null) {
+  static Future<Usuario?> cargarUsuarioActual(String username) async {
+    if (_token == null) {
+      print('❌ No hay token para cargar usuario');
+      return null;
+    }
+
+    try {
+      final url = '$baseUrl/usuarios/perfil/$username';
+      print('📡 Cargando perfil desde: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      print('📡 Perfil response status: ${response.statusCode}');
+      print('📡 Perfil response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print('❌ Respuesta de perfil vacía');
+          return null;
+        }
+
+        final data = json.decode(response.body);
+
+        // Validar datos mínimos
+        if (data['username'] == null) {
+          print('❌ Username no encontrado en respuesta');
+          return null;
+        }
+
+        _usuarioActual = Usuario(
+          id: data['id'],
+          email: data['email'] ?? '',
+          username: data['username'] ?? '',
+          nombre: data['nombre'] ?? '',
+          apellido: data['apellido'],
+          licencia: data['licencia'],
+          edad: data['edad'] ?? 0,
+          role: data['role'] != null
+              ? Role.fromString(data['role'])
+              : Role.USUARIO,
+          verificado: data['verificado'] ?? false,
+          bloqueado: data['bloqueado'] ?? false,
+        );
+
+        print('✅ Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.value}');
+        return _usuarioActual;
+      } else {
+        print('❌ Error cargando perfil: ${response.statusCode} - ${response.body}');
         return null;
       }
-
-      return Usuario.fromJson(jsonDecode(usuarioJson));
     } catch (e) {
-      print('Error al obtener usuario actual: $e');
+      print('❌ Exception cargando perfil: $e');
       return null;
     }
   }
 
-  // Obtener token JWT almacenado
-  static Future<String?> obtenerToken() async {
+  // ============================================================
+  // GUARDAR SESIÓN
+  // ============================================================
+
+  static Future<void> _guardarSesion() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
+      if (_token != null) {
+        await prefs.setString('auth_token', _token!);
+      }
+      if (_refreshToken != null) {
+        await prefs.setString('refresh_token', _refreshToken!);
+      }
+      if (_usuarioActual != null) {
+        await prefs.setString('usuario_actual', json.encode(_usuarioActual!.toJson()));
+      }
+      print('✅ Sesión guardada correctamente');
     } catch (e) {
-      print('Error al obtener token: $e');
-      return null;
+      print('❌ Error guardando sesión: $e');
     }
   }
 
-  // Cerrar sesión
+  // ============================================================
+  // OBTENER USUARIO ACTUAL
+  // ============================================================
+
+  static Future<Usuario?> obtenerUsuarioActual() async {
+    if (_usuarioActual != null) {
+      print('📦 Usuario en memoria: ${_usuarioActual?.username}');
+      return _usuarioActual;
+    }
+
+    // Intentar cargar de SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userJson = prefs.getString('usuario_actual');
+
+      if (token != null && userJson != null && userJson.isNotEmpty) {
+        _token = token;
+        _usuarioActual = Usuario.fromJson(json.decode(userJson));
+        print('📦 Usuario cargado de SharedPreferences: ${_usuarioActual?.username}');
+        return _usuarioActual;
+      }
+    } catch (e) {
+      print('Error cargando de SharedPreferences: $e');
+    }
+
+    print('❌ No hay usuario logueado');
+    return null;
+  }
+
+  // ============================================================
+  // VERIFICAR SESIÓN
+  // ============================================================
+
+  static Future<bool> isLoggedIn() async {
+    if (_token != null) return true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userJson = prefs.getString('usuario_actual');
+
+      if (token != null && userJson != null && userJson.isNotEmpty) {
+        _token = token;
+        _usuarioActual = Usuario.fromJson(json.decode(userJson));
+        return true;
+      }
+    } catch (e) {
+      print('Error verificando sesión: $e');
+    }
+
+    return false;
+  }
+
+  // ============================================================
+  // CERRAR SESIÓN
+  // ============================================================
+
   static Future<void> cerrarSesion() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_usuarioActualKey);
-      await prefs.remove(_tokenKey);
-      print('Sesión cerrada');
+      if (_usuarioActual != null && _token != null) {
+        await http.post(
+          Uri.parse('$baseUrl/usuarios/logout?username=${_usuarioActual!.username}'),
+          headers: _headers,
+        ).timeout(const Duration(seconds: 5));
+      }
     } catch (e) {
-      print('Error al cerrar sesión: $e');
+      print('Error en logout: $e');
+    }
+
+    await _limpiarSesion();
+    print('✅ Sesión cerrada');
+  }
+
+  // ============================================================
+  // REGISTRO
+  // ============================================================
+
+  static Future<bool> registrarUsuarioConDTO(RegistroBaseDTO dto) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/registro'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(dto.toJson()),
+      ).timeout(const Duration(seconds: 30));
+
+      print('📡 Registro response: ${response.statusCode}');
+      print('📡 Registro body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        String errorMsg = 'Error en el registro';
+        try {
+          if (response.body.isNotEmpty) {
+            final error = json.decode(response.body);
+            errorMsg = error['message'] ?? errorMsg;
+          }
+        } catch (e) {
+          // Ignorar
+        }
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
-  // Verificar si hay usuario actualmente logueado
-  static Future<bool> tieneUsuarioActual() async {
-    Usuario? usuario = await obtenerUsuarioActual();
-    return usuario != null;
+  // ============================================================
+  // VERIFICACIÓN
+  // ============================================================
+
+  static Future<LoginResponse?> verificarCodigo(String codigo, String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/verificar'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'codigo': codigo}),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final loginResponse = LoginResponse.fromJson(data);
+        _token = loginResponse.token;
+        _refreshToken = loginResponse.refreshToken;
+        await cargarUsuarioActual(loginResponse.username);
+        await _guardarSesion();
+        return loginResponse;
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Error en la verificación');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<void> reenviarCodigo(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/reenviar-codigo?email=$email'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode != 200) {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Error al reenviar código');
+      }
+    } catch (e) {
+      rethrow;
+    }
   }
 }

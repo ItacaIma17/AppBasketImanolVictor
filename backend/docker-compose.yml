@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   postgres:
     image: postgres:15
     container_name: postgres_db
@@ -28,6 +27,30 @@ services:
       - .env
     ports:
       - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: frontend_tfg
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./frontend:/app
+      - /app/build
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_tfg
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

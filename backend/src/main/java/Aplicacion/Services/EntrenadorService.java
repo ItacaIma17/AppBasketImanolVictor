@@ -37,6 +37,8 @@ public class EntrenadorService {
                     "Ya existe un entrenador con este username");
 
         Entrenador entrenador = new Entrenador();
+
+        entrenador.setUsuario(usuario);
         entrenador.setNombre(dto.getNombre());
         entrenador.setApellido(dto.getApellido());
         entrenador.setUsername(dto.getUsername());

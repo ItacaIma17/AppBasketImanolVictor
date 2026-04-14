@@ -8,6 +8,7 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/screens/Perfil.dart';
 import 'package:tfg_appfede/screens/Inicio/InicioSesion.dart';
 import 'package:tfg_appfede/screens/Inicio/Registro.dart';
+import '../models/usuario.dart';
 import '../screens/Ligas.dart';
 import '../screens/Favoritos.dart';
 import '../screens/Tienda.dart';
@@ -55,9 +56,9 @@ class _MenuLateralState extends State<MenuLateral> {
     if (usuario != null) {
       return {
         'nombre': usuario.nombre,
-        'apellidos': usuario.apellidos,
+        'apellidos': usuario.apellido,
         'email': usuario.email,
-        'rol': usuario.rol,
+        'rol': usuario.role.value,
         'logueado': true,
       };
     } else {

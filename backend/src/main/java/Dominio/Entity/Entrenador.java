@@ -39,4 +39,7 @@ public class Entrenador {
 
     @OneToOne(mappedBy = "entrenador")
     private Equipo equipo;
+
+    @OneToOne(mappedBy = "usuario")
+    private Usuario usuario;
 }
