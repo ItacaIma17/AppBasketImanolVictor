@@ -141,35 +141,40 @@ class AutenticacionService {
 
   static Future<Usuario?> cargarUsuarioActual(String username) async {
     if (_token == null) {
-      print('❌ No hay token para cargar usuario');
+      print('No hay token para cargar usuario');
       return null;
     }
 
     try {
       final url = '$baseUrl/usuarios/perfil/$username';
-      print('📡 Cargando perfil desde: $url');
+      print('Cargando perfil desde: $url');
 
       final response = await http.get(
         Uri.parse(url),
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
-      print('📡 Perfil response status: ${response.statusCode}');
-      print('📡 Perfil response body: ${response.body}');
+      print('Perfil response status: ${response.statusCode}');
+      print('Perfil response body: ${response.body}');
 
       if (response.statusCode == 200) {
         if (response.body.isEmpty) {
-          print('❌ Respuesta de perfil vacía');
+          print('Respuesta de perfil vacía');
           return null;
         }
 
         final data = json.decode(response.body);
+        print('Datos del perfil: $data');
 
         // Validar datos mínimos
         if (data['username'] == null) {
-          print('❌ Username no encontrado en respuesta');
+          print('Username no encontrado en respuesta');
           return null;
         }
+
+        // Obtener el rol correctamente del backend
+        final rolString = data['rol'] ?? 'USUARIO';
+        print('Rol recibido del backend: $rolString');
 
         _usuarioActual = Usuario(
           id: data['id'],
@@ -179,21 +184,19 @@ class AutenticacionService {
           apellido: data['apellido'],
           licencia: data['licencia'],
           edad: data['edad'] ?? 0,
-          role: data['role'] != null
-              ? Role.fromString(data['role'])
-              : Role.USUARIO,
+          role: Role.fromString(rolString),  // ← Usar el rol del backend
           verificado: data['verificado'] ?? false,
           bloqueado: data['bloqueado'] ?? false,
         );
 
-        print('✅ Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.value}');
+        print('Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.value}');
         return _usuarioActual;
       } else {
-        print('❌ Error cargando perfil: ${response.statusCode} - ${response.body}');
+        print('Error cargando perfil: ${response.statusCode} - ${response.body}');
         return null;
       }
     } catch (e) {
-      print('❌ Exception cargando perfil: $e');
+      print('Exception cargando perfil: $e');
       return null;
     }
   }

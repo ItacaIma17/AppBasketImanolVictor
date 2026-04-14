@@ -13,10 +13,22 @@ enum Role {
   String get value => name;
 
   static Role fromString(String value) {
-    return Role.values.firstWhere(
-          (e) => e.name == value.toUpperCase(),
-      orElse: () => Role.USUARIO,
-    );
+    switch (value.toUpperCase()) {
+      case 'USUARIO':
+        return Role.USUARIO;
+      case 'ENTRENADOR':
+        return Role.ENTRENADOR;
+      case 'ARBITRO':
+        return Role.ARBITRO;
+      case 'JUGADOR':
+        return Role.JUGADOR;
+      case 'ADMIN':
+        return Role.ADMIN;
+      default:
+        ///Usar el usuario por defecto como rol
+        print('Rol desconocido: $value, usando USUARIO por defecto');
+        return Role.USUARIO;
+    }
   }
 
   /// Obtener nombre en español para mostrar en UI
