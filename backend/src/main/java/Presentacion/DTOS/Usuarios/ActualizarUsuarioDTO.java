@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class ActualizarUsuarioDTO {
 
-    private String nombre;
+    private String username;
 
-    private String apellido;
+    private String oldPassword;
 
-    private String password;
+    private String newPassword;
 }

@@ -1,5 +1,5 @@
 // lib/models/usuario.dart
-import 'role.dart';
+import '../models/role.dart';
 
 class Usuario {
   final int? id;

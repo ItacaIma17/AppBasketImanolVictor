@@ -7,6 +7,7 @@ import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 import '../models/role.dart';
 import '../models/usuario.dart';
+import 'EditarPerfilPage.dart';
 import 'Inicio/InicioSesion.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -17,6 +18,9 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
+  // Variable para forzar refresco del FutureBuilder
+  int _refreshKey = 0;
+
   @override
   void initState() {
     super.initState();
@@ -24,7 +28,9 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   void _cargarUsuario() {
-    setState(() {});
+    setState(() {
+      _refreshKey++; // Cambiar la key para forzar reconstrucción
+    });
   }
 
   @override
@@ -39,6 +45,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         child: SafeArea(
           child: FutureBuilder<Usuario?>(
+            key: ValueKey(_refreshKey), // ← AÑADIDO: key para refrescar
             future: AutenticacionService.obtenerUsuarioActual(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -163,8 +170,8 @@ class _PerfilPageState extends State<PerfilPage> {
             children: [
               _buildFilaInfo(
                 label: 'Rol',
-                valor: usuario.role.displayName, // ← CORREGIDO
-                icono: _getIconoRol(usuario.role), // ← CORREGIDO
+                valor: usuario.role.displayName,
+                icono: _getIconoRol(usuario.role),
               ),
               if (usuario.tieneLicencia) ...[
                 const SizedBox(height: 16),
@@ -226,24 +233,38 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 30),
 
-          // Botón de cerrar sesión
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              onPressed: () => _mostrarConfirmacionCerrarSesion(),
-              child: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(
-                  color: AppColors.blanco,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          // SECCIÓN DE ACCIONES (NUEVA)
+          _buildSeccion(
+            titulo: 'Acciones',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit, color: AppColors.naranja),
+                title: const Text(
+                  'Editar Perfil',
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
+                trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EditarPerfilPage()),
+                  );
+                  if (result == true) {
+                    _cargarUsuario(); // Recargar perfil si hubo cambios
+                  }
+                },
               ),
-            ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(fontWeight: FontWeight.w500, color: Colors.red),
+                ),
+                trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                onTap: () => _mostrarConfirmacionCerrarSesion(),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
         ],
@@ -277,7 +298,7 @@ class _PerfilPageState extends State<PerfilPage> {
             ),
             child: Center(
               child: Text(
-                usuario.iniciales, // ← CORREGIDO: usar iniciales
+                usuario.iniciales,
                 style: const TextStyle(
                   color: AppColors.blanco,
                   fontSize: 48,
@@ -288,7 +309,7 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            usuario.nombreCompleto, // ← CORREGIDO: usar nombreCompleto
+            usuario.nombreCompleto,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.blanco,
@@ -298,7 +319,7 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            usuario.role.displayName, // ← CORREGIDO: usar displayName
+            usuario.role.displayName,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.blanco,

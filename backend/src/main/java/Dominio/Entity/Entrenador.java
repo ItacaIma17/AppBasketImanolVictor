@@ -1,3 +1,4 @@
+// Dominio/Entity/Entrenador.java
 package Dominio.Entity;
 
 import Dominio.Entity.Roles.Roles;
@@ -37,9 +38,22 @@ public class Entrenador {
 
     private boolean verificado;
 
+    private String telefono;
+
+    private String experiencia;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id", unique = true)
+    private Usuario usuario;
+
     @OneToOne(mappedBy = "entrenador")
     private Equipo equipo;
 
-    @OneToOne(mappedBy = "usuario")
-    private Usuario usuario;
+    // Constructor vacío
+    public Entrenador() {}
+
+    // Método para obtener nombre completo
+    public String getNombreCompleto() {
+        return nombre + " " + (apellido != null ? apellido : "");
+    }
 }

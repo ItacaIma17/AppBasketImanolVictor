@@ -6,7 +6,9 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +29,11 @@ public class Partido {
     @JoinColumn(name = "equipo_visitante_id", nullable = false)
     private Equipo equipoVisitante;
 
-    @Column(name = "fecha_hora", nullable = false)
-    private LocalDateTime fechaHora;
+    @Column(name = "fecha", nullable = false)
+    private LocalDate fecha;
+
+    @Column(name = "hora", nullable = false)
+    private LocalTime hora;
 
     @Column(name = "pabellon", nullable = false, length = 100)
     private String pabellon;

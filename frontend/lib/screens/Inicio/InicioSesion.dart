@@ -231,7 +231,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                         // Navegar a pantalla de registro
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegistroPage()),
+                          MaterialPageRoute(builder: (context) => const Registro()),
                         );
                       },
                       child: const Text(

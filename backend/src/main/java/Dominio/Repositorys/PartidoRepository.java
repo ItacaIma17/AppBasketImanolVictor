@@ -12,5 +12,5 @@ public interface PartidoRepository extends JpaRepository<Partido, Long> {
 
     Partido countByEstado(EstadoPartido estadoPartido);
 
-    List<Partido> findByFechaHoraBetween(LocalDateTime fechastart, LocalDateTime fechaEnd);
+    List<Partido> findByFechaBetween(LocalDate inicio, LocalDate fin);
 }

@@ -5,7 +5,6 @@ import Dominio.Entity.Roles.Roles;
 import Dominio.Repositorys.*;
 import Presentacion.Config.JwtTokenProvider;
 import Presentacion.DTOS.Equipo.SeguirEquipoDTO;
-import Presentacion.DTOS.Jugador.JugadorResponse;
 import Presentacion.DTOS.Jugador.SeguirReponseDTO;
 import Presentacion.DTOS.Usuarios.ActualizarUsuarioDTO;
 import Presentacion.DTOS.Usuarios.ChangePasswordDTO;
@@ -18,15 +17,15 @@ import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.Principal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -46,31 +45,74 @@ public class UserService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
+    private final CustomUserDetailsService userDetails;
+
+    @Value("${admin.secret.key:ADMIN_SECRET_KEY_2024}")
+    private String adminSecretKey;
+
     // ──────────────────────────────────────────────
     // REGISTRO
     // ──────────────────────────────────────────────
 
     @Transactional
     public void registrarInicial(RegistroBaseDTO dto) {
-        log.info("Iniciando registro para usuario: {} con rol: {}", dto.getUsername(), dto.getRol());
+        log.info("========================================");
+        log.info("📝 Iniciando registro para usuario: {}", dto.getUsername());
+        log.info("🎭 Rol solicitado: {}", dto.getRol());
+
+        // VALIDACIÓN PARA ADMIN
+        boolean isAdmin = dto.getRol() == Roles.ADMIN;
+        if (isAdmin) {
+            log.info("👑 Procesando registro de ADMINISTRADOR");
+            String adminKey = null;
+            if (dto instanceof RegistroAdminDTO) {
+                adminKey = ((RegistroAdminDTO) dto).getAdminKey();
+            }
+            log.info("🔑 Clave de admin recibida: {}", adminKey);
+            log.info("🔑 Clave esperada en backend: {}", adminSecretKey);
+
+            if (adminKey == null || adminKey.isEmpty()) {
+                log.error("❌ Clave de administrador no proporcionada");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "La clave de administrador es obligatoria");
+            }
+
+            if (!adminSecretKey.equals(adminKey)) {
+                log.error("❌ Clave de administrador INCORRECTA");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Clave de administrador incorrecta");
+            }
+            log.info("✅ Clave de administrador CORRECTA");
+        }
 
         validarRegistro(dto);
-            // Crear usuario base
-            Usuario usuario = crearUsuarioBase(dto);
-            usuarioRepository.save(usuario);
-            log.info("Usuario base creado con ID: {}", usuario.getId());
 
-            // Crear entidad específica según el rol
-            crearEntidadEspecifica(dto, usuario);
+        // Crear usuario base
+        Usuario usuario = crearUsuarioBase(dto);
 
-            // Generar y guardar código de verificación
+        // SI ES ADMIN, MARCAR COMO VERIFICADO DIRECTAMENTE
+        if (isAdmin) {
+            usuario.setVerificado(true);
+            log.info("👑 Administrador creado como VERIFICADO automáticamente");
+        }
+
+        usuarioRepository.save(usuario);
+        log.info("✅ Usuario base creado con ID: {}", usuario.getId());
+
+        // Crear entidad específica según el rol
+        crearEntidadEspecifica(dto, usuario);
+
+        // SOLO ENVIAR CÓDIGO DE VERIFICACIÓN SI NO ES ADMIN
+        if (!isAdmin) {
             String codigo = generarCodigoVerificacion(dto.getEmail());
-
-            // Enviar código por email
             enviarCodigoVerificacion(dto.getEmail(), codigo);
+            log.info("📧 Código de verificación enviado a: {}", dto.getEmail());
+        } else {
+            log.info("👑 Administrador registrado sin necesidad de verificación por email");
+        }
 
-            log.info("Registro completado para: {}", dto.getEmail());
-
+        log.info("✅ Registro COMPLETADO para: {}", dto.getEmail());
+        log.info("========================================");
     }
 
     private Usuario crearUsuarioBase(RegistroBaseDTO dto) {
@@ -93,6 +135,8 @@ public class UserService {
             usuario.setApellido(((RegistroJugadorDTO) dto).getApellido());
         } else if (dto instanceof RegistroUsuarioDTO) {
             usuario.setApellido(((RegistroUsuarioDTO) dto).getApellido());
+        } else if (dto instanceof RegistroAdminDTO) {
+            usuario.setApellido(((RegistroAdminDTO) dto).getApellido());
         }
 
         return usuario;
@@ -133,7 +177,7 @@ public class UserService {
         if (usuarioRepository.existsByUsername(dto.getUsername()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya está en uso");
 
-        // Validaciones específicas por rol (los servicios específicos también validarán)
+        // Validaciones específicas por rol
         if (dto instanceof RegisterEntrenadorDTO) {
             RegisterEntrenadorDTO entDTO = (RegisterEntrenadorDTO) dto;
             if (entDTO.getCodigoEntrenador() == null || entDTO.getCodigoEntrenador().isBlank())
@@ -149,7 +193,90 @@ public class UserService {
             if (jugDTO.getPosicion() == null || jugDTO.getPosicion().isBlank())
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La posición es obligatoria");
         }
+    }
 
+    // ──────────────────────────────────────────────
+    // ACTUALIZAR PERFIL
+    // ──────────────────────────────────────────────
+
+    @Transactional
+    public UsuarioPerfilDTO actualizarPerfil(UserDetails userDetails, ActualizarUsuarioDTO dto) {
+        Usuario usuario = usuarioRepository.findByUsername(userDetails.getUsername());
+
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+
+        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            if (!dto.getUsername().equals(usuario.getUsername()) &&
+                    usuarioRepository.existsByUsername(dto.getUsername())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de usuario ya está en uso");
+            }
+            usuario.setUsername(dto.getUsername());
+            log.info("Username actualizado de {} a {}", userDetails.getUsername(), dto.getUsername());
+        }
+
+        if (dto.getOldPassword() != null && !dto.getOldPassword().isEmpty() &&
+                dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+
+            if (!passwordEncoder.matches(dto.getOldPassword(), usuario.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Contraseña actual incorrecta");
+            }
+
+            if (dto.getNewPassword().length() < 6) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 6 caracteres");
+            }
+
+            usuario.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+            log.info("Contraseña actualizada para usuario: {}", usuario.getUsername());
+
+            actualizarPasswordEnEntidad(usuario);
+        }
+
+        usuario = usuarioRepository.save(usuario);
+        log.info("Perfil actualizado para usuario: {}", usuario.getUsername());
+
+        return UsuarioPerfilDTO.fromEntity(usuario);
+    }
+
+    @Transactional
+    public UsuarioPerfilDTO actualizarPerfilPorUsername(String username, ActualizarUsuarioDTO dto) {
+        Usuario usuario = usuarioRepository.findByUsername(username);
+
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+
+        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            if (!dto.getUsername().equals(usuario.getUsername()) &&
+                    usuarioRepository.existsByUsername(dto.getUsername())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de usuario ya está en uso");
+            }
+            usuario.setUsername(dto.getUsername());
+            log.info("Username actualizado de {} a {}", username, dto.getUsername());
+        }
+
+        if (dto.getOldPassword() != null && !dto.getOldPassword().isEmpty() &&
+                dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+
+            if (!passwordEncoder.matches(dto.getOldPassword(), usuario.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Contraseña actual incorrecta");
+            }
+
+            if (dto.getNewPassword().length() < 6) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 6 caracteres");
+            }
+
+            usuario.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+            log.info("Contraseña actualizada para usuario: {}", usuario.getUsername());
+
+            actualizarPasswordEnEntidad(usuario);
+        }
+
+        usuario = usuarioRepository.save(usuario);
+        log.info("Perfil actualizado para usuario: {}", usuario.getUsername());
+
+        return UsuarioPerfilDTO.fromEntity(usuario);
     }
 
     // ──────────────────────────────────────────────
@@ -172,11 +299,9 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ya fue utilizado");
         }
 
-        // Marcar como verificado
         verification.setVerified(true);
         emailVerificationRepository.save(verification);
 
-        // Buscar y actualizar usuario
         Usuario usuario = usuarioRepository.findByEmail(verification.getEmail());
         if (usuario == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
@@ -185,10 +310,8 @@ public class UserService {
         usuario.setVerificado(true);
         usuarioRepository.save(usuario);
 
-        // Notificar a la entidad específica
         notificarVerificacionAEntidad(usuario);
 
-        // Generar tokens
         String token = jwtTokenProvider.generateToken(usuario);
         String refreshToken = jwtTokenProvider.generateRefreshToken(usuario);
 
@@ -226,10 +349,8 @@ public class UserService {
         if (usuario.isVerificado())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya ha sido verificado");
 
-        // Eliminar códigos anteriores
         emailVerificationRepository.findByEmail(email).ifPresent(emailVerificationRepository::delete);
 
-        // Generar nuevo código
         String nuevoCodigo = generarCodigoVerificacion(email);
         enviarCodigoVerificacion(email, nuevoCodigo);
 
@@ -254,7 +375,7 @@ public class UserService {
     // ──────────────────────────────────────────────
 
     @Transactional
-    public LoginResponse login(LoginRequest dto) {
+    public void login(LoginRequest dto) {
         Usuario usuario = usuarioRepository.findByUsername(dto.getUsername());
 
         if (usuario == null)
@@ -273,28 +394,35 @@ public class UserService {
         usuario.setRefreshToken(refreshToken);
         usuarioRepository.save(usuario);
 
-        return buildLoginResponse(usuario, token, refreshToken);
     }
 
     @Transactional
     public LoginResponse refreshToken(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token no proporcionado");
 
-        if (!jwtTokenProvider.validateToken(refreshToken))
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token no proporcionado");
+        }
+
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido");
+        }
 
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
+
         Usuario usuario = usuarioRepository.findByUsername(username);
 
-        if (usuario == null || !refreshToken.equals(usuario.getRefreshToken()))
+        if (usuario == null || !refreshToken.equals(usuario.getRefreshToken())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token no válido");
+        }
 
-        String nuevoToken = jwtTokenProvider.generateToken(usuario);
-        usuario.setToken(nuevoToken);
+        String newToken = jwtTokenProvider.generateToken(usuario);
+        String newRefresh = jwtTokenProvider.generateRefreshToken(usuario);
+
+        usuario.setToken(newToken);
+        usuario.setRefreshToken(newRefresh);
         usuarioRepository.save(usuario);
 
-        return buildLoginResponse(usuario, nuevoToken, refreshToken);
+        return buildLoginResponse(usuario, newToken, newRefresh);
     }
 
     @Transactional
@@ -334,24 +462,65 @@ public class UserService {
         usuario.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
         usuarioRepository.save(usuario);
 
-        // Actualizar contraseña en entidad específica
         actualizarPasswordEnEntidad(usuario);
 
-        log.info("Contraseña actualizada para usuario: {}" + usuario.getNombre());
+        log.info("Contraseña actualizada para usuario: {}", usuario.getNombre());
     }
 
     private void actualizarPasswordEnEntidad(Usuario usuario) {
+        String email = usuario.getEmail();
+        String passwordEncriptada = usuario.getPassword();
+
         switch (usuario.getRole()) {
             case ENTRENADOR:
-                entrenadorService.actualizarPassword(usuario.getEmail(), usuario.getPassword());
+                entrenadorService.actualizarPassword(email, passwordEncriptada);
                 break;
             case ARBITRO:
-                arbitroService.actualizarPassword(usuario.getEmail(), usuario.getPassword());
+                arbitroService.actualizarPassword(email, passwordEncriptada);
                 break;
             case JUGADOR:
-                jugadorService.actualizarPassword(usuario.getEmail(), usuario.getPassword());
+                jugadorService.actualizarPassword(email, passwordEncriptada);
+                break;
+            case USUARIO:
+            case ADMIN:
+                log.info("Rol {} no requiere actualizar contraseña en entidad específica", usuario.getRole());
                 break;
         }
+    }
+
+    // En Aplicacion.Services.UserService
+
+    public Usuario findByUsername(String username) {
+        log.info("🔍 Buscando usuario por username: {}", username);
+        return usuarioRepository.findByUsername(username);
+    }
+
+    public void actualizarRefreshToken(String username, String refreshToken) {
+        log.info("🔄 Actualizando refresh token para: {}", username);
+        Usuario usuario = findByUsername(username);
+        if (usuario != null) {
+            usuario.setRefreshToken(refreshToken);
+            usuarioRepository.save(usuario);
+            log.info("✅ Refresh token actualizado");
+        }
+    }
+
+    public UsuarioPerfilDTO obtenerPerfilPorUsername(String username) {
+        log.info("📋 Obteniendo perfil para: {}", username);
+        Usuario usuario = findByUsername(username);
+        if (usuario == null) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+
+        return UsuarioPerfilDTO.builder()
+                .username(usuario.getUsername())
+                .email(usuario.getEmail())
+                .nombre(usuario.getNombre())
+                .apellido(usuario.getApellido())
+                .edad(usuario.getEdad())
+                .rol(usuario.getRole())
+                .verificado(usuario.isVerificado())
+                .build();
     }
 
     // ──────────────────────────────────────────────
@@ -373,14 +542,13 @@ public class UserService {
     }
 
     private LoginResponse buildLoginResponse(Usuario usuario, String token, String refreshToken) {
-        LoginResponse response = new LoginResponse();
-        response.setToken(token);
-        response.setRefreshToken(refreshToken);
-        response.setUsername(usuario.getUsername());
-        response.setNombre(usuario.getNombre());
-        response.setApellido(usuario.getApellido());
-        response.setEmail(usuario.getEmail());
-        response.setRol(usuario.getRole().name());
+        LoginResponse response = LoginResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken)
+                .username(usuario.getUsername())
+                .email(usuario.getEmail())
+                .rol(usuario.getRole())
+                .build();
         return response;
     }
 
@@ -397,6 +565,9 @@ public class UserService {
         }
     }
 
+    // ──────────────────────────────────────────────
+    // SEGUIR JUGADOR/EQUIPO
+    // ──────────────────────────────────────────────
 
     public SeguirReponseDTO seguirJugador(Long idJugador, Usuario usuario) {
         Jugador jugador = jugadorRepository.findById(idJugador)
@@ -417,7 +588,6 @@ public class UserService {
         return seguir;
     }
 
-
     public SeguirEquipoDTO seguirEquipo(Long idEquipo, Usuario usuario) {
         Equipo equipo = equipoRepository.findById(idEquipo)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -434,8 +604,4 @@ public class UserService {
 
         return seguir;
     }
-
-
-
-
 }

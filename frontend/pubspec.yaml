@@ -42,7 +42,7 @@ dependencies:
   http: ^1.1.0
   
   # Para seleccionar archivos PDF (Acta del Partido)
-  file_picker: ^6.1.1
+  file_picker: ^8.0.0
   
   # Para abrir URLs y PDFs
   url_launcher: ^6.2.2

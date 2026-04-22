@@ -29,6 +29,8 @@ class AppConfig {
   static String perfil(String username) => '$apiUrl/usuarios/perfil/$username';
   static String seguirJugador(int id) => '$apiUrl/usuarios/seguirJugador/$id';
   static String seguirEquipo(int id) => '$apiUrl/usuarios/seguirEquipo/$id';
+  static String actualizarPerfil(String username, String oldPassword,
+      String newPassword) => '$apiUrl/usuarios/actualizar';
 
   static const int connectionTimeout = 30000;
   static const int receiveTimeout = 30000;

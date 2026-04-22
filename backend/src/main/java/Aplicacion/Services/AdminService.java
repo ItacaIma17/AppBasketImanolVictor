@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -236,7 +237,7 @@ public class AdminService {
                     arbitro.getNombre(),
                     partido.getEquipoLocal().getNombre(),
                     partido.getEquipoVisitante().getNombre(),
-                    partido.getFechaHora(),
+                    partido.getFecha(),
                     partido.getPabellon());
         } catch (MessagingException e) {
             log.warn("Email no enviado al árbitro: {}", e.getMessage());
@@ -265,7 +266,7 @@ public class AdminService {
         Partido partido = partidoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        partido.setFechaHora(partidoActualizado.getFechaHora());
+        partido.setFecha(partidoActualizado.getFecha());
         partido.setPabellon(partidoActualizado.getPabellon());
         partido.setDireccionPabellon(partidoActualizado.getDireccionPabellon());
         partido.setLiga(partidoActualizado.getLiga());
@@ -298,7 +299,7 @@ public class AdminService {
         // Preparar DTO base con información del partido
         RecordatorioPartidoDTO dtoBase = new RecordatorioPartidoDTO();
         dtoBase.setNombreRival(null); // Se seteará por cada usuario
-        dtoBase.setFecha(partido.getFechaHora());
+        dtoBase.setFecha(partido.getFecha());
         dtoBase.setPabellon(partido.getPabellon());
         dtoBase.setDireccionPabellon(partido.getDireccionPabellon());
 
@@ -311,7 +312,7 @@ public class AdminService {
             dtoArbitro.setNombreUsuario(partido.getArbitro().getNombre());
             dtoArbitro.setNombreRival(partido.getEquipoLocal().getNombre() + " vs " +
                     partido.getEquipoVisitante().getNombre());
-            dtoArbitro.setFecha(partido.getFechaHora());
+            dtoArbitro.setFecha(partido.getFecha());
             dtoArbitro.setPabellon(partido.getPabellon());
             dtoArbitro.setDireccionPabellon(partido.getDireccionPabellon());
 
@@ -348,7 +349,7 @@ public class AdminService {
             dtoEntrenador.setSendto(equipo.getEntrenador().getEmail());
             dtoEntrenador.setNombreUsuario(equipo.getEntrenador().getNombre());
             dtoEntrenador.setNombreRival(nombreRival);
-            dtoEntrenador.setFecha(partido.getFechaHora());
+            dtoEntrenador.setFecha(partido.getFecha());
             dtoEntrenador.setPabellon(partido.getPabellon());
             dtoEntrenador.setDireccionPabellon(partido.getDireccionPabellon());
 
@@ -368,7 +369,7 @@ public class AdminService {
                 dtoJugador.setSendto(jugador.getEmail());
                 dtoJugador.setNombreUsuario(jugador.getNombre());
                 dtoJugador.setNombreRival(nombreRival);
-                dtoJugador.setFecha(partido.getFechaHora());
+                dtoJugador.setFecha(partido.getFecha());
                 dtoJugador.setPabellon(partido.getPabellon());
                 dtoJugador.setDireccionPabellon(partido.getDireccionPabellon());
 
@@ -388,17 +389,16 @@ public class AdminService {
     /**
      * Envía recordatorios para todos los partidos de un día específico
      */
-    public void enviarRecordatoriosPartidosDelDia(LocalDateTime fecha) {
-        LocalDateTime inicioDia = fecha.toLocalDate().atStartOfDay();
-        LocalDateTime finDia = inicioDia.plusDays(1).minusNanos(1);
-
-        List<Partido> partidos = partidoRepository.findByFechaHoraBetween(inicioDia, finDia);
+    public void enviarRecordatoriosPartidosDelDia(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
+        LocalDate fechaInicioDate = fechaInicio.toLocalDate();
+        LocalDate fechaFinDate = fechaFin.toLocalDate();
+        List<Partido> partidos = partidoRepository.findByFechaBetween(fechaInicioDate, fechaFinDate);
 
         for (Partido partido : partidos) {
             enviarRecordatorioPartido(partido.getId());
         }
 
-        log.info("Enviados recordatorios para {} partidos del día {}", partidos.size(), fecha);
+        log.info("Enviados recordatorios para {} partidos del día {}", partidos.size(), fechaInicio, fechaFin);
     }
 
     /**
@@ -419,7 +419,7 @@ public class AdminService {
         dto.setNombreUsuario(partido.getArbitro().getNombre());
         dto.setNombreRival(partido.getEquipoLocal().getNombre() + " vs " +
                 partido.getEquipoVisitante().getNombre());
-        dto.setFecha(partido.getFechaHora());
+        dto.setFecha(partido.getFecha());
         dto.setPabellon(partido.getPabellon());
         dto.setDireccionPabellon(partido.getDireccionPabellon());
 

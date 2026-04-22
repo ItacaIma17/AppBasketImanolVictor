@@ -7,6 +7,7 @@ import '../config/api_config.dart';
 import '../models/DTOS/Login/loginRequest.dart';
 import '../models/DTOS/Login/loginResponse.dart';
 import '../models/DTOS/Registro/registroBaseDTO.dart';
+import '../models/DTOS/updateUser/ActualizarUsuarioDTO.dart';
 import '../models/role.dart';
 import '../models/usuario.dart';
 
@@ -56,6 +57,34 @@ class AutenticacionService {
     }
   }
 
+  // En autenticacion_service.dart
+  static Future<bool> refreshTokenUser() async {
+    if (_refreshToken == null) return false;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/refresh-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'refreshToken': _refreshToken}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _token = data['token'];
+        _refreshToken = data['refreshToken'];
+        await _guardarSesion();
+        print('✅ Token refrescado exitosamente');
+        return true;
+      } else {
+        print('❌ Error refrescando token: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Excepción refrescando token: $e');
+      return false;
+    }
+  }
+
   static Future<void> _limpiarSesion() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
@@ -65,6 +94,8 @@ class AutenticacionService {
     _refreshToken = null;
     _usuarioActual = null;
   }
+
+
 
   // ============================================================
   // LOGIN CORREGIDO
@@ -90,6 +121,7 @@ class AutenticacionService {
           print('❌ Respuesta vacía del servidor');
           return false;
         }
+
 
         final data = json.decode(response.body);
 
@@ -166,15 +198,18 @@ class AutenticacionService {
         final data = json.decode(response.body);
         print('Datos del perfil: $data');
 
-        // Validar datos mínimos
         if (data['username'] == null) {
           print('Username no encontrado en respuesta');
           return null;
         }
 
-        // Obtener el rol correctamente del backend
+        // Obtener el rol del backend
         final rolString = data['rol'] ?? 'USUARIO';
         print('Rol recibido del backend: $rolString');
+
+        // ✅ USAR fromString PARA CONVERTIR EL STRING A ENUM
+        final role = Role.fromString(rolString);
+        print('Role convertido: ${role.displayName}');
 
         _usuarioActual = Usuario(
           id: data['id'],
@@ -184,12 +219,12 @@ class AutenticacionService {
           apellido: data['apellido'],
           licencia: data['licencia'],
           edad: data['edad'] ?? 0,
-          role: Role.fromString(rolString),  // ← Usar el rol del backend
+          role: role,  // ← Aquí usas el Role convertido
           verificado: data['verificado'] ?? false,
           bloqueado: data['bloqueado'] ?? false,
         );
 
-        print('Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.value}');
+        print('Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.displayName}');
         return _usuarioActual;
       } else {
         print('Error cargando perfil: ${response.statusCode} - ${response.body}');
@@ -198,6 +233,77 @@ class AutenticacionService {
     } catch (e) {
       print('Exception cargando perfil: $e');
       return null;
+    }
+  }
+
+  // lib/services/autenticacion_service.dart
+// Añadir este método en la clase AutenticacionService
+
+  // autenticacion_service.dart - método actualizarPerfil mejorado
+  static Future<Map<String, dynamic>> actualizarPerfil({
+    String? username,
+    String? oldPassword,
+    String? newPassword,
+  }) async {
+    if (_token == null) {
+      throw Exception('No hay sesión iniciada');
+    }
+
+    try {
+      final body = ActualizarUsuarioDTO(
+        username: username,
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      ).toJson();
+
+      final bodyClean = Map.from(body)
+        ..removeWhere((key, value) => value == null);
+
+      print('═══════════════════════════════════════════');
+      print('🔑 Token: ${_token!.substring(0, _token!.length > 20 ? 20 : _token!.length)}...');
+      print('📏 Longitud token: ${_token!.length}');
+      print('📦 Body a enviar: $bodyClean');
+      print('🌐 URL: ${AppConfig.apiUrl}/usuarios/actualizar');
+      print('═══════════════════════════════════════════');
+
+      final response = await http.put(
+        Uri.parse('${AppConfig.apiUrl}/usuarios/actualizar'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+        },
+        body: json.encode(bodyClean),
+      );
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // Actualizar usuario en memoria si cambió username
+        if (_usuarioActual != null && username != null && username.isNotEmpty) {
+          _usuarioActual = _usuarioActual!.copyWith(username: username);
+          await _guardarSesion();
+        }
+
+        return data;
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('Sesión expirada o no autorizado. Por favor, inicia sesión nuevamente.');
+      } else {
+        String errorMsg = 'Error al actualizar perfil';
+        try {
+          if (response.body.isNotEmpty) {
+            final error = json.decode(response.body);
+            errorMsg = error['error'] ?? error['message'] ?? errorMsg;
+          }
+        } catch (e) {}
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      print('❌ Error actualizando perfil: $e');
+      rethrow;
     }
   }
 
@@ -303,8 +409,13 @@ class AutenticacionService {
 
   static Future<bool> registrarUsuarioConDTO(RegistroBaseDTO dto) async {
     try {
+      // ✅ CORREGIDO: Usar el endpoint correcto
+      final url = '$baseUrl/usuarios/registro';  // ← Cambiado de 'auth/register' a 'usuarios/registro'
+      print('📝 Enviando registro a: $url');
+      print('📝 Datos: ${dto.toJson()}');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/registro'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(dto.toJson()),
       ).timeout(const Duration(seconds: 30));
@@ -313,20 +424,25 @@ class AutenticacionService {
       print('📡 Registro body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Registro exitoso');
         return true;
+      } else if (response.statusCode == 403) {
+        print('❌ Clave de administrador incorrecta');
+        throw Exception('Clave de administrador incorrecta');
       } else {
         String errorMsg = 'Error en el registro';
         try {
           if (response.body.isNotEmpty) {
             final error = json.decode(response.body);
-            errorMsg = error['message'] ?? errorMsg;
+            errorMsg = error['message'] ?? error['error'] ?? errorMsg;
           }
         } catch (e) {
-          // Ignorar
+          print('Error parseando respuesta: $e');
         }
         throw Exception(errorMsg);
       }
     } catch (e) {
+      print('❌ Excepción en registro: $e');
       rethrow;
     }
   }
@@ -337,13 +453,25 @@ class AutenticacionService {
 
   static Future<LoginResponse?> verificarCodigo(String codigo, String email) async {
     try {
+      // ✅ Usar el endpoint correcto para verificación
       final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/verificar'),
+        Uri.parse('$baseUrl/usuarios/verificar'),  // Este parece correcto según logs
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'codigo': codigo}),
+        body: json.encode({
+          'email': email,     // ← Asegurar que envía el email
+          'codigo': codigo,
+        }),
       ).timeout(const Duration(seconds: 30));
 
+      print('📡 Verificación response: ${response.statusCode}');
+      print('📡 Verificación body: ${response.body}');
+
       if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print('✅ Verificación exitosa sin contenido');
+          return null;
+        }
+
         final data = json.decode(response.body);
         final loginResponse = LoginResponse.fromJson(data);
         _token = loginResponse.token;
@@ -352,10 +480,17 @@ class AutenticacionService {
         await _guardarSesion();
         return loginResponse;
       } else {
-        final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Error en la verificación');
+        String errorMsg = 'Error en la verificación';
+        if (response.body.isNotEmpty) {
+          try {
+            final error = json.decode(response.body);
+            errorMsg = error['message'] ?? error['error'] ?? errorMsg;
+          } catch (e) {}
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
+      print('❌ Excepción en verificación: $e');
       rethrow;
     }
   }

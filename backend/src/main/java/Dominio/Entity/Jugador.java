@@ -13,10 +13,11 @@ public class Jugador {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String nombre;
-
     private String apellido;
+    private String posicion;
+    private double altura;
+    private double peso;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -28,9 +29,6 @@ public class Jugador {
     private String email;
 
     private int edad;
-    private double altura;
-    private double peso;
-    private String posicion;
     private int dorsal;
 
     @Column(unique = true, nullable = false)
@@ -40,6 +38,10 @@ public class Jugador {
     private Roles role;
 
     private boolean verificado;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id", unique = true)
+    private Usuario usuario;
 
     @ManyToOne
     @JoinColumn(name = "equipo_id")

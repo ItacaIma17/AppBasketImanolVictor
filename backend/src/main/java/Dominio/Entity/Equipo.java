@@ -1,3 +1,4 @@
+// Dominio/Entity/Equipo.java
 package Dominio.Entity;
 
 import jakarta.persistence.*;
@@ -14,19 +15,36 @@ public class Equipo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String nombre;
 
-    private String nombreEstadio;
-
     @OneToOne
-    @JoinColumn(name = "entrenador_id")
+    @JoinColumn(name = "entrenador_id", unique = true)
     private Entrenador entrenador;
 
     @ManyToOne
     @JoinColumn(name = "liga_id")
     private Liga liga;
 
-    @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL)
+    private String nombreEstadio;
+
+    private String ciudad;
+
+    private int añoFundacion;
+
+    @Column(columnDefinition = "TEXT")
+    private String escudoUrl;
+
+    @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Jugador> jugadores = new ArrayList<>();
+
+    // Constructor vacío
+    public Equipo() {}
+
+    // Constructor con campos básicos
+    public Equipo(String nombre, String nombreEstadio, String ciudad) {
+        this.nombre = nombre;
+        this.nombreEstadio = nombreEstadio;
+        this.ciudad = ciudad;
+    }
 }

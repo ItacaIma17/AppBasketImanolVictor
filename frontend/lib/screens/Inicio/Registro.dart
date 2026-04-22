@@ -2,34 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/models/role.dart';
-
+import '../../models/DTOS/Admin/RegistroAdminDTO.dart';
+import '../../models/DTOS/Registro/RegistroArbitroDTO.dart';
+import '../../models/DTOS/Registro/RegistroEntrenadorDTO.dart';
+import '../../models/DTOS/Registro/RegistroJugadorDTO.dart';
+import '../../models/DTOS/Registro/RegistroUsuarioDTO.dart';
 import '../../models/DTOS/Registro/registroBaseDTO.dart';
 
-class RegistroPage extends StatefulWidget {
-  const RegistroPage({super.key});
+class Registro extends StatefulWidget {
+  const Registro({super.key});
 
   @override
-  State<RegistroPage> createState() => _RegistroPageState();
+  State<Registro> createState() => _RegistroPageState();
 }
 
-class _RegistroPageState extends State<RegistroPage> {
+class _RegistroPageState extends State<Registro> {
   // Controladores para los campos del formulario
   final TextEditingController nombreCtrl = TextEditingController();
   final TextEditingController apellidosCtrl = TextEditingController();
   final TextEditingController usernameCtrl = TextEditingController();
   final TextEditingController edadCtrl = TextEditingController();
   final TextEditingController licenciaCtrl = TextEditingController();
+  final TextEditingController codigoEntrenadorCtrl = TextEditingController();
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController passCtrl = TextEditingController();
   final TextEditingController confirmPassCtrl = TextEditingController();
-  final TextEditingController posicionCtrl = TextEditingController(); // NUEVO: para jugadores
+  final TextEditingController posicionCtrl = TextEditingController();
+  final TextEditingController adminKeyCtrl = TextEditingController();
 
   // Variables de estado
   bool mostrarPassword = false;
   bool mostrarConfirmPassword = false;
   bool aceptaTerminos = false;
-  bool isLoading = false; // NUEVO: estado de carga
-  bool _emailEnUso = false; // NUEVO: validación en tiempo real
+  bool isLoading = false;
+  bool _emailEnUso = false;
 
   // Focus nodes para navegación por teclado
   final FocusNode _nombreFocus = FocusNode();
@@ -37,6 +43,8 @@ class _RegistroPageState extends State<RegistroPage> {
   final FocusNode _edadFocus = FocusNode();
   final FocusNode _usernameFocus = FocusNode();
   final FocusNode _licenciaFocus = FocusNode();
+  final FocusNode _codigoEntrenadorFocus = FocusNode();
+  final FocusNode _adminKeyFocus = FocusNode(); // NUEVO para admin
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmPasswordFocus = FocusNode();
@@ -49,27 +57,30 @@ class _RegistroPageState extends State<RegistroPage> {
     'Jugador',
     'Entrenador',
     'Árbitro',
+    'Administrador',
   ];
 
   @override
   void dispose() {
-    // Liberar recursos de los controladores
     nombreCtrl.dispose();
     apellidosCtrl.dispose();
     usernameCtrl.dispose();
     edadCtrl.dispose();
     licenciaCtrl.dispose();
+    codigoEntrenadorCtrl.dispose();
+    adminKeyCtrl.dispose(); // NUEVO
     emailCtrl.dispose();
     passCtrl.dispose();
     confirmPassCtrl.dispose();
     posicionCtrl.dispose();
 
-    // Liberar focus nodes
     _nombreFocus.dispose();
     _apellidosFocus.dispose();
     _edadFocus.dispose();
     _usernameFocus.dispose();
     _licenciaFocus.dispose();
+    _codigoEntrenadorFocus.dispose();
+    _adminKeyFocus.dispose(); // NUEVO
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
@@ -79,17 +90,25 @@ class _RegistroPageState extends State<RegistroPage> {
 
   /// Verificar si el rol requiere número de licencia
   bool get requiereLicencia {
-    return tipoUsuario == 'Jugador' ||
-        tipoUsuario == 'Entrenador' ||
-        tipoUsuario == 'Árbitro';
+    return tipoUsuario == 'Jugador' || tipoUsuario == 'Árbitro';
   }
 
-  /// NUEVO: Verificar si el rol requiere posición (solo jugadores)
+  /// Verificar si el rol requiere código de entrenador
+  bool get requiereCodigoEntrenador {
+    return tipoUsuario == 'Entrenador';
+  }
+
+  /// Verificar si el rol requiere clave de administrador
+  bool get requiereAdminKey {
+    return tipoUsuario == 'Administrador';
+  }
+
+  /// Verificar si el rol requiere posición (solo jugadores)
   bool get requierePosicion {
     return tipoUsuario == 'Jugador';
   }
 
-  /// NUEVO: Validar formato de email en tiempo real
+  /// Validar formato de email en tiempo real
   bool get isEmailValid {
     final email = emailCtrl.text;
     return email.isNotEmpty &&
@@ -98,15 +117,15 @@ class _RegistroPageState extends State<RegistroPage> {
         email.length >= 5;
   }
 
-  /// NUEVO: Validar fortaleza de contraseña
+  /// Validar fortaleza de contraseña
   bool get isPasswordStrong {
     final password = passCtrl.text;
     return password.length >= 6 &&
-        password.contains(RegExp(r'[A-Z]')) && // Al menos una mayúscula
-        password.contains(RegExp(r'[0-9]')); // Al menos un número
+        password.contains(RegExp(r'[A-Z]')) &&
+        password.contains(RegExp(r'[0-9]'));
   }
 
-  /// NUEVO: Obtener mensaje de fortaleza de contraseña
+  /// Obtener mensaje de fortaleza de contraseña
   String get passwordStrengthMessage {
     final password = passCtrl.text;
     if (password.isEmpty) return '';
@@ -145,7 +164,6 @@ class _RegistroPageState extends State<RegistroPage> {
                     Center(
                       child: Column(
                         children: [
-                          // Logo de la FAB
                           Container(
                             width: 120,
                             height: 120,
@@ -170,9 +188,7 @@ class _RegistroPageState extends State<RegistroPage> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 20),
-
                           const Text(
                             'CREAR CUENTA',
                             style: TextStyle(
@@ -192,7 +208,7 @@ class _RegistroPageState extends State<RegistroPage> {
 
                     const SizedBox(height: 24),
 
-                    // Indicador de progreso del formulario (NUEVO)
+                    // Indicador de progreso del formulario
                     _buildProgressIndicator(),
 
                     const SizedBox(height: 16),
@@ -268,11 +284,13 @@ class _RegistroPageState extends State<RegistroPage> {
 
                     const SizedBox(height: 16),
 
-                    // CAMPO DE LICENCIA
+                    // CAMPO DE LICENCIA PARA JUGADORES Y ÁRBITROS
                     if (requiereLicencia) ...[
                       _buildTextField(
                         controller: licenciaCtrl,
-                        label: _getLicenciaLabel(),
+                        label: tipoUsuario == 'Jugador'
+                            ? 'Número de Licencia de Jugador'
+                            : 'Número de Licencia Arbitral',
                         icon: Icons.badge,
                         keyboardType: TextInputType.number,
                         focusNode: _licenciaFocus,
@@ -287,7 +305,57 @@ class _RegistroPageState extends State<RegistroPage> {
                       const SizedBox(height: 16),
                     ],
 
-                    // NUEVO: Campo de posición para jugadores
+                    // CAMPO DE CÓDIGO DE ENTRENADOR
+                    if (requiereCodigoEntrenador) ...[
+                      _buildTextField(
+                        controller: codigoEntrenadorCtrl,
+                        label: 'Código de Entrenador',
+                        icon: Icons.vpn_key,
+                        hintText: 'Ej: ENT-123456',
+                        focusNode: _codigoEntrenadorFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _codigoEntrenadorFocus.nextFocus(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'El código de entrenador es obligatorio';
+                          }
+                          if (!value.startsWith('ENT-')) {
+                            return 'Formato inválido. Debe comenzar con ENT-';
+                          }
+                          if (value.length < 8) {
+                            return 'Código inválido';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // CAMPO DE CLAVE DE ADMINISTRADOR (NUEVO)
+                    if (requiereAdminKey) ...[
+                      _buildTextField(
+                        controller: adminKeyCtrl,
+                        label: 'Clave de Administrador',
+                        icon: Icons.admin_panel_settings,
+                        hintText: 'Ingresa la clave secreta de administrador',
+                        obscureText: true,
+                        focusNode: _adminKeyFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _adminKeyFocus.nextFocus(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'La clave de administrador es obligatoria';
+                          }
+                          if (value.length < 6) {
+                            return 'Clave inválida';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Campo de posición para jugadores
                     if (requierePosicion) ...[
                       _buildTextField(
                         controller: posicionCtrl,
@@ -385,7 +453,7 @@ class _RegistroPageState extends State<RegistroPage> {
                 ),
               ),
 
-              // NUEVO: Overlay de carga
+              // Overlay de carga
               if (isLoading)
                 Container(
                   color: Colors.black.withOpacity(0.7),
@@ -412,10 +480,14 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Indicador de progreso del formulario
+  /// Indicador de progreso del formulario
   Widget _buildProgressIndicator() {
     int camposCompletados = 0;
-    int totalCampos = 5 + (requiereLicencia ? 1 : 0) + (requierePosicion ? 1 : 0);
+    int totalCampos = 5 +
+        (requiereLicencia ? 1 : 0) +
+        (requiereCodigoEntrenador ? 1 : 0) +
+        (requiereAdminKey ? 1 : 0) +
+        (requierePosicion ? 1 : 0);
 
     if (nombreCtrl.text.isNotEmpty) camposCompletados++;
     if (apellidosCtrl.text.isNotEmpty) camposCompletados++;
@@ -423,9 +495,11 @@ class _RegistroPageState extends State<RegistroPage> {
     if (emailCtrl.text.isNotEmpty && isEmailValid) camposCompletados++;
     if (passCtrl.text.isNotEmpty && confirmPassCtrl.text.isNotEmpty && passCtrl.text == confirmPassCtrl.text) camposCompletados++;
     if (requiereLicencia && licenciaCtrl.text.isNotEmpty) camposCompletados++;
+    if (requiereCodigoEntrenador && codigoEntrenadorCtrl.text.isNotEmpty) camposCompletados++;
+    if (requiereAdminKey && adminKeyCtrl.text.isNotEmpty) camposCompletados++;
     if (requierePosicion && posicionCtrl.text.isNotEmpty) camposCompletados++;
 
-    final progress = camposCompletados / totalCampos;
+    final progress = totalCampos > 0 ? camposCompletados / totalCampos : 0.0;
 
     return Column(
       children: [
@@ -453,7 +527,7 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Campo de email con validación en tiempo real
+  /// Campo de email con validación en tiempo real
   Widget _buildEmailField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,7 +570,7 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Campo de contraseña con indicador de fortaleza
+  /// Campo de contraseña con indicador de fortaleza
   Widget _buildPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,7 +618,7 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Campo de confirmación de contraseña
+  /// Campo de confirmación de contraseña
   Widget _buildConfirmPasswordField() {
     return _buildTextField(
       controller: confirmPassCtrl,
@@ -574,7 +648,7 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Checkbox de términos y condiciones mejorado
+  /// Checkbox de términos y condiciones mejorado
   Widget _buildTermsAndConditions() {
     return Row(
       children: [
@@ -607,9 +681,8 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Botón de registro con validación de formulario
+  /// Botón de registro con validación de formulario
   Widget _buildRegisterButton() {
-    // Verificar si el formulario es válido
     final isFormValid = aceptaTerminos &&
         nombreCtrl.text.isNotEmpty &&
         apellidosCtrl.text.isNotEmpty &&
@@ -622,6 +695,8 @@ class _RegistroPageState extends State<RegistroPage> {
         passCtrl.text == confirmPassCtrl.text &&
         isPasswordStrong &&
         (!requiereLicencia || licenciaCtrl.text.isNotEmpty) &&
+        (!requiereCodigoEntrenador || codigoEntrenadorCtrl.text.isNotEmpty) &&
+        (!requiereAdminKey || adminKeyCtrl.text.isNotEmpty) &&
         (!requierePosicion || posicionCtrl.text.isNotEmpty);
 
     return SizedBox(
@@ -647,7 +722,7 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Mostrar términos y condiciones
+  /// Mostrar términos y condiciones
   void _showTermsAndConditions() {
     showDialog(
       context: context,
@@ -694,6 +769,7 @@ class _RegistroPageState extends State<RegistroPage> {
     Function(String)? onChanged,
     Function(String)? onSubmitted,
     String? Function(String?)? validator,
+    String? hintText,
   }) {
     return TextFormField(
       controller: controller,
@@ -709,6 +785,8 @@ class _RegistroPageState extends State<RegistroPage> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: AppColors.blancoOpacidad70),
+        hintText: hintText,
+        hintStyle: const TextStyle(color: AppColors.blancoOpacidad54),
         prefixIcon: Icon(icon, color: AppColors.blancoOpacidad70),
         suffixIcon: suffixIcon,
         enabledBorder: const UnderlineInputBorder(
@@ -796,6 +874,12 @@ class _RegistroPageState extends State<RegistroPage> {
                     if (!requiereLicencia) {
                       licenciaCtrl.clear();
                     }
+                    if (!requiereCodigoEntrenador) {
+                      codigoEntrenadorCtrl.clear();
+                    }
+                    if (!requiereAdminKey) {
+                      adminKeyCtrl.clear();
+                    }
                     if (!requierePosicion) {
                       posicionCtrl.clear();
                     }
@@ -814,27 +898,16 @@ class _RegistroPageState extends State<RegistroPage> {
     switch (role) {
       case 'Jugador':
         return Icons.sports_basketball;
-      case 'Entrenador':return Icons.sports;
+      case 'Entrenador':
+        return Icons.sports;
       case 'Árbitro':
         return Icons.sports_score;
       case 'Aficionado':
         return Icons.favorite;
+      case 'Administrador':
+        return Icons.admin_panel_settings;
       default:
         return Icons.person;
-    }
-  }
-
-  /// Obtener label del campo de licencia según el rol
-  String _getLicenciaLabel() {
-    switch (tipoUsuario) {
-      case 'Jugador':
-        return 'Número de Licencia de Jugador';
-      case 'Entrenador':
-        return 'Número de Licencia de Entrenador';
-      case 'Árbitro':
-        return 'Número de Licencia Arbitral';
-      default:
-        return 'Número de Licencia';
     }
   }
 
@@ -868,8 +941,9 @@ class _RegistroPageState extends State<RegistroPage> {
       builder: (context) => AlertDialog(
         title: const Text('Tipos de Usuario'),
         content: const Text(
-          '🏀 Jugador: Necesitarás tu número de licencia de jugador y posición\n\n'
-              '🏆 Entrenador: Necesitarás tu número de licencia de entrenador\n\n'
+          '👑 Administrador: Necesitarás la clave secreta de administrador\n\n'
+              '🏀 Jugador: Necesitarás tu número de licencia de jugador y posición\n\n'
+              '🏆 Entrenador: Necesitarás un código de entrenador válido (formato ENT-XXXXXX)\n\n'
               '⚖️ Árbitro: Necesitarás tu número de licencia arbitral\n\n'
               '❤️ Aficionado: Acceso como seguidor de equipos (no requiere licencia)',
         ),
@@ -883,7 +957,8 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Manejar registro con los DTOs correctos
+  /// Manejar registro con los DTOs correctos
+  /// Manejar registro con los DTOs correctos
   void _handleRegistro() async {
     setState(() => isLoading = true);
 
@@ -891,20 +966,24 @@ class _RegistroPageState extends State<RegistroPage> {
       RegistroBaseDTO registroDTO;
       final rol = _mapRole(tipoUsuario);
 
-      // Construir el DTO según el rol
+      print('📝 Rol seleccionado: $tipoUsuario -> ${rol.value}');
+
       switch (rol) {
-        case Role.USUARIO:
-          registroDTO = RegistroUsuarioDTO(
+        case Role.ADMIN:
+          print('📝 Creando RegistroAdminDTO con adminKey: ${adminKeyCtrl.text}');
+          registroDTO = RegistroAdminDTO(
             email: emailCtrl.text,
             username: usernameCtrl.text,
             nombre: nombreCtrl.text,
             apellido: apellidosCtrl.text,
             edad: int.parse(edadCtrl.text),
             password: passCtrl.text,
+            adminKey: adminKeyCtrl.text,
           );
           break;
 
         case Role.ENTRENADOR:
+          print('📝 Creando RegisterEntrenadorDTO');
           registroDTO = RegisterEntrenadorDTO(
             email: emailCtrl.text,
             username: usernameCtrl.text,
@@ -912,23 +991,12 @@ class _RegistroPageState extends State<RegistroPage> {
             apellido: apellidosCtrl.text,
             edad: int.parse(edadCtrl.text),
             password: passCtrl.text,
-            codigoEntrenador: licenciaCtrl.text,
-          );
-          break;
-
-        case Role.ARBITRO:
-          registroDTO = RegistroArbitroDTO(
-            email: emailCtrl.text,
-            username: usernameCtrl.text,
-            nombre: nombreCtrl.text,
-            apellidos: apellidosCtrl.text,
-            edad: int.parse(edadCtrl.text),
-            password: passCtrl.text,
-            codigoArbitro: licenciaCtrl.text,
+            codigoEntrenador: codigoEntrenadorCtrl.text,
           );
           break;
 
         case Role.JUGADOR:
+          print('📝 Creando RegistroJugadorDTO');
           registroDTO = RegistroJugadorDTO(
             email: emailCtrl.text,
             username: usernameCtrl.text,
@@ -941,19 +1009,53 @@ class _RegistroPageState extends State<RegistroPage> {
           );
           break;
 
+        case Role.ARBITRO:
+          print('📝 Creando RegistroArbitroDTO');
+          registroDTO = RegistroArbitroDTO(
+            email: emailCtrl.text,
+            username: usernameCtrl.text,
+            nombre: nombreCtrl.text,
+            apellido: apellidosCtrl.text,
+            edad: int.parse(edadCtrl.text),
+            password: passCtrl.text,
+            codigoArbitro: licenciaCtrl.text,
+          );
+          break;
+
         default:
-          throw Exception('Rol no soportado');
+          print('📝 Creando RegistroUsuarioDTO');
+          registroDTO = RegistroUsuarioDTO(
+            email: emailCtrl.text,
+            username: usernameCtrl.text,
+            nombre: nombreCtrl.text,
+            apellido: apellidosCtrl.text,
+            edad: int.parse(edadCtrl.text),
+            password: passCtrl.text,
+          );
+          break;
       }
 
-      // Llamar al servicio de registro
+      print('📝 Enviando registro con rol: ${registroDTO.rol}');
+
       final exito = await AutenticacionService.registrarUsuarioConDTO(registroDTO);
 
       if (exito && mounted) {
-        // Mostrar diálogo de verificación
-        _showVerificationDialog();
+        // ✅ SI ES ADMIN, NO MOSTRAR VERIFICACIÓN
+        if (rol == Role.ADMIN) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Administrador registrado exitosamente. Ya puedes iniciar sesión.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Volver al login
+        } else {
+          _showVerificationDialog(); // Solo para no administradores
+        }
       }
 
     } catch (e) {
+      print('❌ Error en registro: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -970,7 +1072,7 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
-  /// NUEVO: Mostrar diálogo de verificación de código
+  /// Mostrar diálogo de verificación de código
   void _showVerificationDialog() {
     final codeController = TextEditingController();
     bool isVerifying = false;
@@ -1021,7 +1123,7 @@ class _RegistroPageState extends State<RegistroPage> {
               TextButton(
                 onPressed: isVerifying ? null : () {
                   Navigator.pop(dialogContext);
-                  Navigator.pop(context); // Volver al login
+                  Navigator.pop(context);
                 },
                 child: const Text('Cancelar'),
               ),
@@ -1050,7 +1152,7 @@ class _RegistroPageState extends State<RegistroPage> {
                           backgroundColor: Colors.green,
                         ),
                       );
-                      Navigator.pop(context); // Volver al login
+                      Navigator.pop(context);
                     }
                   } catch (e) {
                     setDialogState(() => isVerifying = false);
@@ -1071,13 +1173,10 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  /// NUEVO: Manejar registro con Google
+  /// Manejar registro con Google
   void _handleGoogleSignIn() async {
     setState(() => isLoading = true);
     try {
-      // TODO: Implementar Google Sign In
-      // final user = await GoogleSignIn().signIn();
-      // final auth = await AutenticacionService.loginWithGoogle(user);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Google Sign In - Próximamente')),
       );
@@ -1088,11 +1187,10 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
-  /// NUEVO: Manejar registro con Facebook
+  /// Manejar registro con Facebook
   void _handleFacebookSignIn() async {
     setState(() => isLoading = true);
     try {
-      // TODO: Implementar Facebook Sign In
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Facebook Sign In - Próximamente')),
       );
@@ -1103,7 +1201,7 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
-  /// NUEVO: Mapear string a enum Role
+  /// Mapear string a enum Role
   Role _mapRole(String tipoUsuarioStr) {
     switch (tipoUsuarioStr) {
       case 'Jugador':
@@ -1114,6 +1212,8 @@ class _RegistroPageState extends State<RegistroPage> {
         return Role.ARBITRO;
       case 'Aficionado':
         return Role.USUARIO;
+      case 'Administrador':
+        return Role.ADMIN;
       default:
         return Role.USUARIO;
     }

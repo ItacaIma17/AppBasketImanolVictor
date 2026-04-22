@@ -1,26 +1,55 @@
-import 'package:tfg_appfede/models/jugador.dart';
-
+// lib/models/equipo/equipo.dart
 class Equipo {
+  final int? id;
   final String nombre;
-  final int victorias;
-  final int derrotas;
-  final double puntosAFavor;
-  final double puntosEnContra;
-  final List <Jugador> jugadores;
+  final String nombreEstadio;
+  final String ciudad;
+  final int anoFundacion;
+  final String? escudoUrl;
+  final int? ligaId;
+  final String? nombreLiga;
+  final int? entrenadorId;
+  final String? nombreEntrenador;
+  final int numeroJugadores;
 
   Equipo({
+    this.id,
     required this.nombre,
-    required this.victorias,
-    required this.derrotas,
-    required this.puntosAFavor,
-    required this.puntosEnContra,
-    required this.jugadores,
+    required this.nombreEstadio,
+    required this.ciudad,
+    required this.anoFundacion,
+    this.escudoUrl,
+    this.ligaId,
+    this.nombreLiga,
+    this.entrenadorId,
+    this.nombreEntrenador,
+    this.numeroJugadores = 0,
   });
 
-  @override
-  bool operator ==(Object other) =>
-      other is Equipo && other.nombre == nombre;
+  factory Equipo.fromJson(Map<String, dynamic> json) {
+    return Equipo(
+      id: json['id'],
+      nombre: json['nombre'] ?? '',
+      nombreEstadio: json['nombreEstadio'] ?? '',
+      ciudad: json['ciudad'] ?? '',
+      anoFundacion: json['añoFundacion'] ?? 0,
+      escudoUrl: json['escudoUrl'],
+      ligaId: json['ligaId'],
+      nombreLiga: json['nombreLiga'],
+      entrenadorId: json['entrenadorId'],
+      nombreEntrenador: json['nombreEntrenador'],
+      numeroJugadores: json['numeroJugadores'] ?? 0,
+    );
+  }
 
-  @override
-  int get hashCode => nombre.hashCode;
+  Map<String, dynamic> toJson() {
+    return {
+      'nombre': nombre,
+      'nombreEstadio': nombreEstadio,
+      'ciudad': ciudad,
+      'añoFundacion': anoFundacion,
+      'escudoUrl': escudoUrl,
+      'ligaId': ligaId,
+    };
+  }
 }

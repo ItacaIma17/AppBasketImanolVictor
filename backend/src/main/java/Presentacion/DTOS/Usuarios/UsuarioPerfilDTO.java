@@ -1,27 +1,38 @@
 package Presentacion.DTOS.Usuarios;
 
+import Dominio.Entity.Roles.Roles;
 import Dominio.Entity.Usuario;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UsuarioPerfilDTO {
     private String email;
     private String username;
     private String nombre;
     private String apellido;
     private int edad;
-    private String rol;
+    private Roles rol;
     private boolean verificado;
 
     public static UsuarioPerfilDTO fromEntity(Usuario usuario) {
-        UsuarioPerfilDTO dto = new UsuarioPerfilDTO();
-        dto.setEmail(usuario.getEmail());
-        dto.setUsername(usuario.getUsername());
-        dto.setNombre(usuario.getNombre());
-        dto.setApellido(usuario.getApellido());
-        dto.setEdad(usuario.getEdad());
-        dto.setRol(usuario.getRole().name());
-        dto.setVerificado(usuario.isVerificado());
-        return dto;
+        if (usuario == null) {
+            return null;
+        }
+
+        return UsuarioPerfilDTO.builder()
+                .email(usuario.getEmail())
+                .username(usuario.getUsername())
+                .nombre(usuario.getNombre())
+                .apellido(usuario.getApellido())
+                .edad(usuario.getEdad())
+                .rol(usuario.getRole())
+                .verificado(usuario.isVerificado())
+                .build();
     }
 }
