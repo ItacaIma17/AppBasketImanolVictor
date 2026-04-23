@@ -4,7 +4,7 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 import '../../models/equipo.dart';
 import '../../services/equipoService.dart';
-import '../Liga/LigaService.dart';
+import '../../services/LigaService.dart';
 
 class CrearEquipoPage extends StatefulWidget {
   const CrearEquipoPage({super.key});

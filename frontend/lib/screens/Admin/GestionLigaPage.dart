@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-import '../Liga/LigaService.dart';
+import '../../services/LigaService.dart';
 
 class GestionLigasPage extends StatefulWidget {
   const GestionLigasPage({super.key});

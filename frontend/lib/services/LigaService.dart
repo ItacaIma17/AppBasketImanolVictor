@@ -2,8 +2,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../../config/api_config.dart';
-import '../../services/autenticacion_service.dart';
+import '../config/api_config.dart';
+import 'autenticacion_service.dart';
 
 
 class LigaService {

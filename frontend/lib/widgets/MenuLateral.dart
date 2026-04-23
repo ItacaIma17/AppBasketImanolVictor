@@ -6,11 +6,9 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 
 
-import '../screens/Admin/GestionEntrenadoresPage.dart';
 import '../screens/Admin/PanelAdminPage.dart';
 import '../screens/InicioApp.dart';
 import '../screens/Perfil.dart';
-import '../screens/equipos/ListadoEquiposPage.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});

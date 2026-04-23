@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
+import 'package:tfg_appfede/models/equipo.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
+import 'package:tfg_appfede/services/equipoService.dart';
 
 
 class ClasificacionPage extends StatefulWidget {
@@ -22,18 +24,37 @@ class _ClasificacionPageState extends State<ClasificacionPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _esFavorita = false;
+  List<Equipo> _equiposBD = [];
+  bool _cargando = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    
-    // Construir el nombre de la categoría
-    final categoriaNombre = '${widget.categoriaEdad} ${widget.categoriaNivel}';
-    
-    // Verificar si ya está en favoritos
-    _esFavorita = FavoritosManager().esCategoriaSfavorita(categoriaNombre);
+
+@override
+void initState() {
+  super.initState();
+  _tabController = TabController(length: 2, vsync: this);
+  
+  // Construir el nombre de la categoría
+  final categoriaNombre = '${widget.categoriaEdad} ${widget.categoriaNivel}';
+  
+  // Verificar si ya está en favoritos
+  _esFavorita = FavoritosManager().esCategoriaSfavorita(categoriaNombre);
+
+  // Cargar equipos desde el backend
+  _cargarEquipos();
+}
+
+void _cargarEquipos() async {
+  try {
+    final equipos = await EquipoService.listarEquipos(); 
+    setState(() {
+      _equiposBD = equipos;
+      _cargando = false;
+    });
+  } catch (e) {
+    print("Error cargando equipos: $e");
+    setState(() => _cargando = false);
   }
+}
 
   @override
   void dispose() {
@@ -41,43 +62,6 @@ class _ClasificacionPageState extends State<ClasificacionPage>
     super.dispose();
   }
 
-  // Datos de ejemplo de clasificación (luego vendrán de la BD)
-  final List<Map<String, dynamic>> _equipos = [
-    {
-      'nombre': 'Basket Zaragoza',
-      'puntos': 45,
-      'victorias': 20,
-      'derrotas': 2,
-      'puntosAFavor': 1850,
-      'puntosEnContra': 1420,
-    },
-    {
-      'nombre': 'CD Huesca',
-      'puntos': 42,
-      'victorias': 18,
-      'derrotas': 4,
-      'puntosAFavor': 1780,
-      'puntosEnContra': 1520,
-    },
-    {
-      'nombre': 'Oliver Basket',
-      'puntos': 40,
-      'victorias': 17,
-      'derrotas': 5,
-      'puntosAFavor': 1690,
-      'puntosEnContra': 1580,
-    },
-    {
-      'nombre': 'Caspe Basket',
-      'puntos': 38,
-      'victorias': 16,
-      'derrotas': 6,
-      'puntosAFavor': 1620,
-      'puntosEnContra': 1610,
-    },
-  ];
-
-  // Datos de ejemplo de partidos por jornadas
   final List<Map<String, dynamic>> _jornadas = [
     {
       'numero': 1,
@@ -257,15 +241,45 @@ class _ClasificacionPageState extends State<ClasificacionPage>
 
   /// Tab de clasificación
   Widget _buildClasificacionTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _equipos.length,
-      itemBuilder: (context, index) {
-        final equipo = _equipos[index];
-        return _buildEquipoCard(equipo, index + 1);
-      },
+  // Mientras carga datos del backend
+  if (_cargando) {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.blanco),
     );
   }
+
+  // Si no hay equipos en la BD
+  if (_equiposBD.isEmpty) {
+    return const Center(
+      child: Text(
+        "No hay equipos registrados",
+        style: TextStyle(
+          color: AppColors.blanco,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Mostrar equipos reales
+  return ListView.builder(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    itemCount: _equiposBD.length,
+    itemBuilder: (context, index) {
+      final equipo = _equiposBD[index];
+
+      // Adaptamos tu card antigua a datos reales
+      return _buildEquipoCard({
+        'nombre': equipo.nombre,
+        'puntos': equipo.puntos ?? 0,
+        'victorias': equipo.victorias ?? 0,
+        'derrotas': equipo.derrotas ?? 0,
+      }, index + 1);
+    },
+  );
+}
+
 
   /// Card de equipo en la clasificación
   Widget _buildEquipoCard(Map<String, dynamic> equipo, int posicion) {
