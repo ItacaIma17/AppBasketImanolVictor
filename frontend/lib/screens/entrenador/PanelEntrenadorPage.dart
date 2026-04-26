@@ -9,10 +9,15 @@ import '../../services/equipoService.dart';
 import '../../services/partidoService.dart';
 import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
+import '../equipos/ConfiguracionPage.dart';
+import 'JugadoresEquipoPage.dart';
 import '../equipos/SolicitarEquipoPage.dart';
 import 'MiEquipoPage.dart';
 import 'PresentarAlineacion.dart';
 import 'SeleccionarPartidoEntrenadorPage.dart';
+import 'ProximosPartidosPage.dart'; // ✅ Añadir import
+import 'EstadisticasEquipoPage.dart'; // ✅ Añadir import
+
 
 class PanelEntrenadorPage extends StatefulWidget {
   const PanelEntrenadorPage({super.key});
@@ -36,8 +41,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   }
 
   Future<void> _cargarDatos() async {
-    if (!mounted) return;
-
     setState(() {
       _isLoading = true;
       _error = null;
@@ -48,38 +51,28 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
       final equipo = EquipoEntrenador.fromJson(equipoData);
 
       if (equipo.tieneEquipo) {
-        // Cargar jugadores y próximos partidos en paralelo con casting correcto
-        final resultados = await Future.wait([
-          EquipoService.getJugadoresEquipo(equipo.equipoId),
-          PartidoService.getProximosPartidosEquipo(equipo.equipoId),
-        ]);
+        final jugadores = await EquipoService.getJugadoresEquipo(equipo.equipoId);
+        final partidos = await PartidoService.getProximosPartidosEquipo(equipo.equipoId);
 
-        if (mounted) {
-          setState(() {
-            _miEquipo = equipo;
-            _jugadores = resultados[0] as List<Jugador>;
-            _proximosPartidos = resultados[1] as List<Partido>;
-            _tieneEquipo = true;
-            _isLoading = false;
-          });
-        }
+        setState(() {
+          _miEquipo = equipo;
+          _jugadores = jugadores;
+          _proximosPartidos = partidos;
+          _tieneEquipo = true;
+          _isLoading = false;
+        });
       } else {
-        if (mounted) {
-          setState(() {
-            _tieneEquipo = false;
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error cargando datos: $e');
-      if (mounted) {
         setState(() {
           _tieneEquipo = false;
           _isLoading = false;
-          _error = null;
         });
       }
+    } catch (e) {
+      print('Error cargando datos: $e');
+      setState(() {
+        _tieneEquipo = false;
+        _isLoading = false;
+      });
     }
   }
 
@@ -89,9 +82,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Panel de Entrenador"),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
         child: SafeArea(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -103,10 +94,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     );
   }
 
-  // ============================================================
-  // SIN EQUIPO ASIGNADO
-  // ============================================================
-
   Widget _buildSinEquipoWidget() {
     return Center(
       child: Padding(
@@ -114,20 +101,11 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.sports_basketball,
-              size: 80,
-              color: Colors.white54,
-            ),
+            const Icon(Icons.sports_basketball, size: 80, color: Colors.white54),
             const SizedBox(height: 24),
             const Text(
               'Aún no tienes un equipo asignado',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -140,9 +118,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const SolicitarEquipoPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const SolicitarEquipoPage()),
                 ).then((_) => _cargarDatos());
               },
               icon: const Icon(Icons.vpn_key),
@@ -157,10 +133,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
       ),
     );
   }
-
-  // ============================================================
-  // CON EQUIPO ASIGNADO
-  // ============================================================
 
   Widget _buildMiEquipoWidget() {
     return RefreshIndicator(
@@ -177,6 +149,8 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
             _buildMenuPrincipal(),
             const SizedBox(height: 16),
             if (_proximosPartidos.isNotEmpty) _buildProximosPartidos(),
+            const SizedBox(height: 16),
+            _buildAccionesRapidas(),
           ],
         ),
       ),
@@ -186,14 +160,9 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   Widget _buildEquipoHeader() {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 4,
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.orange, Colors.orangeAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: const LinearGradient(colors: [Colors.orange, Colors.orangeAccent]),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Padding(
@@ -204,31 +173,17 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
               const SizedBox(height: 12),
               Text(
                 _miEquipo!.nombreEquipo,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
               if (_miEquipo!.nombreLiga != null)
-                Text(
-                  _miEquipo!.nombreLiga!,
-                  style: const TextStyle(color: Colors.white70),
-                ),
+                Text(_miEquipo!.nombreLiga!, style: const TextStyle(color: Colors.white70)),
               if (_miEquipo!.nombreEstadio != null)
-                Text(
-                  _miEquipo!.nombreEstadio!,
-                  style: const TextStyle(color: Colors.white70),
-                ),
+                Text(_miEquipo!.nombreEstadio!, style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
                 child: Text(
                   'Entrenador: ${_miEquipo!.nombreCompletoEntrenador}',
                   style: const TextStyle(color: Colors.white),
@@ -244,42 +199,16 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   Widget _buildEstadisticasRapidas() {
     return Row(
       children: [
-        Expanded(
-          child: _buildEstadisticaCard(
-            icon: Icons.people,
-            label: 'Jugadores',
-            value: '${_jugadores.length}',
-            color: Colors.blue,
-          ),
-        ),
+        Expanded(child: _buildEstadisticaCard(Icons.people, 'Jugadores', '${_jugadores.length}', Colors.blue)),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildEstadisticaCard(
-            icon: Icons.sports_basketball,
-            label: 'Partidos',
-            value: '${_proximosPartidos.length}',
-            color: Colors.green,
-          ),
-        ),
+        Expanded(child: _buildEstadisticaCard(Icons.calendar_today, 'Partidos', '${_proximosPartidos.length}', Colors.green)),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildEstadisticaCard(
-            icon: Icons.assessment,
-            label: 'Victorias',
-            value: '0',
-            color: Colors.orange,
-          ),
-        ),
+        Expanded(child: _buildEstadisticaCard(Icons.emoji_events, 'Victorias', '0', Colors.orange)),
       ],
     );
   }
 
-  Widget _buildEstadisticaCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildEstadisticaCard(IconData icon, String label, String value, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -287,14 +216,8 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
           children: [
             Icon(icon, size: 28, color: color),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
@@ -305,14 +228,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'GESTIÓN DEL EQUIPO',
-          style: TextStyle(
-            color: Colors.white70,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
+        const Text('GESTIÓN DEL EQUIPO', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 12),
         GridView.count(
           shrinkWrap: true,
@@ -322,54 +238,20 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
           mainAxisSpacing: 12,
           childAspectRatio: 1.5,
           children: [
-            _buildMenuCard(
-              title: 'Mi Equipo',
-              icon: Icons.people,
-              color: Colors.blue,
-              onTap: () => _navigateTo(const MiEquipoPage()),
-            ),
-            _buildMenuCard(
-              title: 'Jugadores',
-              icon: Icons.sports_basketball,
-              color: Colors.green,
-              onTap: () => _navigateTo(JugadoresEquipoPage(equipoId: _miEquipo!.equipoId)),
-            ),
-            _buildMenuCard(
-              title: 'Próximos Partidos',
-              icon: Icons.calendar_today,
-              color: Colors.orange,
-              onTap: () => _navigateTo(ProximosPartidosPage(partidos: _proximosPartidos)),
-            ),
-            _buildMenuCard(
-              title: 'Alineación',
-              icon: Icons.line_style,
-              color: Colors.purple,
-              onTap: () => _navigateTo(const SeleccionarPartidoEntrenadorPage()),
-            ),
-            _buildMenuCard(
-              title: 'Estadísticas',
-              icon: Icons.bar_chart,
-              color: Colors.red,
-              onTap: () => _navigateTo(const EstadisticasEquipoPage()),
-            ),
-            _buildMenuCard(
-              title: 'Configuración',
-              icon: Icons.settings,
-              color: Colors.grey,
-              onTap: () => _navigateTo(const ConfiguracionEquipoPage()),
-            ),
+            _buildMenuCard('Mi Equipo', Icons.people, Colors.blue, () => _navigateTo(const MiEquipoPage())),
+            _buildMenuCard('Jugadores', Icons.sports_basketball, Colors.green, () => _navigateTo(JugadoresEquipoPage(equipoId: _miEquipo!.equipoId))),
+            // ✅ CORREGIDO: No pasar partidos como parámetro
+            _buildMenuCard('Próximos Partidos', Icons.calendar_today, Colors.orange, () => _navigateTo(const ProximosPartidosPage())),
+            _buildMenuCard('Presentar Alineación', Icons.line_style, Colors.purple, () => _navigateTo(const SeleccionarPartidoEntrenadorPage())),
+            _buildMenuCard('Estadísticas', Icons.bar_chart, Colors.red, () => _navigateTo(const EstadisticasEquipoPage())),
+            _buildMenuCard('Configuración', Icons.settings, Colors.grey, () => _navigateTo(const ConfiguracionPage())),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildMenuCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildMenuCard(String title, IconData icon, Color color, VoidCallback onTap) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -383,11 +265,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
             children: [
               Icon(icon, size: 32, color: color),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                textAlign: TextAlign.center,
-              ),
+              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -399,14 +277,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'PRÓXIMOS PARTIDOS',
-          style: TextStyle(
-            color: Colors.white70,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
+        const Text('PRÓXIMOS PARTIDOS', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 12),
         ..._proximosPartidos.take(3).map((partido) => _buildPartidoCard(partido)),
       ],
@@ -422,92 +293,41 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
       child: ListTile(
         leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
         title: Text('vs $rival'),
-        subtitle: Text(
-          '${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year} - ${partido.ubicacion ?? 'Sin ubicación'}',
-        ),
+        subtitle: Text('${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year} - ${partido.ubicacion ?? "Sin ubicación"}'),
         trailing: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PresentarAlineacionPage(
-                  partido: partido,
-                  esLocal: esLocal,
-                ),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.naranja,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
+          onPressed: () => _navigateTo(PresentarAlineacionPage(partido: partido, esLocal: esLocal)),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: const Text('Alineación'),
         ),
       ),
     );
   }
 
+  Widget _buildAccionesRapidas() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _navigateTo(const SeleccionarPartidoEntrenadorPage()),
+            icon: const Icon(Icons.line_style),
+            label: const Text('Nueva Alineación'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _navigateTo(const MiEquipoPage()),
+            icon: const Icon(Icons.people),
+            label: const Text('Ver Equipo'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _navigateTo(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
-}
-
-// Pantallas placeholder
-class JugadoresEquipoPage extends StatelessWidget {
-  final int equipoId;
-  const JugadoresEquipoPage({super.key, required this.equipoId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Jugadores del Equipo')),
-      body: Center(child: Text('Lista de jugadores del equipo $equipoId')),
-    );
-  }
-}
-
-class ProximosPartidosPage extends StatelessWidget {
-  final List<Partido> partidos;
-  const ProximosPartidosPage({super.key, required this.partidos});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Próximos Partidos')),
-      body: ListView.builder(
-        itemCount: partidos.length,
-        itemBuilder: (context, index) {
-          final partido = partidos[index];
-          return ListTile(
-            title: Text('${partido.equipoLocal} vs ${partido.equipoVisitante}'),
-            subtitle: Text('${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year}'),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class EstadisticasEquipoPage extends StatelessWidget {
-  const EstadisticasEquipoPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Estadísticas')),
-      body: const Center(child: Text('Estadísticas del equipo - Próximamente')),
-    );
-  }
-}
-
-class ConfiguracionEquipoPage extends StatelessWidget {
-  const ConfiguracionEquipoPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Configuración')),
-      body: const Center(child: Text('Configuración del equipo - Próximamente')),
-    );
   }
 }

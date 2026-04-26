@@ -78,12 +78,6 @@ public class    PartidoController {
         return ResponseEntity.ok(partidos);
     }
 
-    @GetMapping("/equipo/{equipoId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PartidoResponseDTO>> getPartidosByEquipo(@PathVariable Long equipoId) {
-        log.info("📋 Listando partidos del equipo: {}", equipoId);
-        return ResponseEntity.ok(partidoService.getPartidosByEquipo(equipoId));
-    }
 
     @PutMapping("/{partidoId}/resultado")
     @PreAuthorize("hasAnyRole('ADMIN', 'ARBITRO')")
@@ -109,5 +103,15 @@ public class    PartidoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+
+    // Presentacion/Controllers/PartidoController.java
+
+    @GetMapping("/equipo/{equipoId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<PartidoResponseDTO>> getPartidosByEquipo(@PathVariable Long equipoId) {
+        log.info("📋 Listando partidos del equipo: {}", equipoId);
+        return ResponseEntity.ok(partidoService.getPartidosByEquipo(equipoId));
     }
 }

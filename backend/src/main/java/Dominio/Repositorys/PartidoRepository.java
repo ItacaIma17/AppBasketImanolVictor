@@ -21,10 +21,6 @@ public interface PartidoRepository extends JpaRepository<Partido, Long> {
 
     List<Partido> findByEquipoVisitanteId(Long equipoId);
 
-    // ✅ Búsqueda por equipo (local o visitante)
-    @Query("SELECT p FROM Partido p WHERE p.equipoLocal.id = :equipoId OR p.equipoVisitante.id = :equipoId")
-    List<Partido> findByEquipoLocalIdOrEquipoVisitanteId(@Param("equipoId") Long equipoId);
-
     // ✅ Búsqueda por árbitro
     List<Partido> findByArbitroId(Long arbitroId);
 
@@ -55,4 +51,17 @@ public interface PartidoRepository extends JpaRepository<Partido, Long> {
             "AND p.fecha > :fecha AND p.estado != 'FINALIZADO' ORDER BY p.fecha ASC LIMIT 5")
     List<Partido> findProximosPartidosByEquipo(@Param("equipoId") Long equipoId,
                                                @Param("fecha") LocalDateTime fecha);
+
+
+    // Dominio/Repositorys/PartidoRepository.java
+
+    @Query("SELECT p FROM Partido p WHERE p.equipoLocal.id = :equipoId OR p.equipoVisitante.id = :equipoId")
+    List<Partido> findByEquipoLocalIdOrEquipoVisitanteId(@Param("equipoId") Long equipoId);
+
+    // En PartidoRepository.java - Añadir este método
+    @Query("SELECT p FROM Partido p WHERE " +
+            "(p.equipoLocal.id = :equipoLocalId AND p.equipoVisitante.id = :equipoVisitanteId) OR " +
+            "(p.equipoLocal.id = :equipoVisitanteId AND p.equipoVisitante.id = :equipoLocalId)")
+    Partido findPartidoEntreEquipos(@Param("equipoLocalId") Long equipoLocalId,
+                                              @Param("equipoVisitanteId") Long equipoVisitanteId);
 }

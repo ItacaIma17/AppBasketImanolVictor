@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 import '../../models/equipo.dart';
+import '../../models/liga.dart';
 import '../../services/equipoService.dart';
 import '../Liga/LigaService.dart';
 
@@ -57,7 +58,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
 
       setState(() {
         _equipos = equipos;
-        _ligas = ligas;
+        _ligas = ligas.cast<Map<String, dynamic>>();
         _isLoading = false;
       });
     } catch (e) {
@@ -121,7 +122,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Editar Equipo'),
-        content: _buildFormulario(),
+        content: _buildFormularioEquipo(),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -155,6 +156,114 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
             child: const Text('Guardar'),
           ),
         ],
+      ),
+    );
+  }
+
+  // lib/screens/Admin/GestionEquiposPage.dart - Añadir método de edición
+
+  // lib/screens/Admin/GestionEquiposPage.dart
+
+  void _mostrarDialogoEditar(Equipo equipo) {
+    final nombreCtrl = TextEditingController(text: equipo.nombre);
+    final ciudadCtrl = TextEditingController(text: equipo.ciudad);
+    final estadioCtrl = TextEditingController(text: equipo.nombreEstadio);
+    final anoCtrl = TextEditingController(text: equipo.anoFundacion?.toString() ?? '');
+    final escudoCtrl = TextEditingController(text: equipo.escudoUrl ?? '');
+    int? ligaIdSeleccionada = equipo.ligaId;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text('Editar Equipo: ${equipo.nombre}'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nombreCtrl,
+                    decoration: const InputDecoration(labelText: 'Nombre del equipo'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: ciudadCtrl,
+                    decoration: const InputDecoration(labelText: 'Ciudad'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: estadioCtrl,
+                    decoration: const InputDecoration(labelText: 'Estadio'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: anoCtrl,
+                    decoration: const InputDecoration(labelText: 'Año de fundación'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<List<Liga>>(
+                    future: LigaService.listarLigas(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+                      final ligas = snapshot.data!;
+                      return DropdownButtonFormField<int>(
+                        decoration: const InputDecoration(labelText: 'Liga'),
+                        value: ligaIdSeleccionada,
+                        items: ligas.map((liga) {
+                          return DropdownMenuItem(
+                            value: liga.id,
+                            child: Text(liga.nombreLiga),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            ligaIdSeleccionada = value;
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final equipoData = {
+                    'nombre': nombreCtrl.text.trim(),
+                    'ciudad': ciudadCtrl.text.trim(),
+                    'nombreEstadio': estadioCtrl.text.trim(),
+                    'anoFundacion': int.tryParse(anoCtrl.text.trim()),
+                    'escudoUrl': escudoCtrl.text.trim().isEmpty ? null : escudoCtrl.text.trim(),
+                    'ligaId': ligaIdSeleccionada,
+                  };
+
+                  try {
+                    await EquipoService.actualizarEquipo(equipo.id!, equipoData);
+                    Navigator.pop(context);
+                    await _cargarDatos();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✅ Equipo actualizado correctamente'), backgroundColor: Colors.green),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -199,7 +308,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Crear Nuevo Equipo'),
-        content: SingleChildScrollView(child: _buildFormulario()),
+        content: SingleChildScrollView(child: _buildFormularioEquipo()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -215,55 +324,44 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
     );
   }
 
-  Widget _buildFormulario() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextFormField(
-            controller: _nombreController,
-            decoration: const InputDecoration(labelText: 'Nombre del equipo'),
-            validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _estadioController,
-            decoration: const InputDecoration(labelText: 'Estadio'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _ciudadController,
-            decoration: const InputDecoration(labelText: 'Ciudad'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _anoController,
-            decoration: const InputDecoration(labelText: 'Año de fundación'),
-            keyboardType: TextInputType.number,
-            validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
-          ),
-          // En la sección del formulario, corrige el Dropdown así:
+  // lib/screens/Admin/GestionEquiposPage.dart
 
-          DropdownButtonFormField<int>(
-            value: _ligaIdSeleccionada,
-            decoration: const InputDecoration(labelText: 'Liga'),
-            items: _ligas.map<DropdownMenuItem<int>>((liga) {  // ← Especificar el tipo genérico
-              return DropdownMenuItem<int>(
-                value: liga['id'] as int,  // ← Asegurar tipo int
-                child: Text(liga['nombreLiga']),
-              );
-            }).toList(),
-            onChanged: (value) => _ligaIdSeleccionada = value,
-            validator: (v) => v == null ? 'Selecciona una liga' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _escudoUrlController,
-            decoration: const InputDecoration(labelText: 'URL del escudo (opcional)'),
-          ),
-        ],
-      ),
+  Widget _buildFormularioEquipo() {
+    return FutureBuilder<List<Liga>>(
+      future: LigaService.listarLigas(),  // ✅ Ahora devuelve List<Liga>
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final ligas = snapshot.data!;
+
+        return Column(
+          children: [
+            TextFormField(
+              controller: _nombreController,
+              decoration: const InputDecoration(labelText: 'Nombre del equipo'),
+            ),
+            const SizedBox(height: 12),
+            // ... otros campos
+            DropdownButtonFormField<int>(
+              decoration: const InputDecoration(labelText: 'Liga'),
+              value: _ligaIdSeleccionada,
+              items: ligas.map((liga) {
+                return DropdownMenuItem(
+                  value: liga.id,
+                  child: Text(liga.nombreLiga),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _ligaIdSeleccionada = value;
+                });
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -329,65 +427,38 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
     );
   }
 
+  // En el método _buildEquipoCard
+
   Widget _buildEquipoCard(Equipo equipo) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.naranja.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppColors.naranja.withOpacity(0.2),
+          child: const Icon(Icons.sports_basketball, color: AppColors.naranja),
+        ),
+        title: Text(equipo.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Estadio: ${equipo.nombreEstadio}'),
+            Text('Ciudad: ${equipo.ciudad}'),
+            Text('Liga: ${equipo.nombreLiga ?? "Sin liga"}'),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.blue),
+              onPressed: () => _mostrarDialogoEditar(equipo),
             ),
-            child: Center(
-              child: equipo.escudoUrl != null
-                  ? Image.network(equipo.escudoUrl!, height: 80)
-                  : Icon(Icons.sports_basketball, size: 60, color: AppColors.naranja),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _eliminarEquipo(equipo),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  equipo.nombre,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '🏟️ ${equipo.nombreEstadio}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Text(
-                  '📍 ${equipo.ciudad}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _actualizarEquipo(equipo),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _eliminarEquipo(equipo),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

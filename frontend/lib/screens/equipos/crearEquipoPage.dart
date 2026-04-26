@@ -45,7 +45,7 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
     try {
       final ligas = await LigaService.listarLigas();
       setState(() {
-        _ligas = ligas;
+        _ligas = ligas.cast<Map<String, dynamic>>();
       });
     } catch (e) {
       print('Error cargando ligas: $e');

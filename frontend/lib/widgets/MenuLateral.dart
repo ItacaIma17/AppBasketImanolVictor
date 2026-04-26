@@ -2,11 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/role.dart';
+import 'package:tfg_appfede/screens/Admin/ConfiguracionPage.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
-import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 import '../screens/Admin/GestionEntrenadoresPage.dart';
 import '../screens/Admin/PanelAdminPage.dart';
 import '../screens/Entrenador/MiEquipoPage.dart';
+import '../screens/Entrenador/PanelEntrenadorPage.dart' hide ProximosPartidosPage, EstadisticasEquipoPage;  // ✅ Ocultar el conflictivo
+import '../screens/Entrenador/ProximosPartidosPage.dart';
+import '../screens/Entrenador/EstadisticasEquipoPage.dart';
 import '../screens/InicioApp.dart';
 import '../screens/Partidos/SeleccionarPartidoPage.dart';
 import '../screens/Perfil.dart';
@@ -15,8 +18,6 @@ import '../screens/arbitros/SeleccionarPartidoActaPage.dart';
 import '../screens/entrenador/ListadoEquipoPage.dart';
 import '../screens/entrenador/SeleccionarPartidoEntrenadorPage.dart';
 import '../screens/entrenador/misPartidosEntrenadorPage.dart';
-import '../screens/entrenador/proximosParitidosEntrenadorPage.dart';
-import '../screens/equipos/ListadoEquiposPage.dart';
 import '../screens/equipos/SolicitarEquipoPage.dart';
 
 class MenuLateral extends StatelessWidget {
@@ -40,7 +41,7 @@ class MenuLateral extends StatelessWidget {
             _buildDrawerHeader(usuario?.nombreCompleto ?? 'Usuario'),
             const Divider(color: AppColors.blancoOpacidad70),
 
-            // Opciones comunes
+            // Opciones comunes para todos
             _buildDrawerItem(
               icon: Icons.home,
               title: 'Inicio',
@@ -53,13 +54,17 @@ class MenuLateral extends StatelessWidget {
             ),
             const Divider(color: AppColors.blancoOpacidad70),
 
+            // ============================================
             // OPCIONES PARA ENTRENADOR
+            // ============================================
             if (rol == Role.ENTRENADOR && entrenador != null) ...[
               _buildDrawerItem(
                 icon: Icons.sports_basketball,
                 title: 'Mi Equipo',
                 onTap: () => _navigateTo(context, const MiEquipoPage()),
               ),
+
+              // Mostrar "Solicitar Equipo" solo si NO tiene equipo
               if (!entrenador.tieneEquipo) ...[
                 _buildDrawerItem(
                   icon: Icons.vpn_key,
@@ -67,16 +72,23 @@ class MenuLateral extends StatelessWidget {
                   onTap: () => _navigateTo(context, const SolicitarEquipoPage()),
                 ),
               ],
+
+              // Mostrar opciones solo si TIENE equipo
               if (entrenador.tieneEquipo && entrenador.equipoId != null) ...[
-                _buildDrawerItem(
-                  icon: Icons.people,
-                  title: 'Mis Jugadores',
-                  onTap: () => _navigateTo(context, JugadoresEquipoPage(equipoId: entrenador.equipoId!)),
-                ),
                 _buildDrawerItem(
                   icon: Icons.calendar_today,
                   title: 'Próximos Partidos',
-                  onTap: () => _navigateTo(context, const ProximosPartidosEntrenadorPage()),
+                  onTap: () => _navigateTo(context, const ProximosPartidosPage()),  // ✅ Ahora funciona
+                ),
+                _buildDrawerItem(
+                  icon: Icons.bar_chart,
+                  title: 'Estadísticas Equipo',
+                  onTap: () => _navigateTo(context, EstadisticasEquipoPage()),  // ✅ Sin const
+                ),
+                _buildDrawerItem(
+                  icon: Icons.calendar_today,
+                  title: 'Mis Partidos',
+                  onTap: () => _navigateTo(context, const MisPartidosEntrenadorPage()),
                 ),
                 _buildDrawerItem(
                   icon: Icons.line_style,
@@ -84,15 +96,17 @@ class MenuLateral extends StatelessWidget {
                   onTap: () => _navigateTo(context, const SeleccionarPartidoEntrenadorPage()),
                 ),
                 _buildDrawerItem(
-                  icon: Icons.bar_chart,
-                  title: 'Estadísticas',
-                  onTap: () => _navigateTo(context, const EstadisticasEquipoPage()),
+                  icon: Icons.settings,
+                  title: 'Configuración',
+                  onTap: () => _navigateTo(context, ConfiguracionPage()),
                 ),
               ],
               const Divider(color: AppColors.blancoOpacidad70),
             ],
 
+            // ============================================
             // OPCIONES PARA ÁRBITRO
+            // ============================================
             if (rol == Role.ARBITRO) ...[
               _buildDrawerItem(
                 icon: Icons.assignment,
@@ -112,7 +126,9 @@ class MenuLateral extends StatelessWidget {
               const Divider(color: AppColors.blancoOpacidad70),
             ],
 
+            // ============================================
             // OPCIONES PARA ADMIN
+            // ============================================
             if (rol == Role.ADMIN) ...[
               _buildDrawerItem(
                 icon: Icons.admin_panel_settings,
@@ -132,7 +148,9 @@ class MenuLateral extends StatelessWidget {
               const Divider(color: AppColors.blancoOpacidad70),
             ],
 
+            // ============================================
             // OPCIONES PARA JUGADOR
+            // ============================================
             if (rol == Role.JUGADOR && jugador != null) ...[
               _buildDrawerItem(
                 icon: Icons.sports_basketball,
@@ -190,7 +208,12 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem({required IconData icon, required String title, required VoidCallback onTap, Color color = AppColors.blanco}) {
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color color = AppColors.blanco,
+  }) {
     return ListTile(
       leading: Icon(icon, color: color),
       title: Text(title, style: TextStyle(color: color)),

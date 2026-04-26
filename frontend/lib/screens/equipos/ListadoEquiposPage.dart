@@ -240,7 +240,7 @@ class _ListaEquiposPageState extends State<ListaEquiposPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetalleEquipoPage(equipo: equipo),
+        builder: (context) => EquipoDetallePage(equipo: equipo),
       ),
     ).then((_) => _cargarEquipos());
   }

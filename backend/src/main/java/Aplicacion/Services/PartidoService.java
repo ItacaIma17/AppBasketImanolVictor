@@ -142,19 +142,7 @@ public class PartidoService {
     // PARTIDOS POR EQUIPO
     // ============================================================
 
-    @Transactional(readOnly = true)
-    public List<PartidoResponseDTO> getPartidosByEquipo(Long equipoId) {
-        log.info("📋 Buscando partidos para equipo ID: {}", equipoId);
 
-        if (!equipoRepository.existsById(equipoId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Equipo no encontrado con ID: " + equipoId);
-        }
-
-        return partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId).stream()
-                .map(PartidoResponseDTO::fromEntity)
-                .collect(Collectors.toList());
-    }
 
     @Transactional(readOnly = true)
     public List<PartidoResponseDTO> getPartidosByEquipoAndEstado(Long equipoId, String estado) {
@@ -426,5 +414,21 @@ public class PartidoService {
         log.info("✅ Estado del partido {} cambiado a {}", saved.getId(), nuevoEstado);
 
         return PartidoResponseDTO.fromEntity(saved);
+    }
+
+    // Aplicacion/Services/PartidoService.java
+
+    @Transactional(readOnly = true)
+    public List<PartidoResponseDTO> getPartidosByEquipo(Long equipoId) {
+        log.info("📋 Buscando partidos para equipo ID: {}", equipoId);
+
+        if (!equipoRepository.existsById(equipoId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Equipo no encontrado con ID: " + equipoId);
+        }
+
+        return partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId).stream()
+                .map(PartidoResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 }

@@ -93,6 +93,27 @@ class PartidoService {
     }
   }
 
+  // lib/services/partido_service.dart
+
+  static Future<List<Partido>> getPartidosByEquipo(int equipoId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/partidos/equipo/$equipoId'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Partido.fromJson(e)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('❌ Error obteniendo partidos del equipo: $e');
+      return [];
+    }
+  }
+
   static Future<List<Partido>> getPartidosEntrenador() async {
     try {
       final response = await http.get(

@@ -293,6 +293,10 @@ public class EquipoService {
     // ACTUALIZAR EQUIPO
     // ============================================================
 
+    // Aplicacion/Services/EquipoService.java
+
+    // Aplicacion/Services/EquipoService.java
+
     @Transactional
     public EquipoResponse actualizarEquipo(Long id, EquipoRequest dto) {
         log.info("✏️ Actualizando equipo con ID: {}", id);
@@ -301,39 +305,55 @@ public class EquipoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Equipo no encontrado con ID: " + id));
 
+        // Actualizar nombre
         if (dto.getNombre() != null && !dto.getNombre().equals(equipo.getNombre())) {
             if (equipoRepository.findByNombre(dto.getNombre()).isPresent()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         "Ya existe un equipo con el nombre: " + dto.getNombre());
             }
             equipo.setNombre(dto.getNombre());
+            log.info("   Nombre actualizado a: {}", dto.getNombre());
         }
 
+        // Actualizar ciudad
         if (dto.getCiudad() != null) {
             equipo.setCiudad(dto.getCiudad());
+            log.info("   Ciudad actualizada a: {}", dto.getCiudad());
         }
 
+        // Actualizar estadio
         if (dto.getNombreEstadio() != null) {
             equipo.setNombreEstadio(dto.getNombreEstadio());
+            log.info("   Estadio actualizado a: {}", dto.getNombreEstadio());
         }
 
+        // Actualizar año de fundación
         if (dto.getAnoFundacion() != null) {
             equipo.setAnoFundacion(dto.getAnoFundacion());
+            log.info("   Año fundación actualizado a: {}", dto.getAnoFundacion());
         }
 
+        // Actualizar escudo
         if (dto.getEscudoUrl() != null) {
             equipo.setEscudoUrl(dto.getEscudoUrl());
+            log.info("   Escudo actualizado");
         }
 
+        // ✅ ACTUALIZAR LIGA (importante)
         if (dto.getLigaId() != null) {
             Liga liga = ligaRepository.findById(dto.getLigaId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Liga no encontrada con ID: " + dto.getLigaId()));
             equipo.setLiga(liga);
+            log.info("   Liga actualizada a: {} (ID: {})", liga.getNombreLiga(), liga.getId());
+        } else {
+            log.warn("   No se recibió ligaId, la liga se mantiene como: {}",
+                    equipo.getLiga() != null ? equipo.getLiga().getNombreLiga() : "null");
         }
 
         Equipo saved = equipoRepository.save(equipo);
         log.info("✅ Equipo actualizado: {}", saved.getNombre());
+        log.info("   Liga final: {}", saved.getLiga() != null ? saved.getLiga().getNombreLiga() : "ninguna");
 
         return EquipoResponse.fromEntity(saved);
     }

@@ -1,7 +1,7 @@
 // lib/screens/Admin/GestionLigasPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
-
+import '../../models/liga.dart';
 import '../../services/autenticacion_service.dart';
 import '../Liga/LigaService.dart';
 
@@ -13,7 +13,7 @@ class GestionLigasPage extends StatefulWidget {
 }
 
 class _GestionLigasPageState extends State<GestionLigasPage> {
-  List<Map<String, dynamic>> _ligas = [];
+  List<Liga> _ligas = [];  // ✅ Cambiado a List<Liga>
   bool _isLoading = true;
   String? _error;
 
@@ -21,8 +21,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _temporadaController = TextEditingController();
-  final _paisController = TextEditingController();
-
+  final _paisController = TextEditingController();  // ✅ Añadido
 
   @override
   void initState() {
@@ -35,6 +34,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _temporadaController.dispose();
+    _paisController.dispose();
     super.dispose();
   }
 
@@ -57,10 +57,6 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
       });
     }
   }
-
-  // lib/screens/Admin/GestionLigasPage.dart
-
-  // lib/screens/Admin/GestionLigasPage.dart (parte del método crear)
 
   Future<void> _crearLiga() async {
     if (!_formKey.currentState!.validate()) return;
@@ -93,12 +89,12 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     }
   }
 
-  Future<void> _eliminarLiga(Map<String, dynamic> liga) async {
+  Future<void> _eliminarLiga(Liga liga) async {  // ✅ Cambiado a tipo Liga
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar eliminación'),
-        content: Text('¿Eliminar la liga "${liga['nombreLiga']}"?'),
+        content: Text('¿Eliminar la liga "${liga.nombreLiga}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
@@ -108,7 +104,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
 
     if (confirmar == true) {
       try {
-        await LigaService.eliminarLiga(liga['id']);
+        await LigaService.eliminarLiga(liga.id!);
         await _cargarLigas();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +135,12 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                controller: _paisController,  // ✅ Campo para país
+                decoration: const InputDecoration(labelText: 'País'),
+                validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
                 controller: _descripcionController,
                 decoration: const InputDecoration(labelText: 'Descripción'),
                 maxLines: 3,
@@ -164,6 +166,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     _nombreController.clear();
     _descripcionController.clear();
     _temporadaController.clear();
+    _paisController.clear();
   }
 
   void _mostrarError(String mensaje) {
@@ -206,14 +209,15 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.naranja.withOpacity(0.2),
-                      child: Text(liga['nombreLiga'][0], style: const TextStyle(color: AppColors.naranja, fontWeight: FontWeight.bold)),
+                      child: Text(liga.nombreLiga[0], style: const TextStyle(color: AppColors.naranja, fontWeight: FontWeight.bold)),
                     ),
-                    title: Text(liga['nombreLiga'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(liga.nombreLiga, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (liga['descripcion'] != null) Text(liga['descripcion']),
-                        Text('📅 ${liga['temporada'] ?? 'Temporada no especificada'}', style: const TextStyle(fontSize: 12)),
+                        if (liga.pais != null) Text('País: ${liga.pais}'),
+                        Text('📅 ${liga.temporada ?? 'Temporada no especificada'}', style: const TextStyle(fontSize: 12)),
+                        Text('🏆 Equipos: ${liga.numeroEquiposRegistrados}', style: const TextStyle(fontSize: 12)),
                       ],
                     ),
                     trailing: IconButton(

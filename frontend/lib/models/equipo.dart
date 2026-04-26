@@ -17,9 +17,12 @@ class Equipo {
   final bool solicitudPendiente;
   final int? numeroJugadores;
   final List<Jugador>? jugadores;
-  final double puntos;
-  final int victorias;
-  final int derrotas;
+
+  // Estadísticas de clasificación
+  final int? puntos;
+  final int? partidosJugados;
+  final int? partidosGanados;
+  final int? partidosPerdidos;
 
   Equipo({
     this.id,
@@ -37,9 +40,10 @@ class Equipo {
     this.solicitudPendiente = false,
     this.numeroJugadores,
     this.jugadores,
-    this.puntos = 0,
-    this.victorias = 0,
-    this.derrotas = 0,
+    this.puntos,
+    this.partidosJugados,
+    this.partidosGanados,
+    this.partidosPerdidos,
   });
 
   factory Equipo.fromJson(Map<String, dynamic> json) {
@@ -58,29 +62,13 @@ class Equipo {
       codigoSolicitud: json['codigoSolicitud'],
       solicitudPendiente: json['solicitudPendiente'] ?? false,
       numeroJugadores: json['numeroJugadores'],
-      puntos: json['puntos'] ?? 0,
-      victorias: json['victorias'] ?? 0,
-      derrotas: json['derrotas'] ?? 0,
       jugadores: json['jugadores'] != null
-          ? (json['jugadores'] as List)
-          .map((j) => Jugador.fromJson(j))
-          .toList()
+          ? (json['jugadores'] as List).map((j) => Jugador.fromJson(j)).toList()
           : [],
+      puntos: json['puntos'],
+      partidosJugados: json['partidosJugados'],
+      partidosGanados: json['partidosGanados'],
+      partidosPerdidos: json['partidosPerdidos'],
     );
-  }
-
-
-  Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'nombreEstadio': nombreEstadio,
-      'ciudad': ciudad,
-      'añoFundacion': anoFundacion,
-      'escudoUrl': escudoUrl,
-      'ligaId': ligaId,
-      'puntos': puntos,
-      'victorias': victorias,
-      'derrotas': derrotas,
-    };
   }
 }

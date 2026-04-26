@@ -218,13 +218,23 @@ class EquipoService {
   // ============================================================
 
   // Actualizar equipo (solo admin)
+  // lib/services/equipoService.dart
+
+  // lib/services/equipoService.dart
+
   static Future<Equipo> actualizarEquipo(int id, Map<String, dynamic> equipoData) async {
     try {
+      print('✏️ Actualizando equipo ID: $id');
+      print('📝 Datos enviados: $equipoData');
+
       final response = await http.put(
         Uri.parse('$baseUrl/equipos/$id'),
         headers: _headers,
         body: json.encode(equipoData),
       ).timeout(const Duration(seconds: 30));
+
+      print('📡 Status code: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         return Equipo.fromJson(json.decode(response.body));

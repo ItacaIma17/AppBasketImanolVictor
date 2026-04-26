@@ -123,12 +123,17 @@ public class EquipoController {
     // ACTUALIZAR EQUIPO
     // ============================================================
 
+    // Presentacion/Controllers/EquipoController.java
+
+    // Presentacion/Controllers/EquipoController.java
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipoResponse> actualizarEquipo(
             @PathVariable Long id,
             @Valid @RequestBody EquipoRequest dto) {
-        log.info("✏️ Actualizando equipo ID: {}", id);
+        log.info("✏️ Actualizando equipo ID: {} - Nuevo nombre: {}", id, dto.getNombre());
+        log.info("   Liga ID recibida: {}", dto.getLigaId());
         return ResponseEntity.ok(equipoService.actualizarEquipo(id, dto));
     }
 
