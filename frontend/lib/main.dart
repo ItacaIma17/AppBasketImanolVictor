@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/screens/Inicio/InicioSesion.dart';
+import 'package:tfg_appfede/services/logicaLiga.dart';
+import 'package:tfg_appfede/services/logicaEquipo.dart';
+import 'package:tfg_appfede/services/logicaJugador.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Cargar datos de la BD al iniciar
+  try {
+    await LogicaLiga().cargarLigas();
+    await LogicaEquipo().cargarEquipos();
+    await LogicaJugador().cargarJugadores();
+    print("✓ Datos cargados correctamente");
+  } catch (e) {
+    print("✗ Error cargando datos: $e");
+  }
+  
   runApp(const MyApp());
 }
 

@@ -3,6 +3,8 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
 import 'package:tfg_appfede/screens/Jugadores.dart';
+import 'package:tfg_appfede/services/logicaEquipo.dart';
+import 'package:tfg_appfede/services/logicaLiga.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaCategoriaFav.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaEquipoFav.dart';
@@ -109,23 +111,21 @@ class _FavoritosPageState extends State<FavoritosPage>
       itemBuilder: (context, index) {
         final nombre = ligas[index];
 
-        // Aquí decides cómo codificas la categoría. De momento, asumimos "Edad Nivel"
-        final partes = nombre.split(' ');
-        final categoriaEdad = partes.isNotEmpty ? partes.first : '';
-        final categoriaNivel =
-            partes.length > 1 ? partes.sublist(1).join(' ') : '';
+        // Buscar la liga en la BD usando LogicaLiga
+        final ligaEnBD = LogicaLiga().buscarPorNombre(nombre);
+        final ligaId = ligaEnBD?['id'] ?? 0;
 
         return TarjetaCategoria(
           nombre: nombre,
-          categoriaEdad: categoriaEdad,
-          categoriaNivel: categoriaNivel,
+          categoriaEdad: nombre,
+          categoriaNivel: '',
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ClasificacionPage(
-                  categoriaEdad: categoriaEdad,
-                  categoriaNivel: categoriaNivel,
+                  categoria: nombre,
+                  ligaId: ligaId,
                 ),
               ),
             );
@@ -148,10 +148,15 @@ class _FavoritosPageState extends State<FavoritosPage>
       itemCount: equipos.length,
       itemBuilder: (context, index) {
         final nombre = equipos[index];
+        
+        // Obtener el equipoId desde el nombre usando LogicaEquipo
+        final logicaEquipo = LogicaEquipo();
+        final equipo = logicaEquipo.buscarPorNombre(nombre);
+        final equipoId = equipo?.id ?? 0;
 
         return TarjetaEquipo(
           nombre: nombre,
-          posicion: '-',          // De momento sin datos reales
+          posicion: '-',
           proximoPartido: '-',
           rival: '-',
           esLocal: false,
@@ -159,7 +164,7 @@ class _FavoritosPageState extends State<FavoritosPage>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => EquipoPage(nombreEquipo: nombre),
+                builder: (context) => EquipoPage(equipoId: equipoId),
               ),
             );
           },

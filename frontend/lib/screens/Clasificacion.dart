@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
 import 'package:tfg_appfede/models/equipo.dart';
+import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
-import 'package:tfg_appfede/services/equipoService.dart';
+import 'package:tfg_appfede/services/logicaEquipo.dart';
+import 'package:tfg_appfede/services/PartidoService.dart';
 
 
 class ClasificacionPage extends StatefulWidget {
-  final String categoriaEdad;
-  final String categoriaNivel;
+  final String categoria;
+  final int ligaId;
 
   const ClasificacionPage({
     super.key,
-    required this.categoriaEdad,
-    required this.categoriaNivel,
+    required this.categoria,
+    required this.ligaId,
   });
 
   @override
@@ -25,6 +27,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
   late TabController _tabController;
   bool _esFavorita = false;
   List<Equipo> _equiposBD = [];
+  List<Partido> _partidos = [];
   bool _cargando = true;
 
 
@@ -34,7 +37,7 @@ void initState() {
   _tabController = TabController(length: 2, vsync: this);
   
   // Construir el nombre de la categoría
-  final categoriaNombre = '${widget.categoriaEdad} ${widget.categoriaNivel}';
+  final categoriaNombre = '${widget.categoria}';
   
   // Verificar si ya está en favoritos
   _esFavorita = FavoritosManager().esCategoriaSfavorita(categoriaNombre);
@@ -45,16 +48,60 @@ void initState() {
 
 void _cargarEquipos() async {
   try {
-    final equipos = await EquipoService.listarEquipos(); 
-    setState(() {
-      _equiposBD = equipos;
-      _cargando = false;
-    });
-  } catch (e) {
-    print("Error cargando equipos: $e");
-    setState(() => _cargando = false);
+    final logicaEquipo = LogicaEquipo();
+    await logicaEquipo.cargarEquipos();
+
+    // Equipos filtrados por liga
+    final equipos = logicaEquipo.obtenerEquiposPorLiga(widget.ligaId);
+    print('Equipos cargados para liga ${widget.ligaId}: ${equipos.length}');
+
+    // Cargar partidos de cada equipo
+    final List<Partido> todosPartidos = [];
+
+    for (final equipo in equipos) {
+      print('Cargando partidos para equipo: ${equipo.nombre} (ID: ${equipo.id})');
+
+      final local = await PartidoService.obtenerPartidosPorEquipoLocal(equipo.id ?? 0);
+      final visitante = await PartidoService.obtenerPartidosPorEquipoVisitante(equipo.id ?? 0);
+
+      print('Partidos como local: ${local.length}');
+      print('Partidos como visitante: ${visitante.length}');
+
+      todosPartidos.addAll(local);
+      todosPartidos.addAll(visitante);
+    }
+      // Eliminar duplicados usando el id (String)
+      final Map<String, Partido> partidosUnicos = {};
+      for (final partido in todosPartidos) {
+        if (!partidosUnicos.containsKey(partido.id)) {
+          partidosUnicos[partido.id] = partido;
+        }
+      }
+
+      // Convertir a lista y ordenar por fecha
+      final partidos = partidosUnicos.values.toList();
+
+      partidos.sort((a, b) {
+        final fechaA = DateTime.tryParse(a.fecha) ?? DateTime.now();
+        final fechaB = DateTime.tryParse(b.fecha) ?? DateTime.now();
+        return fechaA.compareTo(fechaB);
+      });
+
+      print('Total partidos únicos cargados: ${partidos.length}');
+      for (final p in partidos) {
+        print('${p.nombreLocal} vs ${p.nombreVisitante} (${p.fecha} ${p.hora})');
+      }
+
+      setState(() {
+        _equiposBD = equipos;
+        _partidos = partidos;
+        _cargando = false;
+      });
+    } catch (e) {
+      print("Error cargando equipos: $e");
+      setState(() => _cargando = false);
+    }
   }
-}
 
   @override
   void dispose() {
@@ -62,42 +109,18 @@ void _cargarEquipos() async {
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _jornadas = [
-    {
-      'numero': 1,
-      'partidos': [
-        {
-          'equipoLocal': 'Basket Zaragoza',
-          'equipoVisitante': 'CD Huesca',
-          'resultadoLocal': 85,
-          'resultadoVisitante': 72,
-        },
-        {
-          'equipoLocal': 'Oliver Basket',
-          'equipoVisitante': 'Caspe Basket',
-          'resultadoLocal': 78,
-          'resultadoVisitante': 80,
-        },
-      ],
-    },
-    {
-      'numero': 2,
-      'partidos': [
-        {
-          'equipoLocal': 'CD Huesca',
-          'equipoVisitante': 'Oliver Basket',
-          'resultadoLocal': 90,
-          'resultadoVisitante': 88,
-        },
-        {
-          'equipoLocal': 'Caspe Basket',
-          'equipoVisitante': 'Basket Zaragoza',
-          'resultadoLocal': 65,
-          'resultadoVisitante': 92,
-        },
-      ],
-    },
-  ];
+  /// Agrupar partidos por fecha (jornada)
+  Map<String, List<Partido>> _agruparPartidosPorFecha() {
+    final Map<String, List<Partido>> agrupados = {};
+    for (final partido in _partidos) {
+      final fecha = partido.fecha ?? 'Sin fecha';
+      if (!agrupados.containsKey(fecha)) {
+        agrupados[fecha] = [];
+      }
+      agrupados[fecha]!.add(partido);
+    }
+    return agrupados;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,18 +183,11 @@ void _cargarEquipos() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${widget.categoriaEdad}',
+                  '${widget.categoria}',
                   style: const TextStyle(
                     color: AppColors.blanco,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  widget.categoriaNivel,
-                  style: const TextStyle(
-                    color: AppColors.blancoOpacidad70,
-                    fontSize: 14,
                   ),
                 ),
               ],
@@ -187,7 +203,7 @@ void _cargarEquipos() async {
             ),
             onPressed: () {
               // Construir el nombre de la categoría
-              final categoriaNombre = '${widget.categoriaEdad} ${widget.categoriaNivel}';
+              final categoriaNombre = '${widget.categoria}';
               
               // Alternar favorito
               setState(() {
@@ -269,27 +285,22 @@ void _cargarEquipos() async {
     itemBuilder: (context, index) {
       final equipo = _equiposBD[index];
 
-      // Adaptamos tu card antigua a datos reales
-      return _buildEquipoCard({
-        'nombre': equipo.nombre,
-        'puntos': equipo.puntos ?? 0,
-        'victorias': equipo.victorias ?? 0,
-        'derrotas': equipo.derrotas ?? 0,
-      }, index + 1);
+      // Pasar el equipo completo a _buildEquipoCard
+      return _buildEquipoCard(equipo, index + 1);
     },
   );
 }
 
 
   /// Card de equipo en la clasificación
-  Widget _buildEquipoCard(Map<String, dynamic> equipo, int posicion) {
+  Widget _buildEquipoCard(Equipo equipo, int posicion) {
     return GestureDetector(
       onTap: () {
-        // Navegar a la pantalla del equipo
+        // Navegar a la pantalla del equipo pasando el equipoId
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EquipoPage(nombreEquipo: equipo['nombre']),
+            builder: (context) => EquipoPage(equipoId: equipo.id ?? 0),
           ),
         );
       },
@@ -337,7 +348,7 @@ void _cargarEquipos() async {
             // Nombre del equipo
             Expanded(
               child: Text(
-                equipo['nombre'],
+                equipo.nombre,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -350,7 +361,7 @@ void _cargarEquipos() async {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${equipo['puntos']} pts',
+                  '${equipo.puntosFavor?.toStringAsFixed(0)} pts favor - ${equipo.puntosContra?.toStringAsFixed(0)} pts contra',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -358,7 +369,7 @@ void _cargarEquipos() async {
                   ),
                 ),
                 Text(
-                  '${equipo['victorias']}V - ${equipo['derrotas']}D',
+                  '${equipo.victorias}V - ${equipo.derrotas}D',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.grey,
@@ -372,20 +383,50 @@ void _cargarEquipos() async {
     );
   }
 
-  /// Tab de resultados por jornadas
+  /// Tab de resultados por fechas
   Widget _buildResultadosTab() {
+    if (_cargando) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.blanco),
+      );
+    }
+
+    if (_partidos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.sports_basketball, size: 80, color: AppColors.blancoOpacidad70),
+            SizedBox(height: 16),
+            Text(
+              'No hay partidos registrados',
+              style: TextStyle(
+                color: AppColors.blanco,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final agrupados = _agruparPartidosPorFecha();
+    final fechas = agrupados.keys.toList();
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _jornadas.length,
+      itemCount: fechas.length,
       itemBuilder: (context, index) {
-        final jornada = _jornadas[index];
-        return _buildJornadaCard(jornada);
+        final fecha = fechas[index];
+        final partidosDeFecha = agrupados[fecha] ?? [];
+        return _buildJornadaCard(fecha, partidosDeFecha);
       },
     );
   }
 
-  /// Card de una jornada con sus partidos
-  Widget _buildJornadaCard(Map<String, dynamic> jornada) {
+  /// Card de una jornada/fecha con sus partidos
+  Widget _buildJornadaCard(String fecha, List<Partido> partidos) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -416,7 +457,7 @@ void _cargarEquipos() async {
                 const Icon(Icons.calendar_today, color: AppColors.blanco, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Jornada ${jornada['numero']}',
+                  'Fecha: $fecha',
                   style: const TextStyle(
                     color: AppColors.blanco,
                     fontSize: 16,
@@ -432,10 +473,10 @@ void _cargarEquipos() async {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(12),
-            itemCount: (jornada['partidos'] as List).length,
+            itemCount: partidos.length,
             separatorBuilder: (context, index) => const Divider(height: 20),
             itemBuilder: (context, index) {
-              final partido = (jornada['partidos'] as List)[index];
+              final partido = partidos[index];
               return _buildPartidoRow(partido);
             },
           ),
@@ -443,55 +484,93 @@ void _cargarEquipos() async {
       ),
     );
   }
+  Widget _buildPartidoRow(Partido partido) {
+    final bool esPendiente = partido.estado == 'PROGRAMADO';
 
-  /// Fila de un partido
-  Widget _buildPartidoRow(Map<String, dynamic> partido) {
-    return Row(
-      children: [
-        // Equipo local
-        Expanded(
-          child: Text(
-            partido['equipoLocal'],
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+    final String resultado = esPendiente
+        ? 'Por jugar'
+        : '${partido.puntosLocal} - ${partido.puntosVisitante}';
+
+    final bool esResultadoDisponible = !esPendiente;
+
+    final String nombreLocal = partido.nombreLocal;
+    final String nombreVisitante = partido.nombreVisitante;
+    final String hora = partido.hora;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              nombreLocal,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.negro,
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
 
-        // Resultado
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.grisClaro,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '${partido['resultadoLocal']} - ${partido['resultadoVisitante']}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: esResultadoDisponible
+                  ? AppColors.gradienteNaranjaAmarillo.colors.first.withOpacity(0.2)
+                  : AppColors.grisClaro,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: esResultadoDisponible
+                    ? AppColors.naranja
+                    : Colors.grey.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              resultado,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: esResultadoDisponible ? AppColors.naranja : Colors.grey,
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
 
-        // Equipo visitante
-        Expanded(
-          child: Text(
-            partido['equipoVisitante'],
-            textAlign: TextAlign.left,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              nombreVisitante,
+              textAlign: TextAlign.left,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.negro,
+              ),
             ),
           ),
-        ),
-      ],
+
+          if (hora.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                hora,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

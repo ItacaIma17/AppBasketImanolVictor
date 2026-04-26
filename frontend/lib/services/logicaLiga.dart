@@ -1,4 +1,4 @@
-import 'package:tfg_appfede/models/liga.dart';
+import 'package:tfg_appfede/services/LigaService.dart';
 
 
 class LogicaLiga {
@@ -6,56 +6,37 @@ class LogicaLiga {
   factory LogicaLiga() => _instance;
   LogicaLiga._internal();
 
-  /// Categorías de edad disponibles
-  final List<String> categoriasEdad = [
-    'Seleccionar categoría...',
-    'Prebenjamín',
-    'Benjamín',
-    'Alevín',
-    'Pre-Infantil',
-    'Infantil',
-    'Cadete',
-    'Junior',
-    'Senior',
-  ];
+  List<Map<String, dynamic>> _ligas = [];
 
-  /// Categorías de nivel disponibles
-  final List<String> categoriasNivel = [
-    'Seleccionar nivel...',
-    'Categoría A',
-    'Categoría B',
-    'Categoría C',
-  ];
-
-  /// Ligas reales (mock)
-  final List<Liga> _ligas = [
-    Liga(categoria: "Senior", nivel: "Categoría A"),
-    Liga(categoria: "Infantil", nivel: "Categoría B"),
-    Liga(categoria: "Cadete", nivel: "Categoría C"),
-    Liga(categoria: "Junior", nivel: "Categoría A"),
-  ];
+  /// Cargar todas las ligas de la base de datos
+  Future<void> cargarLigas() async {
+    try {
+      _ligas = await LigaService.listarLigas();
+    } catch (e) {
+      print("Error cargando ligas: $e");
+      _ligas = [];
+    }
+  }
 
   /// Obtener todas las ligas
-  List<Liga> get ligas => List.unmodifiable(_ligas);
+  List<Map<String, dynamic>> get ligas => List.unmodifiable(_ligas);
 
-  /// Buscar liga por nombre completo
-  Liga? buscarPorNombre(String nombre) {
+  /// Buscar liga por nombre
+  Map<String, dynamic>? buscarPorNombre(String nombre) {
     try {
       return _ligas.firstWhere(
-        (l) => l.nombre.toLowerCase() == nombre.toLowerCase(),
+        (l) => (l['nombreLiga'] ?? '').toString().toLowerCase() == nombre.toLowerCase(),
       );
     } catch (_) {
       return null;
     }
   }
 
-  /// Buscar liga por categoría y nivel
-  Liga? buscarPorCategoriaNivel(String categoria, String nivel) {
+  /// Buscar liga por ID
+  Map<String, dynamic>? buscarPorId(int id) {
     try {
       return _ligas.firstWhere(
-        (l) =>
-            l.categoria.toLowerCase() == categoria.toLowerCase() &&
-            l.nivel.toLowerCase() == nivel.toLowerCase(),
+        (l) => l['id'] == id,
       );
     } catch (_) {
       return null;

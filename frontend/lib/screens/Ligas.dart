@@ -102,9 +102,30 @@ Widget build(BuildContext context) {
                           ...categoriasLimpias,
                         ],
                         onChanged: (value) {
-                          setState(() {
-                            _categoriaSeleccionada = value!;
-                          });
+                          if (value != null && value != 'Seleccionar categoría...') {
+                            // Buscar la liga seleccionada para obtener su ID
+                            final ligaSeleccionada = _ligasBD.firstWhere(
+                              (l) => (l['nombreLiga'] ?? '').toString().trim() == value,
+                              orElse: () => {},
+                            );
+                            
+                            if (ligaSeleccionada.isNotEmpty) {
+                              // Navegar a la pantalla de clasificación con el ID de la liga
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ClasificacionPage(
+                                    categoria: value,
+                                    ligaId: ligaSeleccionada['id'] ?? 0,
+                                  ),
+                                ),
+                              );
+                            }
+                          } else {
+                            setState(() {
+                              _categoriaSeleccionada = value!;
+                            });
+                          }
                         },
                       ),
 
@@ -203,8 +224,8 @@ Widget build(BuildContext context) {
           context,
           MaterialPageRoute(
             builder: (context) => ClasificacionPage(
-              categoriaEdad: liga['categoria'], //
-              categoriaNivel: '', // ya no se usa
+              categoria: liga['categoria'],
+              ligaId: liga['ligaId'] ?? 0,
             ),
           ),
         );

@@ -1,4 +1,3 @@
-// Dominio/Entity/Equipo.java
 package Dominio.Entity;
 
 import jakarta.persistence.*;
@@ -37,6 +36,11 @@ public class Equipo {
 
     @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Jugador> jugadores = new ArrayList<>();
+
+    private int victorias = 0;
+    private int derrotas = 0;
+    private int puntosFavor = 0;
+    private int puntosContra = 0;
 
     // Constructor vacío
     public Equipo() {}

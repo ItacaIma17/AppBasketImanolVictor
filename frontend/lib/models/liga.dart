@@ -1,13 +1,11 @@
 class Liga {
   final String categoria;
-  final String nivel;
 
   Liga({
     required this.categoria,
-    required this.nivel,
   });
 
-  String get nombre => "$categoria $nivel";
+  String get nombre => "$categoria";
 
   @override
   bool operator ==(Object other) =>

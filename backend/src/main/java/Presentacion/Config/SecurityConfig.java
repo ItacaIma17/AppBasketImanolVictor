@@ -73,6 +73,7 @@ public class SecurityConfig {
                                 "/api/jugadores/listar",
                                 "/api/entrenadores/listar",
                                 "/api/arbitros/listar",
+                                "/api/partidos/**",
                                 "/api/usuarios/actualizar"
                         ).permitAll()
                         .anyRequest().authenticated()

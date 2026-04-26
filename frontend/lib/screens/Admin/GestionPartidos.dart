@@ -1,9 +1,10 @@
 // lib/screens/Admin/GestionPartidosPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/models/partido.dart';
 
 import '../../services/equipoService.dart';
-import '../../services/partidoService.dart';
+import '../../services/PartidoService.dart';
 
 
 class GestionPartidosPage extends StatefulWidget {
@@ -14,7 +15,7 @@ class GestionPartidosPage extends StatefulWidget {
 }
 
 class _GestionPartidosPageState extends State<GestionPartidosPage> {
-  List<Map<String, dynamic>> _partidos = [];
+  List<Partido> _partidos = [];
   List<Map<String, dynamic>> _equipos = [];
   bool _isLoading = true;
   String? _error;
@@ -59,9 +60,9 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      await PartidoService.crearPartido({
-        'equipoLocalId': _equipoLocalId,
-        'equipoVisitanteId': _equipoVisitanteId,
+      final nuevoPartido = await PartidoService.crearPartido({
+        'id_local': _equipoLocalId,
+        'id_visitante': _equipoVisitanteId,
         'fecha': DateTime(
           _fechaPartido.year,
           _fechaPartido.month,
@@ -69,26 +70,30 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
           _horaPartido.hour,
           _horaPartido.minute,
         ).toIso8601String(),
-        'ubicacion': _ubicacion,
+        'pabellon': _ubicacion,
       });
 
-      _limpiarFormulario();
-      await _cargarDatos();
+      if (nuevoPartido != null) {
+        _limpiarFormulario();
+        await _cargarDatos();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Partido creado exitosamente'), backgroundColor: Colors.green),
-        );
-        Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Partido creado exitosamente'), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        _mostrarError('Error al crear el partido');
       }
     } catch (e) {
       _mostrarError('Error al crear partido: $e');
     }
   }
 
-  Future<void> _actualizarResultado(Map<String, dynamic> partido) async {
-    final resultadoLocalCtrl = TextEditingController(text: partido['resultadoLocal']?.toString());
-    final resultadoVisitanteCtrl = TextEditingController(text: partido['resultadoVisitante']?.toString());
+  Future<void> _actualizarResultado(Partido partido) async {
+    final resultadoLocalCtrl = TextEditingController(text: partido.puntosLocal.toString());
+    final resultadoVisitanteCtrl = TextEditingController(text: partido.puntosVisitante.toString());
 
     showDialog(
       context: context,
@@ -111,15 +116,24 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
             onPressed: () async {
-              await PartidoService.actualizarResultado(partido['id'], {
-                'resultadoLocal': int.tryParse(resultadoLocalCtrl.text),
-                'resultadoVisitante': int.tryParse(resultadoVisitanteCtrl.text),
-              });
-              Navigator.pop(context);
-              await _cargarDatos();
+              final success = await PartidoService.actualizarResultado(
+                int.tryParse(partido.id) ?? 0,
+                {
+                  'puntosLocal': int.tryParse(resultadoLocalCtrl.text),
+                  'puntosVisitante': int.tryParse(resultadoVisitanteCtrl.text),
+                },
+              );
+
+              if (success) {
+                Navigator.pop(context);
+                await _cargarDatos();
+              }
             },
             child: const Text('Guardar'),
           ),
@@ -128,12 +142,12 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
     );
   }
 
-  Future<void> _eliminarPartido(Map<String, dynamic> partido) async {
+  Future<void> _eliminarPartido(Partido partido) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar eliminación'),
-        content: Text('¿Eliminar el partido?'),
+        content: const Text('¿Eliminar el partido?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
@@ -142,16 +156,18 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
     );
 
     if (confirmar == true) {
-      try {
-        await PartidoService.eliminarPartido(partido['id']);
+      final success = await PartidoService.eliminarPartido(
+        int.tryParse(partido.id) ?? 0,
+      );
+      if (success) {
         await _cargarDatos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('✅ Partido eliminado'), backgroundColor: Colors.green),
           );
         }
-      } catch (e) {
-        _mostrarError('Error al eliminar: $e');
+      } else {
+        _mostrarError('Error al eliminar el partido');
       }
     }
   }
@@ -279,14 +295,13 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
-                    title: Text('${partido['equipoLocal']} vs ${partido['equipoVisitante']}'),
+                    title: Text('${partido.nombreLocal} vs ${partido.nombreVisitante}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('📅 ${partido['fecha']}'),
-                        Text('📍 ${partido['ubicacion'] ?? 'Sin ubicación'}'),
-                        if (partido['resultadoLocal'] != null)
-                          Text('🏆 Resultado: ${partido['resultadoLocal']} - ${partido['resultadoVisitante']}'),
+                        Text('📅 ${partido.fecha ?? '-'}'),
+                        Text('📍 ${partido.pabellon ?? 'Sin ubicación'}'),
+                        Text('🏀 Resultado: ${partido.puntosLocal} - ${partido.puntosVisitante}'),
                       ],
                     ),
                     trailing: Row(

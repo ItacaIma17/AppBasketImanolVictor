@@ -1,59 +1,58 @@
 import 'package:tfg_appfede/models/jugador.dart';
+import 'package:tfg_appfede/services/jugadorService.dart';
 
 class LogicaJugador {
   static final LogicaJugador _instance = LogicaJugador._internal();
   factory LogicaJugador() => _instance;
   LogicaJugador._internal();
 
-  /// Lista de jugadores de ejemplo
-  final List<Jugador> _jugadores = [
-    Jugador(
-      nombre: "Pablo",
-      apellido: "Pérez",
-      posicion: "Escolta",
-      altura: 1.92,
-      peso: 85,
-      promedioPuntos: 18.6,
-      promedioRebotes: 6.2,
-      promedioAsistencias: 3.8,
-      promedioRobos: 1.5,
-    ),
-    Jugador(
-      nombre: "Adrián",
-      apellido: "Fernández",
-      posicion: "Ala-Pívot",
-      altura: 1.98,
-      peso: 92,
-      promedioPuntos: 15.4,
-      promedioRebotes: 8.1,
-      promedioAsistencias: 2.5,
-      promedioRobos: 1.1,
-    ),
-    Jugador(
-      nombre: "Miguel",
-      apellido: "Torres",
-      posicion: "Base",
-      altura: 1.85,
-      peso: 78,
-      promedioPuntos: 12.7,
-      promedioRebotes: 4.3,
-      promedioAsistencias: 5.9,
-      promedioRobos: 0.9,
-    ),
-  ];
+  List<Jugador> _jugadores = [];
+  bool _cargado = false;
+
+  /// Cargar todos los jugadores de la base de datos
+  Future<void> cargarJugadores() async {
+    if (_cargado) return; // Si ya están cargados, no cargar de nuevo
+    
+    try {
+      _jugadores = await JugadorService.listarJugadores();
+      _cargado = true;
+    } catch (e) {
+      print("Error cargando jugadores: $e");
+      _jugadores = [];
+    }
+  }
 
   /// Obtener todos los jugadores
   List<Jugador> get jugadores => List.unmodifiable(_jugadores);
 
-  /// Buscar jugador por nombre completo
-Jugador? buscarPorNombre(String nombreCompleto) {
-  try {
-    return _jugadores.firstWhere(
-      (j) => j.nombreCompleto.toLowerCase() == nombreCompleto.toLowerCase(),
-    );
-  } catch (_) {
-    return null;
+  /// Obtener jugadores por ID de equipo
+  List<Jugador> obtenerJugadoresPorEquipo(int equipoId) {
+    return _jugadores.where((jugador) {
+      // Convertir id_equipo (String) a int para comparar con equipoId (int)
+      final idEquipoInt = int.tryParse(jugador.id_equipo) ?? -1;
+      return idEquipoInt == equipoId;
+    }).toList();
   }
-}
 
+  /// Buscar jugador por nombre completo
+  Jugador? buscarPorNombre(String nombreCompleto) {
+    try {
+      return _jugadores.firstWhere(
+        (j) => "${j.nombre} ${j.apellido}".toLowerCase() == nombreCompleto.toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Buscar jugador por ID
+  Jugador? buscarPorId(int id) {
+    try {
+      return _jugadores.firstWhere(
+        (j) => j.id_equipo == id,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
