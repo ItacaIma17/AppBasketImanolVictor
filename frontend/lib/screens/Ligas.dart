@@ -5,6 +5,7 @@ import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 import 'Clasificacion.dart';
+import 'Liga/LigaService.dart';
 
 class LigasPage extends StatefulWidget {
   const LigasPage({super.key});
@@ -14,40 +15,48 @@ class LigasPage extends StatefulWidget {
 }
 
 class _LigasPageState extends State<LigasPage> {
-  final List<String> _categoriasEdad = [
-    'Seleccionar categoría...',
-    'Prebenjamín',
-    'Benjamín',
-    'Alevín',
-    'Pre-Infantil',
-    'Infantil',
-    'Cadete',
-    'Junior',
-    'Senior',
-  ];
+  List<Map<String, dynamic>> _ligasBD = [];
+  bool _cargando = true;
+  String _categoriaSeleccionada = 'Seleccionar categoría...';
 
-  final List<String> _categoriasNivel = [
-    'Seleccionar nivel...',
-    'Categoría A',
-    'Categoría B',
-    'Categoría C',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _cargarLigas();
+  }
 
-  String _categoriaEdadSeleccionada = 'Seleccionar categoría...';
-  String _categoriaNivelSeleccionada = 'Seleccionar nivel...';
+  void _cargarLigas() async {
+    try {
+      final ligas = await LigaService.listarLigas();
+      setState(() {
+        _ligasBD = ligas;
+        _cargando = false;
+      });
+    } catch (e) {
+      print("Error cargando ligas: $e");
+      setState(() => _cargando = false);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    // De momento, simulamos que cada categoría favorita tiene nombre "Edad Nivel"
+    final categoriasLimpias = _ligasBD
+        .map((l) => (l['nombreLiga'] ?? '').toString().trim())
+        .where((nombre) => nombre.isNotEmpty)
+        .toSet() // elimina duplicados
+        .toList()
+      ..sort();
+
+
+    if (!categoriasLimpias.contains(_categoriaSeleccionada)) {
+      _categoriaSeleccionada = 'Seleccionar categoría...';
+    }
+
+    // FAVORITOS
     final ligasFavoritas = FavoritosManager()
         .categoriasFavoritas
-        .map((nombre) => {
-              'nombre': nombre,
-              'categoriaEdad': nombre.split(' ').first,
-              'categoriaNivel': nombre.split(' ').length > 1
-                  ? nombre.split(' ').sublist(1).join(' ')
-                  : '',
-            })
+        .map((nombre) => {'categoria': nombre})
         .toList();
 
     return Scaffold(
@@ -75,50 +84,36 @@ class _LigasPageState extends State<LigasPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 20),
-                      _buildDropdown(
-                        label: 'Categoría por edad',
-                        value: _categoriaEdadSeleccionada,
-                        items: _categoriasEdad,
-                        onChanged: (value) {
-                          setState(() {
-                            _categoriaEdadSeleccionada = value!;
-                            _categoriaNivelSeleccionada =
-                                'Seleccionar nivel...';
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      if (_categoriaEdadSeleccionada !=
-                          'Seleccionar categoría...')
+
+                      // DROPDOWN
+                      if (_cargando)
+                        const Center(
+                          child: CircularProgressIndicator(color: AppColors.blanco),
+                        )
+                      else
                         _buildDropdown(
-                          label: 'Categoría por nivel',
-                          value: _categoriaNivelSeleccionada,
-                          items: _categoriasNivel,
+                          label: 'Categoría',
+                          value: _categoriaSeleccionada,
+                          items: [
+                            'Seleccionar categoría...',
+                            ...categoriasLimpias,
+                          ],
                           onChanged: (value) {
                             setState(() {
-                              _categoriaNivelSeleccionada = value!;
+                              _categoriaSeleccionada = value!;
                             });
-
-                            if (value != 'Seleccionar nivel...') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ClasificacionPage(
-                                    categoriaEdad: _categoriaEdadSeleccionada,
-                                    categoriaNivel: _categoriaNivelSeleccionada,
-                                  ),
-                                ),
-                              );
-                            }
                           },
                         ),
+
                       const SizedBox(height: 30),
+
+                      // FAVORITOS
                       if (ligasFavoritas.isNotEmpty) ...[
                         Row(
                           children: const [
-                            Icon(Icons.star,
-                                color: AppColors.amarilloAragon),
+                            Icon(Icons.star, color: AppColors.amarilloAragon),
                             SizedBox(width: 8),
                             Text(
                               'Mis ligas favoritas',
@@ -144,6 +139,7 @@ class _LigasPageState extends State<LigasPage> {
       ),
     );
   }
+
 
   Widget _buildDropdown({
     required String label,
@@ -206,8 +202,8 @@ class _LigasPageState extends State<LigasPage> {
           context,
           MaterialPageRoute(
             builder: (context) => ClasificacionPage(
-              categoriaEdad: liga['categoriaEdad'],
-              categoriaNivel: liga['categoriaNivel'],
+              categoriaEdad: liga['categoria'], //
+              categoriaNivel: '', // ya no se usa
             ),
           ),
         );
@@ -236,19 +232,11 @@ class _LigasPageState extends State<LigasPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    liga['nombre'],
+                    liga['categoria'],
                     style: const TextStyle(
                       color: AppColors.blanco,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${liga['categoriaEdad']} - ${liga['categoriaNivel']}',
-                    style: const TextStyle(
-                      color: AppColors.blanco,
-                      fontSize: 13,
                     ),
                   ),
                 ],

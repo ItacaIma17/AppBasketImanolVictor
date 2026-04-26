@@ -25,7 +25,7 @@ public class ActaController {
     }
 
     @GetMapping("/partido/{partidoId}")
-    public ResponseEntity<ActaResponseDTO> obtenerActa(@PathVariable Long partidoId) {
-        return ResponseEntity.ok(actaService.obtenerActa(partidoId));
+    public ResponseEntity<ActaResponseDTO> obtenerActa(@PathVariable Long partidoId, @PathVariable String username) {
+        return ResponseEntity.ok(actaService.obtenerActa(partidoId,username));
     }
 }

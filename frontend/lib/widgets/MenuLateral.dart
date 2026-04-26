@@ -9,8 +9,14 @@ import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 import '../screens/Admin/GestionEntrenadoresPage.dart';
 import '../screens/Admin/PanelAdminPage.dart';
 import '../screens/InicioApp.dart';
+import '../screens/Partidos/SeleccionarPartidoPage.dart';
 import '../screens/Perfil.dart';
+import '../screens/arbitros/MisPartidosPage.dart';
+import '../screens/arbitros/SeleccionarPartidoActaPage.dart';
+import '../screens/entrenador/SeleccionarPartidoEntrenadorPage.dart';
+import '../screens/entrenador/misPartidosEntrenadorPage.dart';
 import '../screens/equipos/ListadoEquiposPage.dart';
+import '../screens/equipos/SolicitarEquipoPage.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
@@ -46,7 +52,9 @@ class MenuLateral extends StatelessWidget {
 
             const Divider(color: AppColors.blancoOpacidad70),
 
-            // Opciones según el rol
+            // ============================================
+            // OPCIONES PARA ENTRENADOR
+            // ============================================
             if (rol == Role.ENTRENADOR) ...[
               _buildDrawerItem(
                 icon: Icons.sports_basketball,
@@ -54,17 +62,28 @@ class MenuLateral extends StatelessWidget {
                 onTap: () => _navigateTo(context, const PanelEntrenadorPage()),
               ),
               _buildDrawerItem(
+                icon: Icons.vpn_key,
+                title: 'Solicitar Equipo',
+                onTap: () => _navigateTo(context, const SolicitarEquipoPage()),
+              ),
+              _buildDrawerItem(
+                icon: Icons.calendar_today,
+                title: 'Mis Partidos',
+                onTap: () => _navigateTo(context, const MisPartidosEntrenadorPage()),
+              ),
+              _buildDrawerItem(
+                icon: Icons.line_style,
+                title: 'Presentar Alineación',
+                onTap: () {
+                  // Navegar a selección de partido para presentar alineación
+                  _navigateTo(context, const SeleccionarPartidoEntrenadorPage());
+                },
+              ),
+              _buildDrawerItem(
                 icon: Icons.people,
                 title: 'Gestionar Jugadores',
                 onTap: () {
                   // TODO: Navegar a gestión de jugadores
-                },
-              ),
-              _buildDrawerItem(
-                icon: Icons.calendar_today,
-                title: 'Calendario',
-                onTap: () {
-                  // TODO: Navegar a calendario
                 },
               ),
               _buildDrawerItem(
@@ -77,22 +96,70 @@ class MenuLateral extends StatelessWidget {
               const Divider(color: AppColors.blancoOpacidad70),
             ],
 
-            // En la sección de ADMIN, añade:
+            // ============================================
+            // OPCIONES PARA ÁRBITRO
+            // ============================================
+            if (rol == Role.ARBITRO) ...[
+              _buildDrawerItem(
+                icon: Icons.assignment,
+                title: 'Mis Partidos',
+                onTap: () => _navigateTo(context, const MisPartidosPage()),
+              ),
+              _buildDrawerItem(
+                icon: Icons.people,
+                title: 'Ver Alineaciones',
+                onTap: () => _navigateTo(context, const SeleccionarPartidoPage()),
+              ),
+              _buildDrawerItem(
+                icon: Icons.description,
+                title: 'Crear Acta',
+                onTap: () => _navigateTo(context, const SeleccionarPartidoActaPage()),
+              ),
+              const Divider(color: AppColors.blancoOpacidad70),
+            ],
+
+            // ============================================
+            // OPCIONES PARA ADMIN
+            // ============================================
             if (rol == Role.ADMIN) ...[
               _buildDrawerItem(
                 icon: Icons.admin_panel_settings,
                 title: 'Panel de Control',
                 onTap: () => _navigateTo(context, const PanelAdminPage()),
               ),
+              _buildDrawerItem(
+                icon: Icons.calendar_today,
+                title: 'Gestionar Partidos',
+                onTap: () {
+                  // TODO: Navegar a gestión de partidos
+                },
+              ),
+              _buildDrawerItem(
+                icon: Icons.people,
+                title: 'Gestionar Árbitros',
+                onTap: () {
+                  // TODO: Navegar a gestión de árbitros
+                },
+              ),
               const Divider(color: AppColors.blancoOpacidad70),
             ],
 
+            // ============================================
+            // OPCIONES PARA JUGADOR
+            // ============================================
             if (rol == Role.JUGADOR) ...[
               _buildDrawerItem(
                 icon: Icons.sports_basketball,
                 title: 'Mi Equipo',
                 onTap: () {
                   // TODO: Navegar a información del equipo
+                },
+              ),
+              _buildDrawerItem(
+                icon: Icons.calendar_today,
+                title: 'Mis Partidos',
+                onTap: () {
+                  // TODO: Navegar a calendario de partidos
                 },
               ),
               _buildDrawerItem(

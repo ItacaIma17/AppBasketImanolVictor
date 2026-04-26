@@ -1,9 +1,8 @@
-// lib/models/entrenador/entrenador.dart
+// lib/models/entrenador.dart
 class Entrenador {
   final int? id;
   final String nombre;
   final String? apellido;
-  final String nombreCompleto;
   final String username;
   final String email;
   final int edad;
@@ -11,23 +10,18 @@ class Entrenador {
   final String? telefono;
   final String? experiencia;
   final bool verificado;
-  final int? equipoId;
-  final String? nombreEquipo;
 
   Entrenador({
     this.id,
     required this.nombre,
     this.apellido,
-    required this.nombreCompleto,
     required this.username,
     required this.email,
     required this.edad,
     required this.codigoEntrenador,
     this.telefono,
     this.experiencia,
-    required this.verificado,
-    this.equipoId,
-    this.nombreEquipo,
+    this.verificado = false,
   });
 
   factory Entrenador.fromJson(Map<String, dynamic> json) {
@@ -35,7 +29,6 @@ class Entrenador {
       id: json['id'],
       nombre: json['nombre'] ?? '',
       apellido: json['apellido'],
-      nombreCompleto: json['nombreCompleto'] ?? '',
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       edad: json['edad'] ?? 0,
@@ -43,8 +36,21 @@ class Entrenador {
       telefono: json['telefono'],
       experiencia: json['experiencia'],
       verificado: json['verificado'] ?? false,
-      equipoId: json['equipoId'],
-      nombreEquipo: json['nombreEquipo'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'apellido': apellido,
+      'username': username,
+      'email': email,
+      'edad': edad,
+      'codigoEntrenador': codigoEntrenador,
+      'telefono': telefono,
+      'experiencia': experiencia,
+      'verificado': verificado,
+    };
   }
 }

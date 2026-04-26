@@ -101,10 +101,13 @@ class AutenticacionService {
   // LOGIN CORREGIDO
   // ============================================================
 
+  // lib/services/autenticacion_service.dart
+
   static Future<bool> login(String username, String password) async {
     try {
-      print('📡 Intentando login para: $username');
-      print('📡 URL: $baseUrl/usuarios/login');
+      print('========================================');
+      print('🔐 Intentando login para: $username');
+      print('🌐 URL: $baseUrl/usuarios/login');
 
       final request = LoginRequest(username: username, password: password);
       final response = await http.post(
@@ -122,8 +125,8 @@ class AutenticacionService {
           return false;
         }
 
-
         final data = json.decode(response.body);
+        print('📦 Datos del login: $data');
 
         // Validar que los datos necesarios existen
         if (data['token'] == null || data['refreshToken'] == null) {
@@ -136,6 +139,10 @@ class AutenticacionService {
 
         // Obtener username de la respuesta o decodificar del token
         String usernameActual = data['username'] ?? username;
+        String? roleFromResponse = data['role'];
+
+        print('👤 Username de respuesta: $usernameActual');
+        print('🎭 Role de respuesta: $roleFromResponse');
 
         // Cargar usuario actual
         final cargado = await cargarUsuarioActual(usernameActual);
@@ -143,9 +150,13 @@ class AutenticacionService {
         if (cargado != null) {
           await _guardarSesion();
           print('✅ Login exitoso para: ${_usuarioActual?.username}');
+          print('🎭 Rol del usuario: ${_usuarioActual?.role}');
+          print('👑 Es administrador: ${_usuarioActual?.isAdmin}');
+          print('========================================');
           return true;
         } else {
           print('❌ No se pudo cargar el usuario');
+          print('========================================');
           return false;
         }
       } else {
@@ -159,10 +170,12 @@ class AutenticacionService {
           errorMsg = 'Credenciales incorrectas';
         }
         print('❌ Login error: $errorMsg');
+        print('========================================');
         return false;
       }
     } catch (e) {
       print('❌ Login exception: $e');
+      print('========================================');
       return false;
     }
   }
@@ -357,6 +370,30 @@ class AutenticacionService {
 
     print('❌ No hay usuario logueado');
     return null;
+  }
+
+  static Future<bool> isAdmin() async {
+    try {
+      // Asegurar que tenemos el usuario actual
+      if (_usuarioActual == null) {
+        // Intentar cargar de SharedPreferences
+        await obtenerUsuarioActual();
+      }
+
+      if (_usuarioActual == null) {
+        print('No hay usuario logueado');
+        return false;
+      }
+
+      final esAdmin = _usuarioActual!.role == Role.ADMIN;
+      print('Verificando si ${_usuarioActual!.username} es admin: $esAdmin');
+      print('Rol actual: ${_usuarioActual!.role}');
+
+      return esAdmin;
+    } catch (e) {
+      print('Error verificando admin: $e');
+      return false;
+    }
   }
 
   // ============================================================

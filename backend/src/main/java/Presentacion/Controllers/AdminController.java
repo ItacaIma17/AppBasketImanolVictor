@@ -8,6 +8,8 @@ import Presentacion.Config.JwtTokenProvider;
 import Presentacion.DTOS.Admin.AdminPanelInfoDTO;
 import Presentacion.DTOS.Admin.ComunicadoAdminDTO;
 import Presentacion.DTOS.Admin.SancionDTO;
+import Presentacion.DTOS.Arbitro.ArbitroRequest;
+import Presentacion.DTOS.Arbitro.AsignarArbitroDTO;
 import Presentacion.DTOS.Jugador.JugadorResponse;
 import Presentacion.DTOS.Usuarios.UsuarioPerfilDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -141,11 +143,10 @@ public class AdminController {
 
     @PutMapping("/arbitros/{arbitroId}/partido/{partidoId}")
     public ResponseEntity<Void> asignarArbitro(
-            @PathVariable Long arbitroId,
-            @PathVariable Long partidoId,
+            @RequestBody AsignarArbitroDTO asignarArbitro,
             HttpServletRequest request) {
         requireAdmin(request);
-        adminService.asignarArbitroAPartido(arbitroId, partidoId);
+        adminService.asignarArbitroAPartido( asignarArbitro);
         return ResponseEntity.ok().build();
     }
 

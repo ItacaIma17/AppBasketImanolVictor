@@ -1,19 +1,22 @@
-// Presentacion/Controllers/EquipoController.java
 package Presentacion.Controllers;
 
 import Aplicacion.Services.EquipoService;
-import Presentacion.DTOS.Equipo.ActualizarEquipoDTO;
-import Presentacion.DTOS.Equipo.CrearEquipoDTO;
 import Presentacion.DTOS.Equipo.EquipoRequest;
-import jakarta.validation.Valid;
+import Presentacion.DTOS.Equipo.EquipoResponse;
+import Presentacion.DTOS.Equipo.SolicitarEquipoDTO;
+import Presentacion.DTOS.Equipo.AprobarSolicitudDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/equipos")
 @RequiredArgsConstructor
@@ -21,63 +24,76 @@ public class EquipoController {
 
     private final EquipoService equipoService;
 
-    // Crear equipo (solo admin)
     @PostMapping("/crear")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EquipoRequest> crearEquipo(@Valid @RequestBody CrearEquipoDTO dto) {
+    public ResponseEntity<EquipoResponse> crearEquipo(@Valid @RequestBody EquipoRequest dto) {
+        log.info("🏀 Creando nuevo equipo: {}", dto.getNombre());
         return ResponseEntity.status(HttpStatus.CREATED).body(equipoService.crearEquipo(dto));
     }
 
-    // Obtener equipo por ID
-    @GetMapping("/{id}")
-    public ResponseEntity<EquipoRequest> obtenerEquipoPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(equipoService.obtenerEquipoPorId(id));
+    @PostMapping("/solicitar")
+    @PreAuthorize("hasRole('ENTRENADOR')")
+    public ResponseEntity<Void> solicitarDirigirEquipo(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody SolicitarEquipoDTO dto) {
+
+        // VALIDAR que userDetails no es null
+        if (userDetails == null) {
+            log.error("UserDetails es null - No hay usuario autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = userDetails.getUsername();
+        log.info("📨 Entrenador {} solicita equipo con código: {}", username, dto.getCodigoSolicitud());
+
+        // Verificar que el username no sea null o vacío
+        if (username == null || username.isEmpty()) {
+            log.error("Username es null o vacío");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        equipoService.solicitarDirigirEquipo(username, dto);
+        return ResponseEntity.ok().build();
     }
 
-    // Obtener equipo por nombre
-    @GetMapping("/buscar")
-    public ResponseEntity<EquipoRequest> obtenerEquipoPorNombre(@RequestParam String nombre) {
-        return ResponseEntity.ok(equipoService.obtenerEquipoPorNombre(nombre));
+    @PostMapping("/aprobar-solicitud")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EquipoResponse> aprobarSolicitud(
+            @AuthenticationPrincipal UserDetails admin,
+            @RequestBody AprobarSolicitudDTO dto) {
+        log.info("✅ Admin {} aprobando/rechazando solicitud", admin.getUsername());
+        return ResponseEntity.ok(equipoService.aprobarSolicitud(dto, admin.getUsername()));
     }
 
-    // Listar todos los equipos
     @GetMapping("/listar")
-    public ResponseEntity<List<EquipoRequest>> listarTodosEquipos() {
+    public ResponseEntity<List<EquipoResponse>> listarEquipos() {
+        log.info("📋 Listando todos los equipos");
         return ResponseEntity.ok(equipoService.listarTodosEquipos());
     }
 
-    // Listar equipos por liga
-    @GetMapping("/liga/{ligaId}")
-    public ResponseEntity<List<EquipoRequest>> listarEquiposPorLiga(@PathVariable Long ligaId) {
-        return ResponseEntity.ok(equipoService.listarEquiposPorLiga(ligaId));
-    }
-
-    // Listar equipos sin entrenador
     @GetMapping("/sin-entrenador")
-    public ResponseEntity<List<EquipoRequest>> listarEquiposSinEntrenador() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EquipoResponse>> listarEquiposSinEntrenador() {
+        log.info("📋 Listando equipos sin entrenador");
         return ResponseEntity.ok(equipoService.listarEquiposSinEntrenador());
     }
 
-    // Actualizar equipo (solo admin)
-    @PutMapping("/{id}")
+    @GetMapping("/solicitudes-pendientes")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EquipoRequest> actualizarEquipo(
-            @PathVariable Long id,
-            @Valid @RequestBody ActualizarEquipoDTO dto) {
-        return ResponseEntity.ok(equipoService.actualizarEquipo(id, dto));
+    public ResponseEntity<List<EquipoResponse>> listarSolicitudesPendientes() {
+        log.info("📋 Listando equipos con solicitudes pendientes");
+        return ResponseEntity.ok(equipoService.listarEquiposConSolicitudPendiente());
     }
 
-    // Eliminar equipo (solo admin)
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> eliminarEquipo(@PathVariable Long id) {
-        equipoService.eliminarEquipo(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/{id}")
+    public ResponseEntity<EquipoResponse> obtenerEquipo(@PathVariable Long id) {
+        log.info("🔍 Obteniendo equipo con ID: {}", id);
+        return ResponseEntity.ok(equipoService.obtenerEquipoPorId(id));
     }
 
-    // Contar jugadores del equipo
-    @GetMapping("/{id}/jugadores/count")
-    public ResponseEntity<Integer> contarJugadores(@PathVariable Long id) {
-        return ResponseEntity.ok(equipoService.contarJugadores(id));
+    @GetMapping("/codigo/{codigo}")
+    public ResponseEntity<EquipoResponse> obtenerEquipoPorCodigo(@PathVariable String codigo) {
+        log.info("🔍 Obteniendo equipo con código: {}", codigo);
+        return ResponseEntity.ok(equipoService.obtenerEquipoPorCodigo(codigo));
     }
 }

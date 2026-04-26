@@ -5,6 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "alineaciones")
@@ -35,4 +36,27 @@ public class Alineacion {
 
     @OneToMany(mappedBy = "alineacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JugadorAlineacion> jugadores = new ArrayList<>();
+
+    // Métodos helpers
+    public void addJugador(JugadorAlineacion jugador) {
+        jugadores.add(jugador);
+        jugador.setAlineacion(this);
+    }
+
+    public void removeJugador(JugadorAlineacion jugador) {
+        jugadores.remove(jugador);
+        jugador.setAlineacion(null);
+    }
+
+    public List<JugadorAlineacion> getTitulares() {
+        return jugadores.stream()
+                .filter(JugadorAlineacion::isTitular)
+                .collect(Collectors.toList());
+    }
+
+    public List<JugadorAlineacion> getSuplentes() {
+        return jugadores.stream()
+                .filter(j -> !j.isTitular())
+                .collect(Collectors.toList());
+    }
 }

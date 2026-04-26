@@ -9,14 +9,14 @@ public class ActaRequestDTO {
     private String resultadoLocal;
     private String resultadoVisitante;
     private String observaciones;
-    private List<EventoDTO> eventos;
+    private List<EventoRequestDTO> eventos;
 
     @Data
-    public static class EventoDTO {
+    public static class EventoRequestDTO {
         private Long jugadorId;
         private String nombreJugador;
         private String nombreEquipo;
-        private int minuto;
+        private Integer minuto;
         private String tipo;
         private String descripcion;
     }

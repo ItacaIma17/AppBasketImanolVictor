@@ -11,6 +11,8 @@ public class ArbitroRequest {
 
     private String username;
 
+    private int edad;
+
     private String codigoArbitro;
 
     private String email;

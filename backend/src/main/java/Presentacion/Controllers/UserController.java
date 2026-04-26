@@ -36,6 +36,8 @@ public class UserController {
     private final AuthenticationManager authenticationManager;  // ← Añadir esto
     private final PasswordEncoder passwordEncoder;              // ← Añadir esto
 
+    // Presentacion/Controllers/UserController.java
+
     @PostMapping("/registro")
     public ResponseEntity<?> registrar(@RequestBody Map<String, Object> payload) {
         log.info("========================================");
@@ -76,6 +78,7 @@ public class UserController {
                 RegistroArbitroDTO arbDTO = new RegistroArbitroDTO();
                 arbDTO.setCodigoArbitro((String) payload.get("codigoArbitro"));
                 arbDTO.setApellidos((String) payload.get("apellido"));
+                // ✅ NO se necesita adminKey para árbitro
                 dto = arbDTO;
                 break;
             default:
@@ -95,6 +98,7 @@ public class UserController {
 
         log.info("📝 Registrando usuario: {} con rol: {}", dto.getUsername(), dto.getRol());
 
+        // ✅ Registrar sin necesidad de clave de admin (la validación está dentro de registrarInicial)
         userService.registrarInicial(dto);
 
         log.info("✅ Registro exitoso para: {}", dto.getUsername());
@@ -102,6 +106,86 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+
+
+    @PostMapping("/verificar")
+    public ResponseEntity<?> verificarCodigo(@RequestBody Map<String, String> request) {
+        log.info("========================================");
+        log.info("📧 INICIANDO VERIFICACIÓN DE CÓDIGO");
+        log.info("   Email: {}", request.get("email"));
+        log.info("   Código: {}", request.get("codigo"));
+
+        String email = request.get("email");
+        String codigo = request.get("codigo");
+
+        if (email == null || email.isEmpty()) {
+            log.error("❌ Email no proporcionado");
+            return ResponseEntity.badRequest().body(Map.of("error", "Email requerido"));
+        }
+
+        if (codigo == null || codigo.isEmpty()) {
+            log.error("❌ Código no proporcionado");
+            return ResponseEntity.badRequest().body(Map.of("error", "Código requerido"));
+        }
+
+        try {
+            // Verificar el código
+            boolean verificado = userService.verificarCodigo(email, codigo);
+
+            if (verificado) {
+                log.info("✅ Código verificado exitosamente para: {}", email);
+
+                // Obtener el usuario
+                Usuario usuario = userService.findByEmail(email);
+                if (usuario == null) {
+                    log.error("❌ Usuario no encontrado después de verificación: {}", email);
+                    return ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado"));
+                }
+
+                log.info("👤 Usuario encontrado: {}", usuario.getUsername());
+                log.info("🎭 Rol del usuario: {}", usuario.getRole());
+
+                // Generar tokens
+                String token = jwtTokenProvider.generateToken(usuario);
+                String refreshToken = jwtTokenProvider.generateRefreshToken(usuario);
+
+                log.info("🔑 Tokens generados para: {}", usuario.getUsername());
+
+                // Actualizar refresh token en BD
+                userService.actualizarRefreshToken(usuario.getUsername(), refreshToken);
+
+                // Construir respuesta
+                LoginResponse response = LoginResponse.builder()
+                        .token(token)
+                        .refreshToken(refreshToken)
+                        .username(usuario.getUsername())
+                        .email(usuario.getEmail())
+                        .rol(usuario.getRole().name())
+                        .verificado(true)
+                        .build();
+
+                log.info("✅ Verificación completada exitosamente para: {}", email);
+                log.info("========================================");
+
+                return ResponseEntity.ok(response);
+            } else {
+                log.warn("⚠️ Código de verificación inválido o expirado para: {}", email);
+                log.info("========================================");
+                return ResponseEntity.status(401).body(Map.of(
+                        "error", "Código inválido o expirado",
+                        "message", "El código de verificación no es correcto o ha expirado"
+                ));
+            }
+        } catch (Exception e) {
+            log.error("❌ Error durante la verificación: {}", e.getMessage(), e);
+            log.info("========================================");
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", "Error interno",
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -190,7 +274,7 @@ public class UserController {
                     .refreshToken(refreshToken)
                     .username(usuario.getUsername())
                     .email(usuario.getEmail())
-                    .rol(usuario.getRole())
+                    .rol(usuario.getRole().name())
                     .build();
 
             log.info("✅ Login exitoso para: {}", usuario.getUsername());

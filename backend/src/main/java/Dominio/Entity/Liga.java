@@ -2,6 +2,8 @@ package Dominio.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +18,8 @@ public class Liga {
 
     @Column(unique = true, nullable = false)
     private String nombreLiga;
+
+    private int numeroEquipos;
 
     @OneToMany(mappedBy = "liga", cascade = CascadeType.ALL)
     private List<Equipo> equipos = new ArrayList<>();

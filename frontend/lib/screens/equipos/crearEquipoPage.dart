@@ -73,7 +73,7 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
     ligaId: _ligaId,
     );
 
-    await EquipoService.crearEquipo(equipo);
+    await EquipoService.crearEquipo(equipo as Map<String, dynamic>);
 
     if (mounted) {
     ScaffoldMessenger.of(context).showSnackBar(

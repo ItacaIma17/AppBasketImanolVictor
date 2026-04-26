@@ -26,6 +26,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -39,6 +41,7 @@ public class UserService {
     private final ArbitroService arbitroService;
     private final JugadorService jugadorService;
     private final JugadorRepository jugadorRepository;
+    private final EntrenadorRepository entrenadorRepository;
     private final EquipoRepository equipoRepository;
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -54,13 +57,15 @@ public class UserService {
     // REGISTRO
     // ──────────────────────────────────────────────
 
+    // Aplicacion/Services/UserService.java
+
     @Transactional
     public void registrarInicial(RegistroBaseDTO dto) {
         log.info("========================================");
         log.info("📝 Iniciando registro para usuario: {}", dto.getUsername());
         log.info("🎭 Rol solicitado: {}", dto.getRol());
 
-        // VALIDACIÓN PARA ADMIN
+        // ✅ VALIDACIÓN SOLO PARA ADMIN
         boolean isAdmin = dto.getRol() == Roles.ADMIN;
         if (isAdmin) {
             log.info("👑 Procesando registro de ADMINISTRADOR");
@@ -69,7 +74,6 @@ public class UserService {
                 adminKey = ((RegistroAdminDTO) dto).getAdminKey();
             }
             log.info("🔑 Clave de admin recibida: {}", adminKey);
-            log.info("🔑 Clave esperada en backend: {}", adminSecretKey);
 
             if (adminKey == null || adminKey.isEmpty()) {
                 log.error("❌ Clave de administrador no proporcionada");
@@ -85,12 +89,14 @@ public class UserService {
             log.info("✅ Clave de administrador CORRECTA");
         }
 
+        // ✅ Para ARBITRO, ENTRENADOR, JUGADOR no se necesita clave
+        // Solo se valida que tengan el código correspondiente
+
         validarRegistro(dto);
 
         // Crear usuario base
         Usuario usuario = crearUsuarioBase(dto);
 
-        // SI ES ADMIN, MARCAR COMO VERIFICADO DIRECTAMENTE
         if (isAdmin) {
             usuario.setVerificado(true);
             log.info("👑 Administrador creado como VERIFICADO automáticamente");
@@ -102,7 +108,6 @@ public class UserService {
         // Crear entidad específica según el rol
         crearEntidadEspecifica(dto, usuario);
 
-        // SOLO ENVIAR CÓDIGO DE VERIFICACIÓN SI NO ES ADMIN
         if (!isAdmin) {
             String codigo = generarCodigoVerificacion(dto.getEmail());
             enviarCodigoVerificacion(dto.getEmail(), codigo);
@@ -279,49 +284,111 @@ public class UserService {
         return UsuarioPerfilDTO.fromEntity(usuario);
     }
 
+    // Aplicacion/Services/UserService.java
+
+    public void verificarAdministrador() {
+        // CORREGIDO: findByRole devuelve List, no Optional
+        List<Usuario> admins = usuarioRepository.findByRole(Roles.ADMIN);
+
+        if (admins != null && !admins.isEmpty()) {
+            // Tomar el primer administrador (si hay varios)
+            Usuario admin = admins.get(0);
+            log.info("========================================");
+            log.info("👑 ADMINISTRADOR ENCONTRADO:");
+            log.info("   ID: {}", admin.getId());
+            log.info("   Username: {}", admin.getUsername());
+            log.info("   Email: {}", admin.getEmail());
+            log.info("   Nombre: {} {}", admin.getNombre(), admin.getApellido());
+            log.info("   Rol: {}", admin.getRole());
+            log.info("   Verificado: {}", admin.isVerificado());
+            log.info("   Bloqueado: {}", admin.isBloqueado());
+
+            // Si hay más de un administrador, mostrar advertencia
+            if (admins.size() > 1) {
+                log.warn("⚠️ Hay {} administradores en el sistema", admins.size());
+            }
+            log.info("========================================");
+        } else {
+            log.warn("========================================");
+            log.warn("⚠️ No se encontró ningún administrador en el sistema");
+            log.warn("⚠️ Se creará automáticamente en el próximo inicio");
+            log.warn("========================================");
+        }
+    }
+
     // ──────────────────────────────────────────────
     // VERIFICACIÓN DE EMAIL
     // ──────────────────────────────────────────────
 
+    // Aplicacion/Services/UserService.java
+
     @Transactional
-    public LoginResponse verificarCodigo(VerificacionEmailDTO dto) {
-        log.info("Verificando código: {}", dto.getCodigo());
+    public boolean verificarCodigo(String email, String codigo) {
+        log.info("🔍 Verificando código para email: {}", email);
+        log.info("   Código proporcionado: {}", codigo);
 
-        EmailVerification verification = emailVerificationRepository.findByCodigo(dto.getCodigo())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Código inválido"));
+        // Buscar la verificación por email
+        EmailVerification verification = emailVerificationRepository
+                .findByEmail(email)
+                .orElse(null);
 
-        if (verification.getExpirationTime().isBefore(LocalDateTime.now())) {
-            emailVerificationRepository.delete(verification);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ha expirado");
+        if (verification == null) {
+            log.error("❌ No se encontró verificación pendiente para: {}", email);
+            return false;
         }
 
+        log.info("📋 Verificación encontrada:");
+        log.info("   Código almacenado: {}", verification.getCodigo());
+        log.info("   Fecha expiración: {}", verification.getExpirationTime());
+        log.info("   Ya verificado: {}", verification.isVerified());
+
+        // Verificar si ya está verificado
         if (verification.isVerified()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ya fue utilizado");
+            log.warn("⚠️ El usuario ya estaba verificado: {}", email);
+            return true;
         }
 
+        // Verificar si el código ha expirado
+        if (verification.getExpirationTime().isBefore(LocalDateTime.now())) {
+            log.warn("⚠️ El código ha expirado para: {}", email);
+            log.warn("   Expiró en: {}", verification.getExpirationTime());
+            return false;
+        }
+
+        // Verificar el código
+        if (!verification.getCodigo().equals(codigo)) {
+            log.warn("⚠️ Código incorrecto para: {}", email);
+            log.warn("   Esperado: {}", verification.getCodigo());
+            log.warn("   Recibido: {}", codigo);
+            return false;
+        }
+
+        log.info("✅ Código correcto, marcando como verificado...");
+
+        // Marcar como verificado
         verification.setVerified(true);
         emailVerificationRepository.save(verification);
 
-        Usuario usuario = usuarioRepository.findByEmail(verification.getEmail());
-        if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        // Actualizar el usuario
+        Usuario usuario = usuarioRepository.findByEmail(email);
+        if (usuario != null) {
+            usuario.setVerificado(true);
+            usuarioRepository.save(usuario);
+            log.info("✅ Usuario marcado como verificado: {}", usuario.getUsername());
+
+            // Si es entrenador, también marcarlo como verificado
+            if (usuario.getRole() == Roles.ENTRENADOR) {
+                entrenadorRepository.findById(usuario.getId())
+                        .ifPresent(entrenador -> {
+                            entrenador.setVerificado(true);
+                            entrenadorRepository.save(entrenador);
+                            log.info("✅ Entrenador marcado como verificado: {}", entrenador.getNombre());
+                        });
+            }
         }
 
-        usuario.setVerificado(true);
-        usuarioRepository.save(usuario);
-
-        notificarVerificacionAEntidad(usuario);
-
-        String token = jwtTokenProvider.generateToken(usuario);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(usuario);
-
-        usuario.setToken(token);
-        usuario.setRefreshToken(refreshToken);
-        usuarioRepository.save(usuario);
-
-        log.info("Usuario verificado correctamente: {}", usuario.getUsername());
-
-        return buildLoginResponse(usuario, token, refreshToken);
+        log.info("🎉 Verificación completada exitosamente para: {}", email);
+        return true;
     }
 
     private void notificarVerificacionAEntidad(Usuario usuario) {
@@ -495,6 +562,11 @@ public class UserService {
         return usuarioRepository.findByUsername(username);
     }
 
+    public Usuario findByEmail(String email) {
+        log.info("🔍 Buscando usuario por email: {}", email);
+        return usuarioRepository.findByEmail(email);
+    }
+
     public void actualizarRefreshToken(String username, String refreshToken) {
         log.info("🔄 Actualizando refresh token para: {}", username);
         Usuario usuario = findByUsername(username);
@@ -547,7 +619,7 @@ public class UserService {
                 .refreshToken(refreshToken)
                 .username(usuario.getUsername())
                 .email(usuario.getEmail())
-                .rol(usuario.getRole())
+                .rol(usuario.getRole().name())
                 .build();
         return response;
     }

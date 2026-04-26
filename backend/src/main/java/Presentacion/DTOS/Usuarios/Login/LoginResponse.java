@@ -14,7 +14,8 @@ public class LoginResponse {
     private String nombre;
     private String email;
     private String apellido;
-    private Roles rol;
+    private String rol;
+    private boolean verificado;
 
     public static LoginResponse fromEntity(Usuario usuario){
         if(usuario == null){
@@ -27,7 +28,8 @@ public class LoginResponse {
                 .username(usuario.getUsername())
                 .apellido(usuario.getApellido())
                 .nombre(usuario.getNombre())
-                .rol(usuario.getRole())
+                .rol(usuario.getRole().name())
+                .verificado(usuario.isVerificado())
                 .build();
     }
 }

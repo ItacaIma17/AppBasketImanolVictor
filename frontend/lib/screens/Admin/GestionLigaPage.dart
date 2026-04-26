@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
+import '../../services/autenticacion_service.dart';
 import '../Liga/LigaService.dart';
 
 class GestionLigasPage extends StatefulWidget {
@@ -55,27 +56,47 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     }
   }
 
+  // lib/screens/Admin/GestionLigasPage.dart
+
   Future<void> _crearLiga() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Verificar permisos
+    if (AutenticacionService.isAdmin()==false) {
+      _mostrarError('No tienes permisos de administrador');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
     try {
-      await LigaService.crearLiga({
-        'nombreLiga': _nombreController.text,
-        'descripcion': _descripcionController.text,
-        'temporada': _temporadaController.text,
-      });
+      // CORREGIDO: Usar los campos correctos que espera el backend
+      final ligaData = {
+        'nombreLiga': _nombreController.text.trim(),
+        'pais': _descripcionController.text.trim().isEmpty ? 'España' : _descripcionController.text.trim(),
+        'numeroEquipos': 0,  // Inicialmente 0 equipos
+      };
+
+      print('📝 Enviando datos de liga: $ligaData');
+
+      await LigaService.crearLiga(ligaData);
 
       _limpiarFormulario();
       await _cargarLigas();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Liga creada exitosamente'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('✅ Liga creada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context); // Cerrar diálogo
       }
     } catch (e) {
       _mostrarError('Error al crear liga: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

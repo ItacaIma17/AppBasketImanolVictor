@@ -5,14 +5,22 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
     @Value("${jwt.secret:miClaveSecretaParaJWT123456789012345678901234567890}")
@@ -37,10 +45,26 @@ public class JwtTokenProvider {
                 .subject(username)
                 .claim("rol", role)
                 .claim("email", email)
+                .claim("authorities", List.of("ROLE_" + role))
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public List<SimpleGrantedAuthority> getAuthorities(String token) {
+        try {
+            Claims claims = extractClaims(token);
+            List<String> authorities = claims.get("authorities", List.class);
+            if (authorities != null) {
+                return authorities.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.warn("No se pudieron extraer autoridades del token", e);
+        }
+        return Collections.emptyList();
     }
 
     public String generateToken(Usuario usuario) {

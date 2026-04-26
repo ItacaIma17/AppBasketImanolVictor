@@ -16,7 +16,7 @@ class GestionEntrenadoresPage extends StatefulWidget {
   State<GestionEntrenadoresPage> createState() => _GestionEntrenadoresPageState();
 }
 
-class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> {
+class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with WidgetsBindingObserver {
   List<Entrenador> _entrenadores = [];
   List<Equipo> _equipos = [];
   bool _isLoading = true;
@@ -25,29 +25,63 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _cargarDatos();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _cargarDatos();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final entrenadores = await EntrenadorService.listarEntrenadoresSinEquipo();
-      final equipos = await EquipoService.listarEquiposSinEntrenador();
+      final resultados = await Future.wait([
+        EntrenadorService.listarEntrenadoresSinEquipo(),
+        EquipoService.listarEquiposSinEntrenador(),
+      ]).catchError((error) {
+        print('Error en Future.wait: $error');
+        return [<Entrenador>[], <Equipo>[]];
+      });
 
-      setState(() {
-        _entrenadores = entrenadores;
-        _equipos = equipos;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _entrenadores = resultados[0] as List<Entrenador>;
+          _equipos = resultados[1] as List<Equipo>;
+          _isLoading = false;
+        });
+
+        print('✅ Datos cargados: ${_entrenadores.length} entrenadores, ${_equipos.length} equipos');
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+      print('❌ Error cargando datos: $e');
     }
   }
 
@@ -56,6 +90,8 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> {
       final codigo = await EntrenadorService.generarCodigo();
       if (mounted) {
         _mostrarDialogoCodigo(codigo);
+
+        await _cargarDatos();
       }
     } catch (e) {
       _mostrarError('Error al generar código: $e');

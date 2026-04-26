@@ -1,21 +1,24 @@
-// Aplicacion/Services/EquipoService.java
 package Aplicacion.Services;
 
 import Dominio.Entity.Equipo;
 import Dominio.Entity.Liga;
+import Dominio.Entity.Entrenador;
 import Dominio.Repositorys.EquipoRepository;
 import Dominio.Repositorys.LigaRepository;
-import Presentacion.DTOS.Equipo.ActualizarEquipoDTO;
-import Presentacion.DTOS.Equipo.CrearEquipoDTO;
+import Dominio.Repositorys.EntrenadorRepository;
 import Presentacion.DTOS.Equipo.EquipoRequest;
+import Presentacion.DTOS.Equipo.EquipoResponse;
+import Presentacion.DTOS.Equipo.SolicitarEquipoDTO;
+import Presentacion.DTOS.Equipo.AprobarSolicitudDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,138 +27,205 @@ public class EquipoService {
 
     private final EquipoRepository equipoRepository;
     private final LigaRepository ligaRepository;
+    private final EntrenadorRepository entrenadorRepository;
 
-    // Crear equipo
+    private static final String CODIGO_PREFIX = "EQ-";
+    private static final SecureRandom random = new SecureRandom();
+
+    private String generarCodigoSolicitud() {
+        String codigo;
+        do {
+            int numero = 100000 + random.nextInt(900000);
+            codigo = CODIGO_PREFIX + numero;
+        } while (equipoRepository.findByCodigoSolicitud(codigo).isPresent());
+        return codigo;
+    }
+
     @Transactional
-    public EquipoRequest crearEquipo(CrearEquipoDTO dto) {
+    public EquipoResponse crearEquipo(EquipoRequest dto) {
         log.info("Creando equipo: {}", dto.getNombre());
 
-        // Verificar que no exista un equipo con el mismo nombre
-        if (equipoRepository.existsByNombre(dto.getNombre())) {
+        if (equipoRepository.findByNombre(dto.getNombre()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Ya existe un equipo con el nombre: " + dto.getNombre());
+                    "Ya existe un equipo con ese nombre");
         }
 
-        // Buscar la liga
-        Liga liga = ligaRepository.findById(dto.getLigaId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Liga no encontrada con ID: " + dto.getLigaId()));
+        Liga liga = null;
+        if (dto.getLigaId() != null) {
+            liga = ligaRepository.findById(dto.getLigaId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Liga no encontrada"));
+        }
 
-        // Crear el equipo
-        Equipo equipo = new Equipo();
-        equipo.setNombre(dto.getNombre());
-        equipo.setNombreEstadio(dto.getNombreEstadio());
-        equipo.setCiudad(dto.getCiudad());
-        equipo.setAñoFundacion(dto.getAñoFundacion());
-        equipo.setEscudoUrl(dto.getEscudoUrl());
+        Equipo equipo = dto.toEntity();
         equipo.setLiga(liga);
 
+        // Generar código de solicitud
+        equipo.setCodigoSolicitud(generarCodigoSolicitud());
+        equipo.setSolicitudPendiente(false);
+
         Equipo saved = equipoRepository.save(equipo);
-        log.info("Equipo creado con ID: {}", saved.getId());
+        log.info("Equipo creado con ID: {} y código: {}", saved.getId(), saved.getCodigoSolicitud());
 
-        return EquipoRequest.fromEntity(saved);
+        return EquipoResponse.fromEntity(saved);
     }
 
-    // Obtener equipo por ID
+    // Aplicacion/Services/EquipoService.java
+
+    @Transactional
+    public void solicitarDirigirEquipo(String username, SolicitarEquipoDTO dto) {
+        log.info("========================================");
+        log.info("📨 Solicitud de equipo para entrenador: {}", username);
+        log.info("   Código de solicitud: {}", dto.getCodigoSolicitud());
+
+        // Validar parámetros
+        if (username == null || username.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Username del entrenador no proporcionado");
+        }
+
+        if (dto.getCodigoSolicitud() == null || dto.getCodigoSolicitud().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Código de solicitud no proporcionado");
+        }
+
+        // Buscar el entrenador por username (NO por UserDetails)
+        Entrenador entrenador = entrenadorRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("❌ Entrenador no encontrado con username: {}", username);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Entrenador no encontrado con username: " + username);
+                });
+
+        log.info("✅ Entrenador encontrado:");
+        log.info("   ID: {}", entrenador.getId());
+        log.info("   Nombre: {} {}", entrenador.getNombre(), entrenador.getApellido());
+        log.info("   Username: {}", entrenador.getUsername());
+
+        // Verificar si ya tiene equipo
+        if (entrenador.getEquipo() != null) {
+            log.warn("⚠️ El entrenador ya tiene un equipo asignado: {}", entrenador.getEquipo().getNombre());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ya tienes un equipo asignado: " + entrenador.getEquipo().getNombre());
+        }
+
+        // Buscar el equipo por código de solicitud
+        Equipo equipo = equipoRepository.findByCodigoSolicitud(dto.getCodigoSolicitud())
+                .orElseThrow(() -> {
+                    log.error("❌ Equipo no encontrado con código: {}", dto.getCodigoSolicitud());
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Código de equipo inválido: " + dto.getCodigoSolicitud());
+                });
+
+        log.info("✅ Equipo encontrado:");
+        log.info("   ID: {}", equipo.getId());
+        log.info("   Nombre: {}", equipo.getNombre());
+        log.info("   Entrenador actual: {}", equipo.getEntrenador() != null ? equipo.getEntrenador().getNombre() : "ninguno");
+
+        // Verificar si el equipo ya tiene entrenador
+        if (equipo.getEntrenador() != null) {
+            log.warn("⚠️ El equipo {} ya tiene un entrenador asignado: {}",
+                    equipo.getNombre(), equipo.getEntrenador().getNombre());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Este equipo ya tiene un entrenador asignado");
+        }
+
+        // Verificar si ya hay solicitud pendiente
+        if (equipo.getSolicitudPendiente() != null && equipo.getSolicitudPendiente()) {
+            log.warn("⚠️ El equipo {} ya tiene una solicitud pendiente", equipo.getNombre());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ya hay una solicitud pendiente para este equipo");
+        }
+
+        // Crear la solicitud
+        equipo.setSolicitudPendiente(true);
+        equipo.setEntrenadorSolicitanteId(entrenador.getId());
+        equipoRepository.save(equipo);
+
+        log.info("✅ Solicitud registrada exitosamente:");
+        log.info("   Entrenador: {} {}", entrenador.getNombre(), entrenador.getApellido());
+        log.info("   Equipo: {}", equipo.getNombre());
+        log.info("   Estado: PENDIENTE");
+        log.info("========================================");
+    }
+
+    @Transactional
+    public EquipoResponse aprobarSolicitud(AprobarSolicitudDTO dto, String adminUsername) {
+        log.info("Admin {} procesando solicitud para equipo código: {}",
+                adminUsername, dto.getCodigoSolicitud());
+
+        Equipo equipo = equipoRepository.findByCodigoSolicitud(dto.getCodigoSolicitud())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Código de equipo inválido"));
+
+        if (!Boolean.TRUE.equals(equipo.getSolicitudPendiente())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No hay solicitud pendiente para este equipo");
+        }
+
+        Entrenador entrenador = entrenadorRepository.findById(dto.getEntrenadorId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Entrenador no encontrado"));
+
+        if (dto.getAprobar()) {
+            // Asignar equipo al entrenador
+            entrenador.setEquipo(equipo);
+            equipo.setEntrenador(entrenador);
+            equipo.setSolicitudPendiente(false);
+            equipo.setEntrenadorSolicitanteId(null);
+
+            entrenadorRepository.save(entrenador);
+            equipoRepository.save(equipo);
+
+            log.info("✅ Solicitud APROBADA: Entrenador {} asignado a equipo {}",
+                    entrenador.getUsername(), equipo.getNombre());
+        } else {
+            // Rechazar solicitud
+            equipo.setSolicitudPendiente(false);
+            equipo.setEntrenadorSolicitanteId(null);
+            equipoRepository.save(equipo);
+
+            log.info("❌ Solicitud RECHAZADA para entrenador {} en equipo {}",
+                    entrenador.getUsername(), equipo.getNombre());
+        }
+
+        return EquipoResponse.fromEntity(equipo);
+    }
+
     @Transactional(readOnly = true)
-    public EquipoRequest obtenerEquipoPorId(Long id) {
+    public List<EquipoResponse> listarTodosEquipos() {
+        return equipoRepository.findAll().stream()
+                .map(EquipoResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<EquipoResponse> listarEquiposSinEntrenador() {
+        return equipoRepository.findEquiposSinEntrenador().stream()
+                .map(EquipoResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<EquipoResponse> listarEquiposConSolicitudPendiente() {
+        return equipoRepository.findEquiposConSolicitudPendiente().stream()
+                .map(EquipoResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public EquipoResponse obtenerEquipoPorId(Long id) {
         Equipo equipo = equipoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Equipo no encontrado con ID: " + id));
-        return EquipoRequest.fromEntity(equipo);
+                        "Equipo no encontrado"));
+        return EquipoResponse.fromEntity(equipo);
     }
 
-    // Obtener equipo por nombre
     @Transactional(readOnly = true)
-    public EquipoRequest obtenerEquipoPorNombre(String nombre) {
-        Equipo equipo = equipoRepository.findByNombre(nombre)
+    public EquipoResponse obtenerEquipoPorCodigo(String codigo) {
+        Equipo equipo = equipoRepository.findByCodigoSolicitud(codigo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Equipo no encontrado con nombre: " + nombre));
-        return EquipoRequest.fromEntity(equipo);
-    }
-
-    // Listar todos los equipos
-    @Transactional(readOnly = true)
-    public List<EquipoRequest> listarTodosEquipos() {
-        return EquipoRequest.fromEntityList(equipoRepository.findAll());
-    }
-
-    // Listar equipos por liga
-    @Transactional(readOnly = true)
-    public List<EquipoRequest> listarEquiposPorLiga(Long ligaId) {
-        return EquipoRequest.fromEntityList(equipoRepository.findByLigaId(ligaId));
-    }
-
-    // Listar equipos sin entrenador
-    @Transactional(readOnly = true)
-    public List<EquipoRequest> listarEquiposSinEntrenador() {
-        return EquipoRequest.fromEntityList(equipoRepository.findEquiposSinEntrenador());
-    }
-
-    // Actualizar equipo
-    @Transactional
-    public EquipoRequest actualizarEquipo(Long id, ActualizarEquipoDTO dto) {
-        log.info("Actualizando equipo con ID: {}", id);
-
-        Equipo equipo = equipoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Equipo no encontrado con ID: " + id));
-
-        if (dto.getNombre() != null && !dto.getNombre().isEmpty()) {
-            if (!dto.getNombre().equals(equipo.getNombre()) &&
-                    equipoRepository.existsByNombre(dto.getNombre())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Ya existe un equipo con el nombre: " + dto.getNombre());
-            }
-            equipo.setNombre(dto.getNombre());
-        }
-
-        if (dto.getNombreEstadio() != null) {
-            equipo.setNombreEstadio(dto.getNombreEstadio());
-        }
-
-        if (dto.getCiudad() != null) {
-            equipo.setCiudad(dto.getCiudad());
-        }
-
-        if (dto.getAñoFundacion() > 0) {
-            equipo.setAñoFundacion(dto.getAñoFundacion());
-        }
-
-        if (dto.getEscudoUrl() != null) {
-            equipo.setEscudoUrl(dto.getEscudoUrl());
-        }
-
-        if (dto.getLigaId() != null) {
-            Liga liga = ligaRepository.findById(dto.getLigaId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Liga no encontrada con ID: " + dto.getLigaId()));
-            equipo.setLiga(liga);
-        }
-
-        Equipo updated = equipoRepository.save(equipo);
-        log.info("Equipo actualizado: {}", updated.getNombre());
-
-        return EquipoRequest.fromEntity(updated);
-    }
-
-    // Eliminar equipo
-    @Transactional
-    public void eliminarEquipo(Long id) {
-        log.info("Eliminando equipo con ID: {}", id);
-
-        if (!equipoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Equipo no encontrado con ID: " + id);
-        }
-
-        equipoRepository.deleteById(id);
-        log.info("Equipo eliminado con ID: {}", id);
-    }
-
-    // Obtener número de jugadores
-    @Transactional(readOnly = true)
-    public int contarJugadores(Long equipoId) {
-        return equipoRepository.countJugadoresByEquipoId(equipoId);
+                        "Código de equipo inválido"));
+        return EquipoResponse.fromEntity(equipo);
     }
 }

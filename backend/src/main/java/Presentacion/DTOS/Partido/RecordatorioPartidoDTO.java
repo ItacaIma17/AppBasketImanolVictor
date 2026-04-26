@@ -11,7 +11,7 @@ public class RecordatorioPartidoDTO {
     private String sendto;
     private String nombreUsuario;
     private String nombreRival;
-    private LocalDate fecha;
+    private LocalDateTime fecha;
     private String pabellon;
     private String direccionPabellon;
 
@@ -19,7 +19,7 @@ public class RecordatorioPartidoDTO {
     }
 
     public RecordatorioPartidoDTO(String direccionPabellon, String sendto, String nombreUsuario,String nombreRival,
-                                  LocalDate fecha,
+                                  LocalDateTime fecha,
                                   String pabellon) {
         this.direccionPabellon = direccionPabellon;
         this.sendto = sendto;

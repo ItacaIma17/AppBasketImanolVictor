@@ -1,23 +1,69 @@
 package Presentacion.DTOS.Arbitro;
 
+import Dominio.Entity.Arbitro;
+import Dominio.Entity.EstadoPartido.EstadoPartido;
+import lombok.Builder;
 import lombok.Data;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
+@Builder
 public class ArbitroResponse {
-
-    private String nombre;
-
-    private String apellidos;
-
-    private String email;
-
+    private Long id;
     private String username;
+    private String email;
+    private String nombre;
+    private String apellidos;
+    private Integer edad;
+    private String codigoArbitro;
+    private Boolean verificado;
+    private Integer partidosAsignados;
+    private List<PartidoAsignadoDTO> proximosPartidos;
 
-    public ArbitroResponse(){}
+    @Data
+    @Builder
+    public static class PartidoAsignadoDTO {
+        private Long partidoId;
+        private String equipoLocal;
+        private String equipoVisitante;
+        private String fecha;
+        private String ubicacion;
+    }
 
-    public ArbitroResponse(String nombre, String apellidos, String username) {
-        this.nombre = nombre;
-        this.apellidos = apellidos;
-        this.username = username;
+    public static ArbitroResponse fromEntity(Arbitro arbitro) {
+        if (arbitro == null) {
+            return null;
+        }
+
+        ArbitroResponseBuilder builder = ArbitroResponse.builder()
+                .id(arbitro.getId())
+                .username(arbitro.getUsername())
+                .email(arbitro.getEmail())
+                .nombre(arbitro.getNombre())
+                .apellidos(arbitro.getApellidos())
+                .edad(arbitro.getEdad())
+                .codigoArbitro(arbitro.getCodigoArbitro())
+                .verificado(arbitro.getVerificado());
+
+        if (arbitro.getPartidos() != null && !arbitro.getPartidos().isEmpty()) {
+            builder.partidosAsignados(arbitro.getPartidos().size())
+                    .proximosPartidos(arbitro.getPartidos().stream()
+                            // CORREGIDO: comparar enum directamente, sin .name()
+                            .filter(p -> EstadoPartido.PROGRAMADO.name().equals(p.getEstado()))
+                            .map(p -> PartidoAsignadoDTO.builder()
+                                    .partidoId(p.getId())
+                                    .equipoLocal(p.getEquipoLocal().getNombre())
+                                    .equipoVisitante(p.getEquipoVisitante().getNombre())
+                                    .fecha(p.getFecha().toString())
+                                    .ubicacion(p.getUbicacion() != null ? p.getUbicacion() : p.getPabellon())
+                                    .build())
+                            .collect(Collectors.toList()));
+        } else {
+            builder.partidosAsignados(0)
+                    .proximosPartidos(List.of());
+        }
+
+        return builder.build();
     }
 }

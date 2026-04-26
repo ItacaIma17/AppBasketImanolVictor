@@ -22,7 +22,7 @@ class RegistroAdminDTO extends RegistroBaseDTO {
   Map<String, dynamic> toJson() {
     final json = super.toJson();
     json['adminKey'] = adminKey;
-    json['rol'] = 'ADMIN';  // ← Asegurar que el rol se envía correctamente
+    json['rol'] = 'ADMIN';
     return json;
   }
 }
