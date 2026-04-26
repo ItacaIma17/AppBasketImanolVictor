@@ -17,6 +17,12 @@ class Partido {
   final String observaciones;
   final String fechaCreacion;
   final String fechaActualizacion;
+  final bool? tieneActa;
+  final int? actaId;
+  final bool? tieneAlineacionLocal;
+  final bool? tieneAlineacionVisitante;
+  final int? alineacionLocalId;
+  final int? alineacionVisitanteId;
 
   Partido({
     required this.id,
@@ -37,19 +43,28 @@ class Partido {
     required this.observaciones,
     required this.fechaCreacion,
     required this.fechaActualizacion,
+
+    // Extra
+    this.tieneActa,
+    this.actaId,
+    this.tieneAlineacionLocal,
+    this.tieneAlineacionVisitante,
+    this.alineacionLocalId,
+    this.alineacionVisitanteId,
   });
 
   factory Partido.fromJson(dynamic json) {
     return Partido(
       id: (json['id'] ?? '').toString(),
+
       idLocal: (json['equipo_local_id'] ?? json['idLocal'] ?? '').toString(),
       idVisitante: (json['equipo_visitante_id'] ?? json['idVisitante'] ?? '').toString(),
 
       nombreLocal: json['nombreLocal'] ?? '',
       nombreVisitante: json['nombreVisitante'] ?? '',
 
-      puntosLocal: (json['marcador_local'] ?? json['puntosLocal'] ?? 0),
-      puntosVisitante: (json['marcador_visitante'] ?? json['puntosVisitante'] ?? 0),
+      puntosLocal: json['marcador_local'] ?? json['puntosLocal'] ?? 0,
+      puntosVisitante: json['marcador_visitante'] ?? json['puntosVisitante'] ?? 0,
 
       fecha: json['fecha'] ?? '',
       hora: json['hora'] ?? '',
@@ -67,6 +82,20 @@ class Partido {
 
       fechaCreacion: json['fecha_creacion'] ?? '',
       fechaActualizacion: json['fecha_actualizacion'] ?? '',
+
+      // Extra
+      tieneActa: json['tieneActa'],
+      actaId: json['actaId'],
+      tieneAlineacionLocal: json['tieneAlineacionLocal'],
+      tieneAlineacionVisitante: json['tieneAlineacionVisitante'],
+      alineacionLocalId: json['alineacionLocalId'],
+      alineacionVisitanteId: json['alineacionVisitanteId'],
     );
   }
+
+  String get resultado => "$puntosLocal - $puntosVisitante";
+
+  bool get estaProgramado => estado == "PROGRAMADO";
+  bool get estaFinalizado => estado == "FINALIZADO";
+  bool get estaEnCurso => estado == "EN_CURSO";
 }

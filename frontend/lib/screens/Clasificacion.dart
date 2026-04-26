@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
-import 'package:tfg_appfede/models/equipo.dart';
 import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
-import 'package:tfg_appfede/services/logicaEquipo.dart';
+import 'package:tfg_appfede/services/equipoService.dart';
+import '../models/equipo.dart';
 import 'package:tfg_appfede/services/PartidoService.dart';
 
 
@@ -42,18 +42,13 @@ void initState() {
   // Verificar si ya está en favoritos
   _esFavorita = FavoritosManager().esCategoriaSfavorita(categoriaNombre);
 
-  // Cargar equipos desde el backend
-  _cargarEquipos();
-}
+    // Cargar equipos desde el backend
+    _cargarEquipos();
+  }
 
 void _cargarEquipos() async {
   try {
-    final logicaEquipo = LogicaEquipo();
-    await logicaEquipo.cargarEquipos();
-
-    // Equipos filtrados por liga
-    final equipos = logicaEquipo.obtenerEquiposPorLiga(widget.ligaId);
-    print('Equipos cargados para liga ${widget.ligaId}: ${equipos.length}');
+    final equipos = await EquipoService.listarEquiposPorLiga(widget.ligaId);
 
     // Cargar partidos de cada equipo
     final List<Partido> todosPartidos = [];
@@ -257,33 +252,33 @@ void _cargarEquipos() async {
 
   /// Tab de clasificación
   Widget _buildClasificacionTab() {
-  // Mientras carga datos del backend
-  if (_cargando) {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.blanco),
-    );
-  }
+    // Mientras carga datos del backend
+    if (_cargando) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.blanco),
+      );
+    }
 
-  // Si no hay equipos en la BD
-  if (_equiposBD.isEmpty) {
-    return const Center(
-      child: Text(
-        "No hay equipos registrados",
-        style: TextStyle(
-          color: AppColors.blanco,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+    // Si no hay equipos en la BD
+    if (_equiposBD.isEmpty) {
+      return const Center(
+        child: Text(
+          "No hay equipos registrados",
+          style: TextStyle(
+            color: AppColors.blanco,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  // Mostrar equipos reales
-  return ListView.builder(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    itemCount: _equiposBD.length,
-    itemBuilder: (context, index) {
-      final equipo = _equiposBD[index];
+    // Mostrar equipos reales
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _equiposBD.length,
+      itemBuilder: (context, index) {
+        final equipo = _equiposBD[index];
 
       // Pasar el equipo completo a _buildEquipoCard
       return _buildEquipoCard(equipo, index + 1);

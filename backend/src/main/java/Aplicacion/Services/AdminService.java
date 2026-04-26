@@ -7,6 +7,8 @@ import Dominio.Repositorys.*;
 import Presentacion.DTOS.Admin.AdminPanelInfoDTO;
 import Presentacion.DTOS.Admin.ComunicadoAdminDTO;
 import Presentacion.DTOS.Admin.SancionDTO;
+import Presentacion.DTOS.Arbitro.ArbitroResponse;
+import Presentacion.DTOS.Arbitro.AsignarArbitroDTO;
 import Presentacion.DTOS.Jugador.JugadorResponse;
 import Presentacion.DTOS.Partido.RecordatorioPartidoDTO;
 import Presentacion.DTOS.Usuarios.UsuarioPerfilDTO;
@@ -94,6 +96,7 @@ public class AdminService {
                 .map(UsuarioPerfilDTO::fromEntity)
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public void bloquearUsuario(Long id) {
@@ -219,14 +222,42 @@ public class AdminService {
 
     // ── GESTIÓN DE ÁRBITROS ───────────────────────────────
 
+    // Añade estos métodos a AdminService.java
+
+// ── GESTIÓN DE ÁRBITROS (mejorada) ─────────────────────
+
+    public List<ArbitroResponse> listarTodosArbitros() {
+        return arbitroRepository.findAll().stream()
+                .map(ArbitroResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // Aplicacion/Services/AdminService.java
+
+    public List<ArbitroResponse> listarArbitrosDisponibles() {
+        // El repositorio debe devolver List<Arbitro>, no List<ArbitroResponse>
+        List<Arbitro> arbitros = arbitroRepository.findArbitrosSinPartidos();
+
+        return arbitros.stream()
+                .map(ArbitroResponse::fromEntity)  // ← Ahora sí funciona
+                .collect(Collectors.toList());
+    }
+
     @Transactional
-    public void asignarArbitroAPartido(Long arbitroId, Long partidoId) {
-        Arbitro arbitro = arbitroRepository.findById(arbitroId)
+    public void asignarArbitroAPartido(AsignarArbitroDTO dto) {
+        Arbitro arbitro = arbitroRepository.findById(dto.getArbitroId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Árbitro no encontrado"));
-        Partido partido = partidoRepository.findById(partidoId)
+
+        Partido partido = partidoRepository.findById(dto.getPartidoId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Partido no encontrado"));
+
+        // Verificar que el partido no tenga ya un acta
+        if (partido.getActa() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Este partido ya tiene un acta finalizada");
+        }
 
         partido.setArbitro(arbitro);
         partidoRepository.save(partido);
@@ -242,6 +273,24 @@ public class AdminService {
         } catch (MessagingException e) {
             log.warn("Email no enviado al árbitro: {}", e.getMessage());
         }
+
+        log.info("Árbitro {} asignado al partido {}", arbitro.getNombre(), partido.getId());
+    }
+
+    @Transactional
+    public void desasignarArbitro(Long partidoId) {
+        Partido partido = partidoRepository.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Partido no encontrado"));
+
+        if (partido.getActa() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede desasignar el árbitro porque el partido ya tiene acta");
+        }
+
+        partido.setArbitro(null);
+        partidoRepository.save(partido);
+        log.info("Árbitro desasignado del partido {}", partidoId);
     }
 
     // ── GESTIÓN DE PARTIDOS ───────────────────────────────
@@ -257,7 +306,7 @@ public class AdminService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un equipo no puede jugar contra sí mismo");
         }
 
-        partido.setEstado(EstadoPartido.PROGRAMADO);
+        partido.setEstado(EstadoPartido.PROGRAMADO.name());
         return partidoRepository.save(partido);
     }
 
@@ -268,7 +317,7 @@ public class AdminService {
 
         partido.setFecha(partidoActualizado.getFecha());
         partido.setPabellon(partidoActualizado.getPabellon());
-        partido.setDireccionPabellon(partidoActualizado.getDireccionPabellon());
+        partido.setUbicacion(partidoActualizado.getUbicacion());
         partido.setLiga(partidoActualizado.getLiga());
 
         return partidoRepository.save(partido);
@@ -301,7 +350,7 @@ public class AdminService {
         dtoBase.setNombreRival(null); // Se seteará por cada usuario
         dtoBase.setFecha(partido.getFecha());
         dtoBase.setPabellon(partido.getPabellon());
-        dtoBase.setDireccionPabellon(partido.getDireccionPabellon());
+        dtoBase.setDireccionPabellon(partido.getUbicacion());
 
         int emailsEnviados = 0;
 
@@ -314,7 +363,7 @@ public class AdminService {
                     partido.getEquipoVisitante().getNombre());
             dtoArbitro.setFecha(partido.getFecha());
             dtoArbitro.setPabellon(partido.getPabellon());
-            dtoArbitro.setDireccionPabellon(partido.getDireccionPabellon());
+            dtoArbitro.setDireccionPabellon(partido.getUbicacion());
 
             try {
                 emailService.enviarRecordatorioPartido(dtoArbitro);
@@ -351,7 +400,7 @@ public class AdminService {
             dtoEntrenador.setNombreRival(nombreRival);
             dtoEntrenador.setFecha(partido.getFecha());
             dtoEntrenador.setPabellon(partido.getPabellon());
-            dtoEntrenador.setDireccionPabellon(partido.getDireccionPabellon());
+            dtoEntrenador.setDireccionPabellon(partido.getUbicacion());
 
             try {
                 emailService.enviarRecordatorioPartido(dtoEntrenador);
@@ -371,7 +420,7 @@ public class AdminService {
                 dtoJugador.setNombreRival(nombreRival);
                 dtoJugador.setFecha(partido.getFecha());
                 dtoJugador.setPabellon(partido.getPabellon());
-                dtoJugador.setDireccionPabellon(partido.getDireccionPabellon());
+                dtoJugador.setDireccionPabellon(partido.getUbicacion());
 
                 try {
                     emailService.enviarRecordatorioPartido(dtoJugador);
@@ -390,9 +439,7 @@ public class AdminService {
      * Envía recordatorios para todos los partidos de un día específico
      */
     public void enviarRecordatoriosPartidosDelDia(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        LocalDate fechaInicioDate = fechaInicio.toLocalDate();
-        LocalDate fechaFinDate = fechaFin.toLocalDate();
-        List<Partido> partidos = partidoRepository.findByFechaBetween(fechaInicioDate, fechaFinDate);
+        List<Partido> partidos = partidoRepository.findByFechaBetween(fechaInicio, fechaFin);
 
         for (Partido partido : partidos) {
             enviarRecordatorioPartido(partido.getId());
@@ -421,7 +468,7 @@ public class AdminService {
                 partido.getEquipoVisitante().getNombre());
         dto.setFecha(partido.getFecha());
         dto.setPabellon(partido.getPabellon());
-        dto.setDireccionPabellon(partido.getDireccionPabellon());
+        dto.setDireccionPabellon(partido.getUbicacion());
 
         try {
             emailService.enviarRecordatorioPartido(dto);

@@ -92,21 +92,26 @@ public class EntrenadorService {
     }
 
     // Crear entrenador desde registro (con código)
+    // En EntrenadorService.crearDesdeRegistro()
+
     @Transactional
     public Entrenador crearDesdeRegistro(RegisterEntrenadorDTO dto, Usuario usuario) {
         log.info("Creando entrenador desde registro con código: {}", dto.getCodigoEntrenador());
 
-        if (dto.getCodigoEntrenador() == null || dto.getCodigoEntrenador().isEmpty()) {
+        // Verificar que el usuario tiene username
+        if (usuario.getUsername() == null || usuario.getUsername().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El código de entrenador es obligatorio");
+                    "El usuario no tiene username asignado");
         }
 
-        if (!dto.getCodigoEntrenador().startsWith(CODIGO_PREFIX)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Código de entrenador inválido. Debe comenzar con " + CODIGO_PREFIX);
-        }
+        log.info("   Username del usuario: {}", usuario.getUsername());
+        log.info("   Email del usuario: {}", usuario.getEmail());
 
-        Entrenador entrenador = new Entrenador();
+        // Buscar o crear entrenador
+        Entrenador entrenador = entrenadorRepository.findByCodigoEntrenador(dto.getCodigoEntrenador())
+                .orElse(new Entrenador());
+
+        // Asignar datos del usuario
         entrenador.setNombre(dto.getNombre());
         entrenador.setApellido(dto.getApellido());
         entrenador.setUsername(usuario.getUsername());
@@ -119,78 +124,86 @@ public class EntrenadorService {
         entrenador.setUsuario(usuario);
 
         Entrenador saved = entrenadorRepository.save(entrenador);
-        log.info("Entrenador creado desde registro con ID: {}", saved.getId());
+        log.info("✅ Entrenador creado con ID: {}, Username: {}", saved.getId(), saved.getUsername());
 
         return saved;
     }
 
-    // Asignar equipo a entrenador
+    // Aplicacion/Services/EntrenadorService.java
+
     @Transactional
     public EntrenadorEquipoDTO asignarEquipoAEntrenador(AsignarEquipoDTO dto, String adminUsername) {
         log.info("Admin {} asignando equipo {} a entrenador con código {}",
                 adminUsername, dto.getEquipoId(), dto.getCodigoEntrenador());
 
-        Usuario admin = userRepository.findByUsername(adminUsername);
-        if (admin == null || admin.getRole() != Roles.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Solo administradores pueden asignar equipos");
-        }
-
+        // Buscar al entrenador por su código
         Entrenador entrenador = entrenadorRepository.findByCodigoEntrenador(dto.getCodigoEntrenador())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Entrenador no encontrado con el código: " + dto.getCodigoEntrenador()));
+                        "Entrenador no encontrado con código: " + dto.getCodigoEntrenador()));
 
+        // Buscar el equipo
         Equipo equipo = equipoRepository.findById(dto.getEquipoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Equipo no encontrado"));
+                        "Equipo no encontrado con ID: " + dto.getEquipoId()));
 
+        // ✅ Verificar si el equipo ya tiene entrenador
         if (equipo.getEntrenador() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El equipo '" + equipo.getNombre() + "' ya tiene un entrenador asignado");
         }
 
+        // ✅ Verificar si el entrenador ya tiene equipo
         if (entrenador.getEquipo() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El entrenador '" + entrenador.getNombre() + "' ya tiene un equipo asignado");
         }
 
-        entrenador.setEquipo(equipo);
-        equipo.setEntrenador(entrenador);
+        // ✅ ASIGNAR EN AMBAS DIRECCIONES
+        entrenador.setEquipo(equipo);  // Entrenador → Equipo
+        equipo.setEntrenador(entrenador);  // Equipo → Entrenador (importante!)
 
         entrenadorRepository.save(entrenador);
         equipoRepository.save(equipo);
 
-        log.info("Equipo '{}' asignado a entrenador '{}'", equipo.getNombre(), entrenador.getNombre());
+        log.info("✅ Equipo '{}' asignado a entrenador '{}'", equipo.getNombre(), entrenador.getNombre());
 
-        EntrenadorEquipoDTO response = new EntrenadorEquipoDTO();
-        response.setEntrenadorId(entrenador.getId());
-        response.setNombreEntrenador(entrenador.getNombre());
-        response.setApellido(entrenador.getApellido());
-        response.setEmail(entrenador.getEmail());
-        response.setUsername(entrenador.getUsername());
-        response.setEquipoId(equipo.getId());
-        response.setNombreEquipo(equipo.getNombre());
-        response.setNombreEstadio(equipo.getNombreEstadio());
-        response.setNombreLiga(equipo.getLiga() != null ? equipo.getLiga().getNombreLiga() : "Sin liga");
-        response.setTieneEquipo(true);
+        // Verificar que se guardó correctamente
+        Entrenador verificado = entrenadorRepository.findById(entrenador.getId()).get();
+        log.info("Verificación - Entrenador {} tiene equipo: {}",
+                verificado.getUsername(),
+                verificado.getEquipo() != null ? verificado.getEquipo().getNombre() : "NO");
 
-        return response;
+        return buildResponse(entrenador, equipo);
     }
 
-    // Obtener equipo del entrenador autenticado
-    @Transactional(readOnly = true)
+    // Aplicacion/Services/EntrenadorService.java
+
     public EntrenadorEquipoDTO obtenerMiEquipo(String username) {
+        log.info("🔍 Buscando equipo del entrenador: {}", username);
+
+        // Buscar el entrenador por username
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Entrenador no encontrado"));
+                        "Entrenador no encontrado: " + username));
+
+        log.info("Entrenador encontrado: ID={}, Nombre={}, Equipo={}",
+                entrenador.getId(),
+                entrenador.getNombre(),
+                entrenador.getEquipo() != null ? entrenador.getEquipo().getId() : "NINGUNO");
 
         if (entrenador.getEquipo() == null) {
+            log.warn("Entrenador {} no tiene equipo asignado", username);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Aún no tienes un equipo asignado. Contacta con el administrador.");
+                    "El entrenador no tiene un equipo asignado");
         }
 
         Equipo equipo = entrenador.getEquipo();
+        log.info("Equipo encontrado: ID={}, Nombre={}", equipo.getId(), equipo.getNombre());
 
+        return buildResponse(entrenador, equipo);
+    }
+
+    private EntrenadorEquipoDTO buildResponse(Entrenador entrenador, Equipo equipo) {
         EntrenadorEquipoDTO response = new EntrenadorEquipoDTO();
         response.setEntrenadorId(entrenador.getId());
         response.setNombreEntrenador(entrenador.getNombre());
@@ -202,7 +215,6 @@ public class EntrenadorService {
         response.setNombreEstadio(equipo.getNombreEstadio());
         response.setNombreLiga(equipo.getLiga() != null ? equipo.getLiga().getNombreLiga() : "Sin liga");
         response.setTieneEquipo(true);
-
         return response;
     }
 

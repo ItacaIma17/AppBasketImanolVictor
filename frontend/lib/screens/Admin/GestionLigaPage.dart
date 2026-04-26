@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-import '../../services/LigaService.dart';
+import '../../services/autenticacion_service.dart';
+import '../Liga/LigaService.dart';
 
 class GestionLigasPage extends StatefulWidget {
   const GestionLigasPage({super.key});
@@ -20,6 +21,8 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _temporadaController = TextEditingController();
+  final _paisController = TextEditingController();
+
 
   @override
   void initState() {
@@ -55,15 +58,24 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     }
   }
 
+  // lib/screens/Admin/GestionLigasPage.dart
+
+  // lib/screens/Admin/GestionLigasPage.dart (parte del método crear)
+
   Future<void> _crearLiga() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isLoading = true);
+
     try {
-      await LigaService.crearLiga({
-        'nombreLiga': _nombreController.text,
-        'descripcion': _descripcionController.text,
-        'temporada': _temporadaController.text,
-      });
+      final ligaData = {
+        'nombreLiga': _nombreController.text.trim(),
+        'pais': _paisController.text.trim().isEmpty ? 'España' : _paisController.text.trim(),
+        'numeroEquipos': 0,
+        'temporada': _temporadaController.text.trim(),
+      };
+
+      await LigaService.crearLiga(ligaData);
 
       _limpiarFormulario();
       await _cargarLigas();
@@ -76,6 +88,8 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
       }
     } catch (e) {
       _mostrarError('Error al crear liga: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

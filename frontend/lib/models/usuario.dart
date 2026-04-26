@@ -1,78 +1,85 @@
 // lib/models/usuario.dart
-import '../models/role.dart';
+import 'package:tfg_appfede/models/role.dart';
 
 class Usuario {
   final int? id;
   final String email;
   final String username;
   final String nombre;
-  final String apellido;
-  final String? licencia;  // ← AÑADIDO (nullable porque solo jugadores/entrenadores/arbitros tienen)
+  final String? apellido;
+  final String? licencia;
   final int edad;
   final Role role;
   final bool verificado;
   final bool bloqueado;
-  final String? codigoVerificacion;
-  final DateTime? expiracionCodigo;
-  final String? token;
-  final String? refreshToken;
-  final List<EquipoSiguiendo>? equiposSiguiendo;
-  final List<JugadorSiguiendo>? jugadoresSiguiendo;
 
   Usuario({
     this.id,
     required this.email,
     required this.username,
     required this.nombre,
-    required this.apellido,
-    this.licencia,  // ← AÑADIDO
+    this.apellido,
+    this.licencia,
     required this.edad,
     required this.role,
-    required this.verificado,
-    required this.bloqueado,
-    this.codigoVerificacion,
-    this.expiracionCodigo,
-    this.token,
-    this.refreshToken,
-    this.equiposSiguiendo,
-    this.jugadoresSiguiendo,
+    this.verificado = false,
+    this.bloqueado = false,
   });
 
-  /// Constructor desde JSON (respuesta del backend)
+  // ============================================================
+  // GETTERS ADICIONALES
+  // ============================================================
+
+  bool get isAdmin => role == Role.ADMIN;
+  bool get isEntrenador => role == Role.ENTRENADOR;
+  bool get isJugador => role == Role.JUGADOR;
+  bool get isArbitro => role == Role.ARBITRO;
+
+  bool get tieneLicencia => licencia != null && licencia!.isNotEmpty;
+
+  String get nombreCompleto => '$nombre ${apellido ?? ''}'.trim();
+
+  String get iniciales {
+    String primeraLetra = nombre.isNotEmpty ? nombre[0] : '';
+    String segundaLetra = apellido != null && apellido!.isNotEmpty ? apellido![0] : '';
+    return '$primeraLetra$segundaLetra'.toUpperCase();
+  }
+
+  // ============================================================
+  // FROM JSON
+  // ============================================================
+
   factory Usuario.fromJson(Map<String, dynamic> json) {
+    // Obtener el rol (puede venir como 'role' o 'rol')
+    String roleStr = '';
+    if (json['role'] != null && json['role'] is String) {
+      roleStr = json['role'];
+    } else if (json['rol'] != null && json['rol'] is String) {
+      roleStr = json['rol'];
+    } else {
+      roleStr = 'USUARIO';
+    }
+
+    final role = Role.fromString(roleStr);
+
     return Usuario(
       id: json['id'],
       email: json['email'] ?? '',
       username: json['username'] ?? '',
       nombre: json['nombre'] ?? '',
       apellido: json['apellido'],
-      licencia: json['licencia'],  // ← AÑADIDO
+      licencia: json['licencia'],
       edad: json['edad'] ?? 0,
-      role: json['role'] != null
-          ? Role.fromString(json['role'])
-          : Role.USUARIO,
+      role: role,
       verificado: json['verificado'] ?? false,
       bloqueado: json['bloqueado'] ?? false,
-      codigoVerificacion: json['codigoVerificacion'],
-      expiracionCodigo: json['expiracionCodigo'] != null
-          ? DateTime.tryParse(json['expiracionCodigo'])
-          : null,
-      token: json['token'],
-      refreshToken: json['refreshToken'],
-      equiposSiguiendo: json['listaEquiposSiguiendo'] != null
-          ? (json['listaEquiposSiguiendo'] as List)
-          .map((e) => EquipoSiguiendo.fromJson(e))
-          .toList()
-          : null,
-      jugadoresSiguiendo: json['listaJugadorSiguiendo'] != null
-          ? (json['listaJugadorSiguiendo'] as List)
-          .map((e) => JugadorSiguiendo.fromJson(e))
-          .toList()
-          : null,
     );
   }
 
-  /// Convertir a JSON (para enviar al backend)
+  // ============================================================
+  // TO JSON
+  // ============================================================
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -80,99 +87,29 @@ class Usuario {
       'username': username,
       'nombre': nombre,
       'apellido': apellido,
-      'licencia': licencia,  // ← AÑADIDO
+      'licencia': licencia,
       'edad': edad,
-      'role': role.value,
+      'role': role.name,
       'verificado': verificado,
       'bloqueado': bloqueado,
-      'codigoVerificacion': codigoVerificacion,
-      'expiracionCodigo': expiracionCodigo?.toIso8601String(),
-      'token': token,
-      'refreshToken': refreshToken,
-      'listaEquiposSiguiendo': equiposSiguiendo?.map((e) => e.toJson()).toList(),
-      'listaJugadorSiguiendo': jugadoresSiguiendo?.map((e) => e.toJson()).toList(),
     };
   }
 
-  /// Obtener nombre completo
-  String get nombreCompleto {
-    if (apellido != null && apellido!.isNotEmpty) {
-      return '$nombre $apellido';
-    }
-    return nombre;
-  }
+  // ============================================================
+  // COPY WITH (para actualizaciones parciales)
+  // ============================================================
 
-  /// Obtener iniciales para el avatar
-  String get iniciales {
-    if (apellido != null && apellido!.isNotEmpty && nombre.isNotEmpty) {
-      return '${nombre[0]}${apellido![0]}'.toUpperCase();
-    }
-    if (nombre.isNotEmpty) {
-      return nombre[0].toUpperCase();
-    }
-    return '?';
-  }
-
-  /// Verificar si el usuario tiene licencia (solo para jugadores, entrenadores y árbitros)
-  bool get tieneLicencia {
-    return licencia != null && licencia!.isNotEmpty;
-  }
-
-  /// Verificar si el usuario es admin
-  bool get isAdmin => role == Role.ADMIN;
-
-  /// Verificar si el usuario es entrenador
-  bool get isEntrenador => role == Role.ENTRENADOR;
-
-  /// Verificar si el usuario es árbitro
-  bool get isArbitro => role == Role.ARBITRO;
-
-  /// Verificar si el usuario es jugador
-  bool get isJugador => role == Role.JUGADOR;
-
-  /// Verificar si el usuario es aficionado
-  bool get isAficionado => role == Role.USUARIO;
-
-  /// Verificar si el usuario está autenticado (tiene token)
-  bool get isAuthenticated => token != null && token!.isNotEmpty;
-
-  /// Verificar si la cuenta está completa (verificada y no bloqueada)
-  bool get isActive => verificado && !bloqueado;
-
-  /// Obtener el tipo de licencia según el rol
-  String get tipoLicencia {
-    if (licencia == null || licencia!.isEmpty) return 'Sin licencia';
-
-    switch (role) {
-      case Role.JUGADOR:
-        return 'Licencia de Jugador';
-      case Role.ENTRENADOR:
-        return 'Licencia de Entrenador';
-      case Role.ARBITRO:
-        return 'Licencia Arbitral';
-      default:
-        return 'Licencia';
-    }
-  }
-
-  /// Copiar usuario con campos modificados
   Usuario copyWith({
     int? id,
     String? email,
     String? username,
     String? nombre,
     String? apellido,
-    String? licencia,  // ← AÑADIDO
+    String? licencia,
     int? edad,
     Role? role,
     bool? verificado,
     bool? bloqueado,
-    String? codigoVerificacion,
-    DateTime? expiracionCodigo,
-    String? token,
-    String? refreshToken,
-    List<EquipoSiguiendo>? equiposSiguiendo,
-    List<JugadorSiguiendo>? jugadoresSiguiendo,
   }) {
     return Usuario(
       id: id ?? this.id,
@@ -180,24 +117,17 @@ class Usuario {
       username: username ?? this.username,
       nombre: nombre ?? this.nombre,
       apellido: apellido ?? this.apellido,
-      licencia: licencia ?? this.licencia,  // ← AÑADIDO
+      licencia: licencia ?? this.licencia,
       edad: edad ?? this.edad,
       role: role ?? this.role,
       verificado: verificado ?? this.verificado,
       bloqueado: bloqueado ?? this.bloqueado,
-      codigoVerificacion: codigoVerificacion ?? this.codigoVerificacion,
-      expiracionCodigo: expiracionCodigo ?? this.expiracionCodigo,
-      token: token ?? this.token,
-      refreshToken: refreshToken ?? this.refreshToken,
-      equiposSiguiendo: equiposSiguiendo ?? this.equiposSiguiendo,
-      jugadoresSiguiendo: jugadoresSiguiendo ?? this.jugadoresSiguiendo,
     );
   }
 
-  @override
-  String toString() {
-    return 'Usuario(id: $id, username: $username, nombre: $nombre, role: ${role.value}, verificado: $verificado, licencia: ${licencia ?? "sin licencia"})';
-  }
+  // ============================================================
+  // EQUALS y HASHCODE
+  // ============================================================
 
   @override
   bool operator ==(Object other) {
@@ -207,66 +137,9 @@ class Usuario {
 
   @override
   int get hashCode => id.hashCode;
-}
 
-/// Modelo para equipos que sigue el usuario
-class EquipoSiguiendo {
-  final int id;
-  final String nombre;
-  final String? nombreLiga;
-
-  EquipoSiguiendo({
-    required this.id,
-    required this.nombre,
-    this.nombreLiga,
-  });
-
-  factory EquipoSiguiendo.fromJson(Map<String, dynamic> json) {
-    return EquipoSiguiendo(
-      id: json['id'] ?? 0,
-      nombre: json['nombre'] ?? '',
-      nombreLiga: json['nombreLiga'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'nombreLiga': nombreLiga,
-    };
-  }
-}
-
-/// Modelo para jugadores que sigue el usuario
-class JugadorSiguiendo {
-  final int id;
-  final String nombre;
-  final String? posicion;
-  final String? nombreEquipo;
-
-  JugadorSiguiendo({
-    required this.id,
-    required this.nombre,
-    this.posicion,
-    this.nombreEquipo,
-  });
-
-  factory JugadorSiguiendo.fromJson(Map<String, dynamic> json) {
-    return JugadorSiguiendo(
-      id: json['id'] ?? 0,
-      nombre: json['nombre'] ?? '',
-      posicion: json['posicion'],
-      nombreEquipo: json['nombreEquipo'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'posicion': posicion,
-      'nombreEquipo': nombreEquipo,
-    };
+  @override
+  String toString() {
+    return 'Usuario{id: $id, username: $username, email: $email, nombre: $nombre, role: ${role.name}}';
   }
 }

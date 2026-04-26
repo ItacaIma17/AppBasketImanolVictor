@@ -35,4 +35,9 @@ public interface EntrenadorRepository extends JpaRepository<Entrenador, Long> {
 
     @Query("SELECT e FROM Entrenador e WHERE e.nombre LIKE %:nombre% OR e.apellido LIKE %:nombre%")
     List<Entrenador> searchByNombre(@Param("nombre") String nombre);
+
+    @Query("SELECT e FROM Entrenador e WHERE e.usuario.id = :usuarioId")
+    Optional<Entrenador> findByUsuarioId(@Param("usuarioId") Long usuarioId);
+
+
 }

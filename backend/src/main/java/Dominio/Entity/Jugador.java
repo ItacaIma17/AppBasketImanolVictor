@@ -46,4 +46,19 @@ public class Jugador {
     @ManyToOne
     @JoinColumn(name = "equipo_id")
     private Equipo equipo;
+
+    @Column(nullable = false)
+    private int puntosTotales = 0;
+
+    @Column(nullable = false)
+    private int rebotesTotales = 0;
+
+    @Column(nullable = false)
+    private int asistenciasTotales = 0;
+
+    @Column(nullable = false)
+    private int robosTotales = 0;
+
+    @Column(nullable = false)
+    private int partidosJugados = 0;
 }

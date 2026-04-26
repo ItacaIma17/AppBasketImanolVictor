@@ -5,9 +5,10 @@ import 'package:tfg_appfede/models/equipo.dart';
 import 'package:tfg_appfede/models/jugador.dart';
 import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/Jugadores.dart';
-import 'package:tfg_appfede/services/logicaEquipo.dart';
-import 'package:tfg_appfede/services/logicaJugador.dart';
+
 import 'package:tfg_appfede/services/PartidoService.dart';
+import 'package:tfg_appfede/services/equipoService.dart';
+import 'package:tfg_appfede/services/jugadorService.dart';
 
 class EquipoPage extends StatefulWidget {
   final int equipoId;
@@ -39,80 +40,83 @@ class _EquipoPageState extends State<EquipoPage> {
   }
 
   void _cargarDatos() async {
-    try {
-      // Cargar equipo
-      final logicaEquipo = LogicaEquipo();
-      await logicaEquipo.cargarEquipos();
-      final equipo = logicaEquipo.buscarPorId(widget.equipoId);
-      
-      // Cargar jugadores del equipo
-      final logicaJugador = LogicaJugador();
-      await logicaJugador.cargarJugadores();
-      final jugadores = logicaJugador.obtenerJugadoresPorEquipo(widget.equipoId);
-      
-      // Cargar partidos en los que participa el equipo
-      final local = await PartidoService.obtenerPartidosPorEquipoLocal(widget.equipoId);
-      final visitante = await PartidoService.obtenerPartidosPorEquipoVisitante(widget.equipoId);
-      
-      final Set<Partido> partidosSet = {};
-      partidosSet.addAll(local);
-      partidosSet.addAll(visitante);
-      final partidos = partidosSet.toList();
-      
-      // Calcular estadísticas
-      int victorias = 0;
-      int derrotas = 0;
-      double totalPuntosAFavor = 0;
-      double totalPuntosEnContra = 0;
-      int partidosJugados = 0;
-      
-      for (final partido in partidos) {
-       if (partido.estado == 'PROGRAMADO') continue;
-        
-        partidosJugados++;
-        final esLocal = int.tryParse(partido.idLocal) == widget.equipoId;
-        if (esLocal) {
-          totalPuntosAFavor += partido.puntosLocal;
-          totalPuntosEnContra += partido.puntosVisitante;
-          if (partido.puntosLocal > partido.puntosVisitante) {
-            victorias++;
-          } else if (partido.puntosLocal < partido.puntosVisitante) {
-            derrotas++;
-          }
-        } else {
-          totalPuntosAFavor += partido.puntosVisitante;
-          totalPuntosEnContra += partido.puntosLocal;
-          if (partido.puntosVisitante > partido.puntosLocal) {
-            victorias++;
-          } else if (partido.puntosVisitante < partido.puntosLocal) {
-            derrotas++;
-          }
-        }
+  try {
+    // Cargar equipo desde backend
+    final equipo = await EquipoService.obtenerEquipo(widget.equipoId);
+
+    // Cargar jugadores del equipo
+    final jugadores = await JugadorService.listarJugadoresPorEquipo(widget.equipoId);
+
+    // Cargar partidos del equipo
+    final local = await PartidoService.obtenerPartidosPorEquipoLocal(widget.equipoId);
+    final visitante = await PartidoService.obtenerPartidosPorEquipoVisitante(widget.equipoId);
+
+    // Unificar sin duplicados
+    final Set<Partido> partidosSet = {};
+    partidosSet.addAll(local);
+    partidosSet.addAll(visitante);
+    final partidos = partidosSet.toList();
+
+    // Calcular estadísticas
+    int victorias = 0;
+    int derrotas = 0;
+    double totalPuntosAFavor = 0;
+    double totalPuntosEnContra = 0;
+    int partidosJugados = 0;
+
+    for (final partido in partidos) {
+      if (partido.estado == 'PROGRAMADO') continue;
+
+      partidosJugados++;
+
+      final esLocal = int.parse(partido.idLocal) == widget.equipoId;
+
+      if (esLocal) {
+        totalPuntosAFavor += partido.puntosLocal;
+        totalPuntosEnContra += partido.puntosVisitante;
+
+        if (partido.puntosLocal > partido.puntosVisitante) victorias++;
+        else derrotas++;
+      } else {
+        totalPuntosAFavor += partido.puntosVisitante;
+        totalPuntosEnContra += partido.puntosLocal;
+
+        if (partido.puntosVisitante > partido.puntosLocal) victorias++;
+        else derrotas++;
       }
-      
-      final divisor = partidosJugados > 0 ? partidosJugados : 1;
-      final puntosAFavor = totalPuntosAFavor / divisor;
-      final puntosEnContra = totalPuntosEnContra / divisor;
-      
-      setState(() {
-        _equipo = equipo;
-        _jugadores = jugadores;
-        _partidos = partidos;
-        _victorias = victorias;
-        _derrotas = derrotas;
-        _puntosAFavor = puntosAFavor;
-        _puntosEnContra = puntosEnContra;
-        _cargando = false;
-      });
-      
-      if (equipo != null) {
-        _esFavorito = FavoritosManager().esEquipoFavorito(equipo.nombre);
-      }
-    } catch (e) {
-      print("Error cargando datos del equipo: $e");
-      setState(() => _cargando = false);
     }
+
+    final divisor = partidosJugados > 0 ? partidosJugados : 1;
+    final puntosAFavor = totalPuntosAFavor / divisor;
+    final puntosEnContra = totalPuntosEnContra / divisor;
+
+    // ============================
+    // 5. Actualizar estado
+    // ============================
+    setState(() {
+      _equipo = equipo;
+      _jugadores = jugadores;
+      _partidos = partidos;
+      _victorias = victorias;
+      _derrotas = derrotas;
+      _puntosAFavor = puntosAFavor;
+      _puntosEnContra = puntosEnContra;
+      _cargando = false;
+    });
+
+    // ============================
+    // 6. Favoritos
+    // ============================
+    if (equipo != null) {
+      _esFavorito = FavoritosManager().esEquipoFavorito(equipo.nombre);
+    }
+
+  } catch (e) {
+    print("Error cargando datos del equipo: $e");
+    setState(() => _cargando = false);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

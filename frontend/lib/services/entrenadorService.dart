@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/entrenador.dart';
 import '../models/entrenadorEquipo.dart';
+import '../models/equipo.dart';
+import '../models/jugador.dart';
 import 'autenticacion_service.dart';
 
 class EntrenadorService {
@@ -28,6 +30,15 @@ class EntrenadorService {
     } else {
       throw Exception('Error al generar código: ${response.statusCode}');
     }
+  }
+
+  static Map<String, String> get _headers {
+    final headers = {'Content-Type': 'application/json'};
+    final token = AutenticacionService.token;
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
   }
 
   // Crear entrenador (admin)
@@ -79,24 +90,81 @@ class EntrenadorService {
   }
 
   // Obtener mi equipo (entrenador autenticado)
-  static Future<EntrenadorEquipo> obtenerMiEquipo() async {
-    final token = AutenticacionService.token;
-    if (token == null) throw Exception('No autenticado');
+  static Future<Map<String, dynamic>> obtenerMiEquipo() async {
+    try {
+      final token = AutenticacionService.token;
+      if (token == null) {
+        throw Exception('No hay sesión activa');
+      }
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/entrenadores/mi-equipo'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiUrl}/entrenadores/mi-equipo'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
 
-    if (response.statusCode == 200) {
-      return EntrenadorEquipo.fromJson(json.decode(response.body));
-    } else if (response.statusCode == 404) {
-      throw Exception('Aún no tienes equipo asignado');
-    } else {
-      throw Exception('Error al obtener equipo');
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 404) {
+        // No tiene equipo - esto es normal, no es error
+        throw Exception('no_tiene_equipo');
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('No autorizado');
+      } else {
+        throw Exception('Error al obtener equipo: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error obteniendo mi equipo: $e');
+      rethrow;
+    }
+  }
+
+
+  // lib/services/entrenadorService.dart
+
+  // lib/services/entrenadorService.dart
+
+  static Future<List<Jugador>> getMisJugadores() async {
+    try {
+      final token = AutenticacionService.token;
+      if (token == null) {
+        print('❌ No hay token disponible');
+        return [];
+      }
+
+      print('📡 Obteniendo jugadores del entrenador');
+      print('🔑 Token disponible: ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
+
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiUrl}/entrenadores/mis-jugadores'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',  // ← Asegurar que se envía
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      print('📡 Status code: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print('✅ Jugadores encontrados: ${data.length}');
+        return data.map((j) => Jugador.fromJson(j)).toList();
+      } else if (response.statusCode == 401) {
+        print('❌ Token expirado o inválido, refrescando...');
+        // Intentar refrescar el token
+        final refreshed = await AutenticacionService.refreshTokenUser();
+        if (refreshed) {
+          print('✅ Token refrescado, reintentando...');
+          return await getMisJugadores();  // Reintentar
+        }
+        return [];
+      } else {
+        print('❌ Error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('❌ Error obteniendo jugadores: $e');
+      return [];
     }
   }
 
@@ -123,22 +191,25 @@ class EntrenadorService {
 
   // Listar entrenadores sin equipo (admin)
   static Future<List<Entrenador>> listarEntrenadoresSinEquipo() async {
-    final token = AutenticacionService.token;
-    if (token == null) throw Exception('No autenticado');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/entrenadores/sin-equipo'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/entrenadores/sin-equipo'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Entrenador.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al listar entrenadores sin equipo');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Entrenador.fromJson(e)).toList();
+      } else if (response.statusCode == 403) {
+        print('❌ No autorizado para ver entrenadores');
+        return [];
+      } else {
+        print('❌ Error al cargar entrenadores: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('❌ Excepción al cargar entrenadores: $e');
+      return [];
     }
   }
 
@@ -160,6 +231,25 @@ class EntrenadorService {
       return data.map((json) => Entrenador.fromJson(json)).toList();
     } else {
       throw Exception('Error al listar entrenadores con equipo');
+    }
+  }
+
+  static Future<List<Equipo>> listarEquiposSinEntrenador() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/equipos/sin-entrenador'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Equipo.fromJson(e)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('❌ Excepción al cargar equipos: $e');
+      return [];
     }
   }
 

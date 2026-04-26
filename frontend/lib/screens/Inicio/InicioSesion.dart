@@ -1,6 +1,11 @@
+// lib/screens/Inicio/InicioSesion.dart
+
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/screens/Admin/PanelAdminPage.dart';
+import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 import 'package:tfg_appfede/screens/InicioApp.dart';
+import 'package:tfg_appfede/screens/Jugadores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'Registro.dart';
 
@@ -16,10 +21,10 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
   final TextEditingController passCtrl = TextEditingController();
 
   bool mostrarPassword = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    // Liberar recursos de los controladores
     emailCtrl.dispose();
     passCtrl.dispose();
     super.dispose();
@@ -40,7 +45,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Botón atrás (opcional si hay navegación previa)
+                // Botón atrás
                 IconButton(
                   icon: const Icon(Icons.arrow_back, color: AppColors.blanco),
                   onPressed: () => Navigator.pop(context),
@@ -165,8 +170,10 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: _handleLogin,
-                      child: const Text(
+                      onPressed: _isLoading ? null : _handleLogin,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
                         "INICIAR SESIÓN",
                         style: TextStyle(
                           color: AppColors.blanco,
@@ -222,13 +229,12 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 30),
 
-                // Registro - CON CURSOR POINTER
+                // Registro
                 Center(
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
                       onTap: () {
-                        // Navegar a pantalla de registro
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const Registro()),
@@ -254,7 +260,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                     cursor: SystemMouseCursors.click,
                     child: TextButton(
                       onPressed: () {
-                        // Navegar a la app como invitado (funcionalidad limitada)
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => const InicioPage()),
@@ -280,7 +285,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     );
   }
 
-  /// Decoración de los campos de entrada
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
@@ -294,7 +298,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     );
   }
 
-  /// Widget de botón de redes sociales
   Widget _socialButton({
     required String text,
     required IconData icon,
@@ -317,7 +320,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     );
   }
 
-  /// Manejar el inicio de sesión
+  /// Manejar el inicio de sesión con redirección por rol
   void _handleLogin() async {
     // Validaciones básicas
     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
@@ -330,35 +333,88 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
       return;
     }
 
-    // Intentar iniciar sesión usando el servicio
-    bool loginExitoso = await AutenticacionService.login(
-      emailCtrl.text,
-      passCtrl.text,
-    );
+    setState(() => _isLoading = true);
 
-    if (loginExitoso) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Inicio de sesión exitoso'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 1),
-        ),
+    try {
+      // Intentar iniciar sesión
+      bool loginExitoso = await AutenticacionService.login(
+        emailCtrl.text,
+        passCtrl.text,
       );
 
-      // Navegar a la pantalla de inicio
-      Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const InicioPage()),
+      if (loginExitoso && mounted) {
+        // Obtener el usuario actual después del login
+        final usuario = AutenticacionService.usuarioActual;
+
+        print('✅ Login exitoso para: ${usuario?.username}');
+        print('🎭 Rol del usuario: ${usuario?.role}');
+        print('👑 Es administrador: ${usuario?.isAdmin}');
+
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inicio de sesión exitoso'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
         );
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email o contraseña incorrectos'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+        // Redirigir según el rol
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (mounted) {
+          if (usuario?.isAdmin == true) {
+            // Redirigir al Panel de Administrador
+            print('👑 Redirigiendo a PanelAdminPage');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PanelAdminPage()),
+            );
+          } else if (usuario?.isEntrenador == true) {
+            // Redirigir al Panel de Entrenador
+            print('🏆 Redirigiendo a PanelEntrenadorPage');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PanelEntrenadorPage()),
+            );
+          } else if (usuario?.isJugador == true) {
+            // Redirigir al Panel de Jugador
+            print('🏀 Redirigiendo a PanelJugadorPage');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const InicioPage()),
+            );
+          } else {
+            // Redirigir a Inicio normal
+            print('👤 Redirigiendo a InicioPage');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const InicioPage()),
+            );
+          }
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email o contraseña incorrectos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error en login: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

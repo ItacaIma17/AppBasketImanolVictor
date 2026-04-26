@@ -4,7 +4,7 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 import '../../models/equipo.dart';
 import '../../services/equipoService.dart';
-import '../../services/LigaService.dart';
+import '../Liga/LigaService.dart';
 
 
 class GestionEquiposPage extends StatefulWidget {
@@ -30,8 +30,8 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
   int? _ligaIdSeleccionada;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _cargarDatos();
   }
 
@@ -75,29 +75,37 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
-      final equipo = Equipo(
-          nombre: _nombreController.text,
-          nombreEstadio: _estadioController.text,
-          ciudad: _ciudadController.text,
-          anoFundacion: int.parse(_anoController.text),
-          escudoUrl: _escudoUrlController.text.isNotEmpty ? _escudoUrlController.text : null,
-    ligaId: _ligaIdSeleccionada,
-    );
+      // En el frontend, asegurar que el año no sea null
+      final equipoData = {
+        'nombre': _nombreController.text.trim(),
+        'ciudad': _ciudadController.text.trim(),
+        'nombreEstadio': _estadioController.text.trim(),
+        'anoFundacion': int.tryParse(_anoController.text.trim()) ?? 0,  // ← Valor por defecto 0 si es null
+        'escudoUrl': _escudoUrlController.text.trim().isEmpty ? null : _escudoUrlController.text.trim(),
+        'ligaId': _ligaIdSeleccionada,
+      };
 
-    await EquipoService.crearEquipo(equipo);
+      print('📝 Datos del equipo a enviar: $equipoData');
 
-    _limpiarFormulario();
-    await _cargarDatos();
+      await EquipoService.crearEquipo(equipoData);
 
-    if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('✅ Equipo creado exitosamente'), backgroundColor: Colors.green),
-    );
-    Navigator.pop(context); // Cerrar diálogo
-    }
+      _limpiarFormulario();
+      await _cargarDatos();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Equipo creado exitosamente'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context); // Cerrar diálogo
+      }
     } catch (e) {
-    _mostrarError('Error al crear equipo: $e');
+      print('❌ Error creando equipo: $e');
+      _mostrarError('Error al crear equipo: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -131,7 +139,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
                     escudoUrl: _escudoUrlController.text.isNotEmpty ? _escudoUrlController.text : null,
               ligaId: _ligaIdSeleccionada,
               );
-              await EquipoService.actualizarEquipo(equipo.id!, equipoActualizado);
+              await EquipoService.actualizarEquipo(equipo.id!, equipoActualizado as Map<String, dynamic>);
               Navigator.pop(context);
               await _cargarDatos();
 

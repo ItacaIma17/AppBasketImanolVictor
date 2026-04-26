@@ -2,6 +2,7 @@ package Dominio.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "eventos_partido")
@@ -20,17 +21,21 @@ public class EventoPartido {
     @JoinColumn(name = "jugador_id")
     private Jugador jugador;
 
+    @Column(nullable = false)
     private String nombreJugador;
 
+    @Column(nullable = false)
     private String nombreEquipo;
 
     @Column(nullable = false)
-    private int minuto;
+    private Integer minuto;
 
-    @Enumerated(EnumType.STRING)
-    private TipoEevento tipo;
+    @Column(nullable = false)
+    private String tipo;
 
     private String descripcion;
+
+    private Integer puntos;
+
+    private LocalDateTime timestamp;
 }
-
-

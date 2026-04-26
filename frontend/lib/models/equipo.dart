@@ -1,36 +1,45 @@
-// lib/models/equipo/equipo.dart
+// lib/models/equipo.dart
+import 'jugador.dart';
+
 class Equipo {
   final int? id;
   final id_liga;
   final String nombre;
-  final String nombreEstadio;
   final String ciudad;
-  final int anoFundacion;
+  final String nombreEstadio;
+  final int? anoFundacion;
   final String? escudoUrl;
-  final int? ligaId;
   final String? nombreLiga;
-  final int? entrenadorId;
+  final int? ligaId;
   final String? nombreEntrenador;
-  final int numeroJugadores;
+  final int? entrenadorId;
+  final bool tieneEntrenador;
+  final String? codigoSolicitud;
+  final bool solicitudPendiente;
+  final int? numeroJugadores;
+  final List<Jugador>? jugadores;
   final double puntosFavor;
   final double puntosContra;
   final int victorias;
   final int derrotas;
 
-
   Equipo({
     this.id,
     this.id_liga,
     required this.nombre,
-    required this.nombreEstadio,
     required this.ciudad,
-    required this.anoFundacion,
+    required this.nombreEstadio,
+    this.anoFundacion,
     this.escudoUrl,
-    this.ligaId,
     this.nombreLiga,
-    this.entrenadorId,
+    this.ligaId,
     this.nombreEntrenador,
-    this.numeroJugadores = 0,
+    this.entrenadorId,
+    this.tieneEntrenador = false,
+    this.codigoSolicitud,
+    this.solicitudPendiente = false,
+    this.numeroJugadores,
+    this.jugadores,
     this.puntosFavor = 0,
     this.puntosContra = 0,
     this.victorias = 0,
@@ -42,22 +51,30 @@ class Equipo {
       id: json['id'],
       id_liga: json['id_liga'],
       nombre: json['nombre'] ?? '',
-
-      nombreEstadio: json['nombreEstadio'] ?? '',
       ciudad: json['ciudad'] ?? '',
-      anoFundacion: json['añoFundacion'] ?? 0,
+      nombreEstadio: json['nombreEstadio'] ?? '',
+      anoFundacion: json['anoFundacion'] ?? json['añoFundacion'],
       escudoUrl: json['escudoUrl'],
-      ligaId: json['ligaId'],
       nombreLiga: json['nombreLiga'],
-      entrenadorId: json['entrenadorId'],
+      ligaId: json['ligaId'],
       nombreEntrenador: json['nombreEntrenador'],
-      numeroJugadores: json['numeroJugadores'] ?? 0,
+      entrenadorId: json['entrenadorId'],
+      tieneEntrenador: json['tieneEntrenador'] ?? false,
+      codigoSolicitud: json['codigoSolicitud'],
+      solicitudPendiente: json['solicitudPendiente'] ?? false,
+      numeroJugadores: json['numeroJugadores'],
       puntosFavor: json['puntos'] ?? 0,
       puntosContra: json['puntosContra'] ?? 0,
       victorias: json['victorias'] ?? 0,
       derrotas: json['derrotas'] ?? 0,
+      jugadores: json['jugadores'] != null
+          ? (json['jugadores'] as List)
+          .map((j) => Jugador.fromJson(j))
+          .toList()
+          : [],
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {

@@ -4,7 +4,7 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 import '../../models/equipo.dart';
 import '../../services/equipoService.dart';
-import '../../services/LigaService.dart';
+import '../Liga/LigaService.dart';
 
 class CrearEquipoPage extends StatefulWidget {
   const CrearEquipoPage({super.key});
@@ -73,7 +73,7 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
     ligaId: _ligaId,
     );
 
-    await EquipoService.crearEquipo(equipo);
+    await EquipoService.crearEquipo(equipo as Map<String, dynamic>);
 
     if (mounted) {
     ScaffoldMessenger.of(context).showSnackBar(

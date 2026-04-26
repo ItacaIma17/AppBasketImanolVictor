@@ -1,6 +1,7 @@
 // lib/screens/Admin/PanelAdminPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';

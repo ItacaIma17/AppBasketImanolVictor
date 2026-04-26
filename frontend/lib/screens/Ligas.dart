@@ -1,12 +1,11 @@
-// lib/services/liga_service.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
-import 'package:tfg_appfede/services/LigaService.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 import 'Clasificacion.dart';
+import 'Liga/LigaService.dart';
 
 class LigasPage extends StatefulWidget {
   const LigasPage({super.key});
@@ -20,73 +19,73 @@ class _LigasPageState extends State<LigasPage> {
   bool _cargando = true;
   String _categoriaSeleccionada = 'Seleccionar categoría...';
 
-@override
-void initState() {
-  super.initState();
-  _cargarLigas();
-}
-
-void _cargarLigas() async {
-  try {
-    final ligas = await LigaService.listarLigas();
-    setState(() {
-      _ligasBD = ligas;
-      _cargando = false;
-    });
-  } catch (e) {
-    print("Error cargando ligas: $e");
-    setState(() => _cargando = false);
+  @override
+  void initState() {
+    super.initState();
+    _cargarLigas();
   }
-}
+
+  void _cargarLigas() async {
+    try {
+      final ligas = await LigaService.listarLigas();
+      setState(() {
+        _ligasBD = ligas;
+        _cargando = false;
+      });
+    } catch (e) {
+      print("Error cargando ligas: $e");
+      setState(() => _cargando = false);
+    }
+  }
 
 
   @override
-Widget build(BuildContext context) {
-  final categoriasLimpias = _ligasBD
-      .map((l) => (l['nombreLiga'] ?? '').toString().trim())
-      .where((nombre) => nombre.isNotEmpty)
-      .toSet() // elimina duplicados
-      .toList()
-    ..sort();
+  Widget build(BuildContext context) {
+    final categoriasLimpias = _ligasBD
+        .map((l) => (l['nombreLiga'] ?? '').toString().trim())
+        .where((nombre) => nombre.isNotEmpty)
+        .toSet() // elimina duplicados
+        .toList()
+      ..sort();
 
 
-  if (!categoriasLimpias.contains(_categoriaSeleccionada)) {
-    _categoriaSeleccionada = 'Seleccionar categoría...';
-  }
+    if (!categoriasLimpias.contains(_categoriaSeleccionada)) {
+      _categoriaSeleccionada = 'Seleccionar categoría...';
+    }
 
-  // FAVORITOS
-  final ligasFavoritas = FavoritosManager()
-      .categoriasFavoritas
-      .map((nombre) => {'categoria': nombre})
-      .toList();
+    // FAVORITOS
+    final ligasFavoritas = FavoritosManager()
+        .categoriasFavoritas
+        .map((nombre) => {'categoria': nombre})
+        .toList();
 
-  return Scaffold(
-    drawer: const MenuLateral(),
-    appBar: const HeaderApp(titulo: "Ligas"),
-    bottomNavigationBar: const BarraInferior(selectedIndex: 0),
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.gradienteAragon,
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Selecciona una liga',
-                      style: TextStyle(
-                        color: AppColors.blanco,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+    return Scaffold(
+      drawer: const MenuLateral(),
+      appBar: const HeaderApp(titulo: "Ligas"),
+      bottomNavigationBar: const BarraInferior(selectedIndex: 0),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.gradienteAragon,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Selecciona una liga',
+                        style: TextStyle(
+                          color: AppColors.blanco,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                     // DROPDOWN
                     if (_cargando)
@@ -129,38 +128,38 @@ Widget build(BuildContext context) {
                         },
                       ),
 
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                    // FAVORITOS
-                    if (ligasFavoritas.isNotEmpty) ...[
-                      Row(
-                        children: const [
-                          Icon(Icons.star, color: AppColors.amarilloAragon),
-                          SizedBox(width: 8),
-                          Text(
-                            'Mis ligas favoritas',
-                            style: TextStyle(
-                              color: AppColors.blanco,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      // FAVORITOS
+                      if (ligasFavoritas.isNotEmpty) ...[
+                        Row(
+                          children: const [
+                            Icon(Icons.star, color: AppColors.amarilloAragon),
+                            SizedBox(width: 8),
+                            Text(
+                              'Mis ligas favoritas',
+                              style: TextStyle(
+                                color: AppColors.blanco,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ...ligasFavoritas
-                          .map((liga) => _buildLigaFavoritaCard(liga)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ...ligasFavoritas
+                            .map((liga) => _buildLigaFavoritaCard(liga)),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
 
   Widget _buildDropdown({

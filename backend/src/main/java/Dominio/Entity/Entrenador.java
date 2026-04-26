@@ -46,7 +46,9 @@ public class Entrenador {
     @JoinColumn(name = "usuario_id", unique = true)
     private Usuario usuario;
 
-    @OneToOne(mappedBy = "entrenador")
+
+    @OneToOne
+    @JoinColumn(name = "equipo_id")
     private Equipo equipo;
 
     // Constructor vacío

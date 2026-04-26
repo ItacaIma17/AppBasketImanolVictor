@@ -1,17 +1,24 @@
 package Aplicacion.Services;
 
-
-import Dominio.Entity.*;
-import Dominio.Repositorys.*;
+import Dominio.Entity.Alineacion;
+import Dominio.Entity.Partido;
+import Dominio.Entity.Entrenador;
+import Dominio.Entity.JugadorAlineacion;
+import Dominio.Entity.Jugador;
+import Dominio.Repositorys.AlineacionRepository;
+import Dominio.Repositorys.PartidoRepository;
+import Dominio.Repositorys.EntrenadorRepository;
+import Dominio.Repositorys.JugadorRepository;
+import Presentacion.DTOS.Alineacion.AlineacionesParaPartidoDTO;
 import Presentacion.DTOS.Entrenador.AlineacionRequestDTO;
 import Presentacion.DTOS.Entrenador.AlineacionResponseDTO;
-import jakarta.transaction.Transactional;
+import Presentacion.DTOS.Partido.AlineacionParaActaDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,133 +30,285 @@ public class AlineacionService {
 
     private final AlineacionRepository alineacionRepository;
     private final PartidoRepository partidoRepository;
-    private final EquipoRepository equipoRepository;
-    private final JugadorRepository jugadorRepository;
     private final EntrenadorRepository entrenadorRepository;
+    private final JugadorRepository jugadorRepository;
 
+    /**
+     * Presentar una nueva alineación
+     */
     @Transactional
-    public AlineacionResponseDTO guardarAlineacion(AlineacionRequestDTO request, String emailEntrenador) {
-        log.info("Guardando alineación para partido: {}", request.getPartidoId());
+    public AlineacionResponseDTO presentarAlineacion(AlineacionRequestDTO request, String username) {
+        log.info("========================================");
+        log.info("🏀 Presentando alineación para partido: {}", request.getPartidoId());
+        log.info("   Entrenador: {}", username);
 
-        // Validar partido
+        // Buscar el entrenador
+        Entrenador entrenador = entrenadorRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Entrenador no encontrado"));
+
+        // Buscar el partido
         Partido partido = partidoRepository.findById(request.getPartidoId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Partido no encontrado"));
 
-        // Validar entrenador
-        Entrenador entrenador = entrenadorRepository.findByEmail(emailEntrenador)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado"));
+        // Verificar que el entrenador pertenece al equipo
+        boolean esEntrenadorLocal = partido.getEquipoLocal().getEntrenador() != null &&
+                partido.getEquipoLocal().getEntrenador().getId().equals(entrenador.getId());
+        boolean esEntrenadorVisitante = partido.getEquipoVisitante().getEntrenador() != null &&
+                partido.getEquipoVisitante().getEntrenador().getId().equals(entrenador.getId());
 
-        // Obtener equipo del entrenador
-        Equipo equipo = entrenador.getEquipo();
-        if (equipo == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El entrenador no tiene equipo asignado");
+        if (!esEntrenadorLocal && !esEntrenadorVisitante) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No puedes presentar alineación para este partido");
         }
 
-        // Validar que el equipo participa en el partido
-        if (!partido.getEquipoLocal().equals(equipo) && !partido.getEquipoVisitante().equals(equipo)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Este equipo no participa en el partido");
+        // Determinar para qué equipo es la alineación
+        Long equipoId = esEntrenadorLocal ?
+                partido.getEquipoLocal().getId() : partido.getEquipoVisitante().getId();
+
+        // Verificar si ya existe una alineación para este equipo en este partido
+        alineacionRepository.findByPartidoIdAndEquipoId(request.getPartidoId(), equipoId)
+                .ifPresent(a -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Ya existe una alineación para este equipo en este partido");
+                });
+
+        // Validar que la alineación tenga 5 titulares
+        if (request.getTitulares() == null || request.getTitulares().size() != 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La alineación debe tener exactamente 5 jugadores titulares");
         }
 
-        // Verificar si ya existe alineación
-        if (alineacionRepository.existsByPartidoAndEquipo(partido, equipo)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una alineación para este partido");
-        }
-
-        // Validar que hay exactamente 5 titulares
-        if (request.getTitulares().size() != 5) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe haber exactamente 5 jugadores titulares");
-        }
-
-        // Crear alineación
+        // Crear la alineación
         Alineacion alineacion = new Alineacion();
         alineacion.setPartido(partido);
-        alineacion.setEquipo(equipo);
+        alineacion.setEquipo(esEntrenadorLocal ? partido.getEquipoLocal() : partido.getEquipoVisitante());
         alineacion.setEntrenador(entrenador);
         alineacion.setFechaPresentacion(LocalDateTime.now());
-        alineacion.setConfirmada(true);
+        alineacion.setConfirmada(request.isConfirmada());
 
-        List<JugadorAlineacion> jugadoresAlineacion = new ArrayList<>();
+        // Procesar jugadores
+        List<JugadorAlineacion> jugadores = new ArrayList<>();
 
-        // Agregar titulares
-        for (Long jugadorId : request.getTitulares()) {
-            Jugador jugador = jugadorRepository.findById(jugadorId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no encontrado: " + jugadorId));
+        // Procesar titulares
+        for (var jugadorReq : request.getTitulares()) {
+            Jugador jugador = jugadorRepository.findById(jugadorReq.getJugadorId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Jugador no encontrado: " + jugadorReq.getJugadorId()));
 
             JugadorAlineacion ja = new JugadorAlineacion();
-            ja.setAlineacion(alineacion);
             ja.setJugador(jugador);
+            ja.setNombreJugador(jugador.getNombre());
+            ja.setApellidoJugador(jugador.getApellido());
+            ja.setDorsal(jugadorReq.getDorsal());
+            ja.setPosicion(jugadorReq.getPosicion());
             ja.setTitular(true);
-            ja.setDorsal(jugador.getDorsal());
-            ja.setPosicion(jugador.getPosicion());
-            jugadoresAlineacion.add(ja);
-        }
-
-        // Agregar suplentes
-        for (Long jugadorId : request.getSuplentes()) {
-            Jugador jugador = jugadorRepository.findById(jugadorId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no encontrado: " + jugadorId));
-
-            JugadorAlineacion ja = new JugadorAlineacion();
             ja.setAlineacion(alineacion);
-            ja.setJugador(jugador);
-            ja.setTitular(false);
-            ja.setDorsal(jugador.getDorsal());
-            ja.setPosicion(jugador.getPosicion());
-            jugadoresAlineacion.add(ja);
+            jugadores.add(ja);
         }
 
-        alineacion.setJugadores(jugadoresAlineacion);
-        alineacion = alineacionRepository.save(alineacion);
+        // Procesar suplentes
+        if (request.getSuplentes() != null) {
+            for (var jugadorReq : request.getSuplentes()) {
+                Jugador jugador = jugadorRepository.findById(jugadorReq.getJugadorId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Jugador no encontrado: " + jugadorReq.getJugadorId()));
 
-        log.info("Alineación guardada con ID: {}", alineacion.getId());
-
-        return toResponse(alineacion);
-    }
-
-    public AlineacionResponseDTO obtenerAlineacion(Long partidoId, String emailEntrenador) {
-        Partido partido = partidoRepository.findById(partidoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
-
-        Entrenador entrenador = entrenadorRepository.findByEmail(emailEntrenador)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado"));
-
-        Equipo equipo = entrenador.getEquipo();
-
-        Alineacion alineacion = alineacionRepository.findByPartidoAndEquipo(partido, equipo)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alineación no encontrada"));
-
-        return toResponse(alineacion);
-    }
-
-    private AlineacionResponseDTO toResponse(Alineacion alineacion) {
-        AlineacionResponseDTO response = new AlineacionResponseDTO();
-        response.setId(alineacion.getId());
-        response.setPartidoId(alineacion.getPartido().getId());
-        response.setEquipoId(alineacion.getEquipo().getId());
-        response.setEquipoNombre(alineacion.getEquipo().getNombre());
-        response.setConfirmada(alineacion.isConfirmada());
-
-        List<AlineacionResponseDTO.JugadorAlineacionDTO> titulares = new ArrayList<>();
-        List<AlineacionResponseDTO.JugadorAlineacionDTO> suplentes = new ArrayList<>();
-
-        for (JugadorAlineacion ja : alineacion.getJugadores()) {
-            AlineacionResponseDTO.JugadorAlineacionDTO dto = new AlineacionResponseDTO.JugadorAlineacionDTO();
-            dto.setId(ja.getJugador().getId());
-            dto.setNombre(ja.getJugador().getNombre());
-            dto.setApellido(ja.getJugador().getApellido());
-            dto.setDorsal(ja.getDorsal());
-            dto.setPosicion(ja.getPosicion());
-
-            if (ja.isTitular()) {
-                titulares.add(dto);
-            } else {
-                suplentes.add(dto);
+                JugadorAlineacion ja = new JugadorAlineacion();
+                ja.setJugador(jugador);
+                ja.setNombreJugador(jugador.getNombre());
+                ja.setApellidoJugador(jugador.getApellido());
+                ja.setDorsal(jugadorReq.getDorsal());
+                ja.setPosicion(jugadorReq.getPosicion());
+                ja.setTitular(false);
+                ja.setAlineacion(alineacion);
+                jugadores.add(ja);
             }
         }
 
-        response.setTitulares(titulares);
-        response.setSuplentes(suplentes);
+        alineacion.setJugadores(jugadores);
+        Alineacion saved = alineacionRepository.save(alineacion);
 
-        return response;
+        log.info("✅ Alineación guardada con ID: {}", saved.getId());
+        log.info("   Titulares: {}", request.getTitulares().size());
+        log.info("   Suplentes: {}", request.getSuplentes() != null ? request.getSuplentes().size() : 0);
+        log.info("========================================");
+
+        return AlineacionResponseDTO.fromEntity(saved);
+    }
+
+    /**
+     * Obtener alineación por partido y equipo
+     */
+    @Transactional(readOnly = true)
+    public AlineacionResponseDTO getAlineacion(Long partidoId, Long equipoId) {
+        log.info("🔍 Buscando alineación para partido: {} y equipo: {}", partidoId, equipoId);
+
+        Alineacion alineacion = alineacionRepository.findByPartidoIdAndEquipoId(partidoId, equipoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se encontró alineación para este equipo en el partido"));
+
+        return AlineacionResponseDTO.fromEntity(alineacion);
+    }
+
+    /**
+     * Obtener ambas alineaciones de un partido (para el árbitro)
+     */
+    @Transactional(readOnly = true)
+    public AlineacionesParaPartidoDTO getAlineacionesPartido(Long partidoId) {
+        log.info("🔍 Buscando alineaciones para partido: {}", partidoId);
+
+        Partido partido = partidoRepository.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Partido no encontrado"));
+
+        Alineacion alineacionLocal = alineacionRepository
+                .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoLocal().getId())
+                .orElse(null);
+
+        Alineacion alineacionVisitante = alineacionRepository
+                .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoVisitante().getId())
+                .orElse(null);
+
+        AlineacionResponseDTO localDTO = alineacionLocal != null ?
+                AlineacionResponseDTO.fromEntity(alineacionLocal) : null;
+        AlineacionResponseDTO visitanteDTO = alineacionVisitante != null ?
+                AlineacionResponseDTO.fromEntity(alineacionVisitante) : null;
+
+        return AlineacionesParaPartidoDTO.fromEntities(
+                localDTO,
+                visitanteDTO,
+                partidoId,
+                partido.getEquipoLocal().getNombre(),
+                partido.getEquipoVisitante().getNombre()
+        );
+    }
+
+    /**
+     * Confirmar una alineación (marcarla como definitiva)
+     */
+    @Transactional
+    public AlineacionResponseDTO confirmarAlineacion(Long id, String username) {
+        log.info("✅ Confirmando alineación ID: {} por entrenador: {}", id, username);
+
+        Alineacion alineacion = alineacionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Alineación no encontrada"));
+
+        // Verificar que el entrenador es el dueño de la alineación
+        if (!alineacion.getEntrenador().getUsername().equals(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No puedes confirmar esta alineación");
+        }
+
+        alineacion.setConfirmada(true);
+        Alineacion saved = alineacionRepository.save(alineacion);
+
+        log.info("✅ Alineación confirmada: {}", id);
+
+        return AlineacionResponseDTO.fromEntity(saved);
+    }
+
+    /**
+     * Obtener alineaciones para el acta del árbitro
+     */
+    @Transactional(readOnly = true)
+    public AlineacionParaActaDTO getAlineacionesParaActa(Long partidoId) {
+        log.info("📋 Obteniendo alineaciones para acta del partido: {}", partidoId);
+
+        Partido partido = partidoRepository.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Partido no encontrado"));
+
+        Alineacion alineacionLocal = alineacionRepository
+                .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoLocal().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Alineación local no encontrada"));
+
+        Alineacion alineacionVisitante = alineacionRepository
+                .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoVisitante().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Alineación visitante no encontrada"));
+
+        return AlineacionParaActaDTO.fromEntities(alineacionLocal, alineacionVisitante);
+    }
+
+    /**
+     * Actualizar alineación (para entrenador)
+     */
+    @Transactional
+    public AlineacionResponseDTO actualizarAlineacion(Long id, AlineacionRequestDTO request, String username) {
+        log.info("✏️ Actualizando alineación ID: {}", id);
+
+        Alineacion alineacion = alineacionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Alineación no encontrada"));
+
+        // Verificar permisos
+        if (!alineacion.getEntrenador().getUsername().equals(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No puedes modificar esta alineación");
+        }
+
+        // Si ya está confirmada, no se puede modificar
+        if (alineacion.isConfirmada()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No se puede modificar una alineación ya confirmada");
+        }
+
+        // Validar titulares
+        if (request.getTitulares() == null || request.getTitulares().size() != 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La alineación debe tener exactamente 5 jugadores titulares");
+        }
+
+        // Limpiar jugadores existentes
+        alineacion.getJugadores().clear();
+
+        // Añadir nuevos jugadores
+        List<JugadorAlineacion> nuevosJugadores = new ArrayList<>();
+
+        for (var jugadorReq : request.getTitulares()) {
+            Jugador jugador = jugadorRepository.findById(jugadorReq.getJugadorId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Jugador no encontrado"));
+
+            JugadorAlineacion ja = new JugadorAlineacion();
+            ja.setJugador(jugador);
+            ja.setNombreJugador(jugador.getNombre());
+            ja.setApellidoJugador(jugador.getApellido());
+            ja.setDorsal(jugadorReq.getDorsal());
+            ja.setPosicion(jugadorReq.getPosicion());
+            ja.setTitular(true);
+            ja.setAlineacion(alineacion);
+            nuevosJugadores.add(ja);
+        }
+
+        if (request.getSuplentes() != null) {
+            for (var jugadorReq : request.getSuplentes()) {
+                Jugador jugador = jugadorRepository.findById(jugadorReq.getJugadorId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Jugador no encontrado"));
+
+                JugadorAlineacion ja = new JugadorAlineacion();
+                ja.setJugador(jugador);
+                ja.setNombreJugador(jugador.getNombre());
+                ja.setApellidoJugador(jugador.getApellido());
+                ja.setDorsal(jugadorReq.getDorsal());
+                ja.setPosicion(jugadorReq.getPosicion());
+                ja.setTitular(false);
+                ja.setAlineacion(alineacion);
+                nuevosJugadores.add(ja);
+            }
+        }
+
+        alineacion.getJugadores().addAll(nuevosJugadores);
+        alineacion.setFechaPresentacion(LocalDateTime.now());
+
+        Alineacion saved = alineacionRepository.save(alineacion);
+        log.info("✅ Alineación actualizada: {}", id);
+
+        return AlineacionResponseDTO.fromEntity(saved);
     }
 }

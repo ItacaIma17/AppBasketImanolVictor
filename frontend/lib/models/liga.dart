@@ -1,16 +1,40 @@
+// lib/models/liga.dart
 class Liga {
-  final String categoria;
+  final int? id;
+  final String nombreLiga;
+  final String? pais;
+  final int numeroEquipos;
+  final String? temporada;
+  final int numeroEquiposRegistrados;
 
   Liga({
-    required this.categoria,
+    this.id,
+    required this.nombreLiga,
+    this.pais,
+    required this.numeroEquipos,
+    this.temporada,
+    required this.numeroEquiposRegistrados,
   });
 
-  String get nombre => "$categoria";
+  factory Liga.fromJson(Map<String, dynamic> json) {
+    return Liga(
+      id: json['id'],
+      nombreLiga: json['nombreLiga'] ?? '',
+      pais: json['pais'],
+      numeroEquipos: json['numeroEquipos'] ?? 0,
+      temporada: json['temporada'],
+      numeroEquiposRegistrados: json['numeroEquiposRegistrados'] ?? 0,
+    );
+  }
 
-  @override
-  bool operator ==(Object other) =>
-      other is Liga && other.nombre == nombre;
-
-  @override
-  int get hashCode => nombre.hashCode;
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombreLiga': nombreLiga,
+      'pais': pais,
+      'numeroEquipos': numeroEquipos,
+      'temporada': temporada,
+      'numeroEquiposRegistrados': numeroEquiposRegistrados,
+    };
+  }
 }

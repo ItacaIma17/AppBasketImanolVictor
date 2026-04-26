@@ -1,9 +1,9 @@
-// lib/models/entrenador/entrenador.dart
+// lib/models/entrenador.dart
+
 class Entrenador {
   final int? id;
   final String nombre;
   final String? apellido;
-  final String nombreCompleto;
   final String username;
   final String email;
   final int edad;
@@ -11,6 +11,7 @@ class Entrenador {
   final String? telefono;
   final String? experiencia;
   final bool verificado;
+  final bool tieneEquipo;
   final int? equipoId;
   final String? nombreEquipo;
 
@@ -18,14 +19,14 @@ class Entrenador {
     this.id,
     required this.nombre,
     this.apellido,
-    required this.nombreCompleto,
     required this.username,
     required this.email,
     required this.edad,
     required this.codigoEntrenador,
     this.telefono,
     this.experiencia,
-    required this.verificado,
+    this.verificado = false,
+    this.tieneEquipo = false,
     this.equipoId,
     this.nombreEquipo,
   });
@@ -35,7 +36,6 @@ class Entrenador {
       id: json['id'],
       nombre: json['nombre'] ?? '',
       apellido: json['apellido'],
-      nombreCompleto: json['nombreCompleto'] ?? '',
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       edad: json['edad'] ?? 0,
@@ -43,8 +43,11 @@ class Entrenador {
       telefono: json['telefono'],
       experiencia: json['experiencia'],
       verificado: json['verificado'] ?? false,
+      tieneEquipo: json['tieneEquipo'] ?? false,
       equipoId: json['equipoId'],
       nombreEquipo: json['nombreEquipo'],
     );
   }
+
+  String get nombreCompleto => '$nombre ${apellido ?? ''}'.trim();
 }

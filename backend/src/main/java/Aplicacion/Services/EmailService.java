@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -80,7 +81,7 @@ public class EmailService {
     }
 
     public void enviarAsignacionPartidoArbitro(String to, String nombre, String equipoLocal,
-                                               String equipoVisitante, LocalDate fecha,
+                                               String equipoVisitante, LocalDateTime fecha,
                                                String pabellon) throws MessagingException {
         Map<String, Object> params = new HashMap<>();
         params.put("to", to);

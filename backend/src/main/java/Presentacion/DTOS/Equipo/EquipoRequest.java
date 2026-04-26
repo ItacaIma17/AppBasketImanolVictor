@@ -1,54 +1,40 @@
+// Presentacion/DTOS/Equipo/EquipoRequest.java
 package Presentacion.DTOS.Equipo;
 
 import Dominio.Entity.Equipo;
+import Dominio.Entity.Liga;
 import lombok.Data;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 public class EquipoRequest {
-    private Long id;
     private String nombre;
-    private String nombreEstadio;
     private String ciudad;
-    private int añoFundacion;
+    private String nombreEstadio;
+    private Integer anoFundacion;  // Puede ser null
     private String escudoUrl;
     private Long ligaId;
-    private String nombreLiga;
-    private Long entrenadorId;
-    private String nombreEntrenador;
-    private int numeroJugadores;
 
-    public EquipoRequest() {}
+    public Equipo toEntity() {
+        Equipo equipo = new Equipo();
+        equipo.setNombre(this.nombre);
+        equipo.setCiudad(this.ciudad);
+        equipo.setNombreEstadio(this.nombreEstadio);
 
-    public static EquipoRequest fromEntity(Equipo equipo) {
-        EquipoRequest dto = new EquipoRequest();
-        dto.setId(equipo.getId());
-        dto.setNombre(equipo.getNombre());
-        dto.setNombreEstadio(equipo.getNombreEstadio());
-        dto.setCiudad(equipo.getCiudad());
-        dto.setAñoFundacion(equipo.getAñoFundacion());
-        dto.setEscudoUrl(equipo.getEscudoUrl());
-
-        if (equipo.getLiga() != null) {
-            dto.setLigaId(equipo.getLiga().getId());
-            dto.setNombreLiga(equipo.getLiga().getNombreLiga());
+        if (this.anoFundacion != null) {
+            equipo.setAnoFundacion(this.anoFundacion);
+        } else {
+            equipo.setAnoFundacion(0); // o un valor por defecto
         }
 
-        if (equipo.getEntrenador() != null) {
-            dto.setEntrenadorId(equipo.getEntrenador().getId());
-            dto.setNombreEntrenador(equipo.getEntrenador().getNombreCompleto());
+        equipo.setEscudoUrl(this.escudoUrl);
+
+        // Crear liga solo si el ID no es null
+        if (this.ligaId != null) {
+            Liga liga = new Liga();
+            liga.setId(this.ligaId);
+            equipo.setLiga(liga);
         }
 
-        dto.setNumeroJugadores(equipo.getJugadores() != null ? equipo.getJugadores().size() : 0);
-
-        return dto;
-    }
-
-    public static List<EquipoRequest> fromEntityList(List<Equipo> equipos) {
-        return equipos.stream()
-                .map(EquipoRequest::fromEntity)
-                .collect(Collectors.toList());
+        return equipo;
     }
 }
