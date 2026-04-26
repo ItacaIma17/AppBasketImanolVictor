@@ -136,8 +136,8 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
 
     try {
       final equipoId = widget.esLocal
-          ? widget.partido.equipoLocalId
-          : widget.partido.equipoVisitanteId;
+          ? widget.partido.idLocal
+          : widget.partido.idVisitante;
 
       final data = {
         'partidoId': widget.partido.id,
@@ -182,8 +182,8 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
   @override
   Widget build(BuildContext context) {
     final nombreEquipo = widget.esLocal
-        ? widget.partido.equipoLocal
-        : widget.partido.equipoVisitante;
+        ? widget.partido.nombreLocal
+        : widget.partido.nombreVisitante;
 
     return Scaffold(
       drawer: const MenuLateral(),
@@ -217,7 +217,7 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'vs ${widget.esLocal ? widget.partido.equipoVisitante : widget.partido.equipoLocal}',
+                                'vs ${widget.esLocal ? widget.partido.nombreVisitante : widget.partido.nombreLocal}',
                                 style: const TextStyle(color: Colors.grey),
                               ),
                             ],

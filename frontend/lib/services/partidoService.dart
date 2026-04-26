@@ -53,6 +53,44 @@ class PartidoService {
     }
   }
 
+// Obtener partidos donde el equipo es local
+static Future<List<Partido>> obtenerPartidosPorEquipoLocal(int equipoId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/partidos/equipo/$equipoId/local'),
+      headers: _headers,
+    ).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((e) => Partido.fromJson(e)).toList();
+    }
+    return [];
+  } catch (e) {
+    print('❌ Error obteniendo partidos como local: $e');
+    return [];
+  }
+}
+
+// Obtener partidos donde el equipo es visitante
+static Future<List<Partido>> obtenerPartidosPorEquipoVisitante(int equipoId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/partidos/equipo/$equipoId/visitante'),
+      headers: _headers,
+    ).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((e) => Partido.fromJson(e)).toList();
+    }
+    return [];
+  } catch (e) {
+    print('❌ Error obteniendo partidos como visitante: $e');
+    return [];
+  }
+}
+
   // Crear partido (solo admin)
   static Future<Map<String, dynamic>> crearPartido(Map<String, dynamic> partidoData) async {
     try {

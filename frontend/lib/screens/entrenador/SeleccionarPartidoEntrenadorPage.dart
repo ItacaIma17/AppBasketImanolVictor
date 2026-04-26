@@ -151,7 +151,7 @@ class _SeleccionarPartidoEntrenadorPageState
                 children: [
                   Expanded(
                     child: Text(
-                      '${partido.equipoLocal} vs ${partido.equipoVisitante}',
+                      '${partido.nombreLocal} vs ${partido.nombreVisitante}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -179,8 +179,12 @@ class _SeleccionarPartidoEntrenadorPageState
                 children: [
                   const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
+
+                  // FECHA + HORA CORREGIDO
                   Text(
-                    DateFormat('dd/MM/yyyy HH:mm').format(partido.fecha),
+                    DateFormat('dd/MM/yyyy HH:mm').format(
+                      DateTime.parse('${partido.fecha} ${partido.hora}'),
+                    ),
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -191,7 +195,7 @@ class _SeleccionarPartidoEntrenadorPageState
                   const Icon(Icons.location_on, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    partido.ubicacion ?? 'Sin ubicación',
+                    partido.direccionPabellon ?? 'Sin ubicación',
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ],

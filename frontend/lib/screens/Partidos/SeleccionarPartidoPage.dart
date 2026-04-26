@@ -54,26 +54,36 @@ class _SeleccionarPartidoPageState extends State<SeleccionarPartidoPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _partidos.length,
-          itemBuilder: (context, index) {
-            final partido = _partidos[index];
-            return Card(
-              child: ListTile(
-                title: Text('${partido.equipoLocal} vs ${partido.equipoVisitante}'),
-                subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(partido.fecha)),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => VerAlineacionesPage(partidoId: partido.id!),
+                padding: const EdgeInsets.all(16),
+                itemCount: _partidos.length,
+                itemBuilder: (context, index) {
+                  final partido = _partidos[index];
+
+                  return Card(
+                    child: ListTile(
+                      title: Text(
+                        '${partido.nombreLocal} vs ${partido.nombreVisitante}',
+                      ),
+
+                      // ⬇️ FECHA + HORA (tu modelo usa Strings)
+                      subtitle: Text(
+                        '${partido.fecha} ${partido.hora}',
+                      ),
+
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VerAlineacionesPage(
+                              partidoId: int.parse(partido.id),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
               ),
-            );
-          },
-        ),
       ),
     );
   }

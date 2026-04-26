@@ -1,11 +1,3 @@
-// Dominio/Entity/Equipo.java
-package Dominio.Entity;
-
-import jakarta.persistence.*;
-import lombok.Data;
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "equipos")
 @Data
@@ -19,7 +11,7 @@ public class Equipo {
     private String nombre;
 
     @OneToOne
-    @JoinColumn(name = "equipo", unique = true)
+    @JoinColumn(name = "entrenador_id", unique = true)
     private Entrenador entrenador;
 
     @ManyToOne
@@ -30,6 +22,7 @@ public class Equipo {
 
     private String ciudad;
 
+    @Column(name = "año_fundacion")
     private int anoFundacion;
 
     @Column(columnDefinition = "TEXT")
@@ -47,14 +40,15 @@ public class Equipo {
     @Column(name = "entrenador_solicitante_id")
     private Long entrenadorSolicitanteId;
 
+    @Column(name = "victorias")
+    private Integer victorias = 0;
 
-    // Constructor vacío
-    public Equipo() {}
+    @Column(name = "derrotas")
+    private Integer derrotas = 0;
 
-    // Constructor con campos básicos
-    public Equipo(String nombre, String nombreEstadio, String ciudad) {
-        this.nombre = nombre;
-        this.nombreEstadio = nombreEstadio;
-        this.ciudad = ciudad;
-    }
+    @Column(name = "puntos_favor")
+    private Integer puntosFavor = 0;
+
+    @Column(name = "puntos_contra")
+    private Integer puntosContra = 0;
 }

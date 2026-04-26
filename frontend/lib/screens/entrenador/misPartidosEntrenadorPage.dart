@@ -172,106 +172,117 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
     );
   }
 
-  Widget _buildPartidoCard(Partido partido, bool esLocal) {
-    final tieneAlineacion = esLocal
-        ? partido.tieneAlineacionLocal ?? false
-        : partido.tieneAlineacionVisitante ?? false;
+    Widget _buildPartidoCard(Partido partido, bool esLocal) {
+      final fechaPartido = DateTime.parse('${partido.fecha} ${partido.hora}');
+      final now = DateTime.now();
+      final estaFinalizado = fechaPartido.isBefore(now);
+      //determina alineacion
+      final tieneAlineacion = esLocal
+          ? (partido.tieneAlineacionLocal ?? false)
+          : (partido.tieneAlineacionVisitante ?? false);
 
-    final estaFinalizado = partido.estado == 'FINALIZADO';
-    final esLocalJuego = true; // Determinar según el equipo
+      final esLocalJuego = esLocal;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () {
-          if (estaFinalizado && partido.tieneActa == true) {
-            _verActa(partido.id!);
-          } else if (!estaFinalizado && !tieneAlineacion) {
-            _presentarAlineacion(partido, esLocalJuego);
-          } else if (!estaFinalizado && tieneAlineacion) {
-            _verAlineacion(partido.id!, partido.equipoLocalId!);
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${partido.equipoLocal} vs ${partido.equipoVisitante}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+      // convertir id de String a int (si es posible)
+      final partidoId = int.tryParse(partido.id.toString()) ?? 0;
+      final equipoLocalId = int.tryParse(partido.idLocal.toString()) ?? 0;
+
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: InkWell(
+      onTap: () {
+        if (estaFinalizado && partido.tieneActa == true) {
+          _verActa(partidoId);
+
+        } else if (!estaFinalizado && !tieneAlineacion) {
+          _presentarAlineacion(partido, esLocalJuego);
+
+        } else if (!estaFinalizado && tieneAlineacion) {
+          _verAlineacion(partidoId, equipoLocalId);
+        }
+      },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${partido.nombreLocal} vs ${partido.nombreVisitante}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  _buildEstadoChip(partido, tieneAlineacion),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    DateFormat('dd/MM/yyyy').format(partido.fecha),
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    DateFormat('HH:mm').format(partido.fecha),
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      partido.ubicacion ?? 'Sin ubicación',
+                    _buildEstadoChip(partido, tieneAlineacion),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(fechaPartido),
                       style: const TextStyle(color: Colors.grey),
                     ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('HH:mm').format(fechaPartido),
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        partido.direccionPabellon ?? 'Sin ubicación',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+                if (estaFinalizado && partido.puntosLocal != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.emoji_events, color: Colors.green),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Resultado: ${partido.puntosLocal} - ${partido.puntosVisitante}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-              if (estaFinalizado && partido.resultadoLocal != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.emoji_events, color: Colors.green),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Resultado: ${partido.resultadoLocal} - ${partido.resultadoVisitante}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
               ],
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
+
+
 
   Widget _buildEstadoChip(Partido partido, bool tieneAlineacion) {
     if (partido.estado == 'FINALIZADO') {

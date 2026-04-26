@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
+import 'package:tfg_appfede/models/liga.dart';
+import 'package:tfg_appfede/models/equipo.dart';
+import 'package:tfg_appfede/screens/Clasificacion.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
-import 'package:tfg_appfede/screens/Jugadores.dart';
+import 'package:tfg_appfede/services/ligaService.dart';
+import 'package:tfg_appfede/services/equipoService.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaCategoriaFav.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaEquipoFav.dart';
-import 'package:tfg_appfede/widgets/Favoritos/TarjetaJugadorFav.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
-import 'Clasificacion.dart';
+
 
 class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
@@ -22,10 +25,31 @@ class _FavoritosPageState extends State<FavoritosPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  List<Liga> _todasLasLigas = [];
+  List<Equipo> _todosLosEquipos = [];
+  bool _cargando = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _cargarDatosIniciales();
+  }
+
+  Future<void> _cargarDatosIniciales() async {
+    try {
+      final ligas = await LigaService.listarLigas();
+      final equipos = await EquipoService.listarEquipos();
+
+      setState(() {
+        _todasLasLigas = ligas;
+        _todosLosEquipos = equipos;
+        _cargando = false;
+      });
+    } catch (e) {
+      print("❌ Error cargando datos iniciales: $e");
+      setState(() => _cargando = false);
+    }
   }
 
   @override
@@ -49,14 +73,16 @@ class _FavoritosPageState extends State<FavoritosPage>
             children: [
               _buildTabs(),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildLigasTab(),
-                    _buildEquiposTab(),
-                    _buildJugadoresTab(),
-                  ],
-                ),
+                child: _cargando
+                    ? const Center(child: CircularProgressIndicator())
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildLigasTab(),
+                          _buildEquiposTab(),
+                          _buildJugadoresTab(),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -95,78 +121,98 @@ class _FavoritosPageState extends State<FavoritosPage>
     );
   }
 
-  /// Ligas favoritas (categorías)
-  Widget _buildLigasTab() {
-    final ligas = FavoritosManager().categoriasFavoritas.toList();
+ /// Ligas favoritas
+Widget _buildLigasTab() {
+  final favoritas = FavoritosManager().categoriasFavoritas.toList();
 
-    if (ligas.isEmpty) {
-      return _buildEmptyState('No tienes ligas favoritas');
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: ligas.length,
-      itemBuilder: (context, index) {
-        final nombre = ligas[index];
-
-        // Aquí decides cómo codificas la categoría. De momento, asumimos "Edad Nivel"
-        final partes = nombre.split(' ');
-        final categoriaEdad = partes.isNotEmpty ? partes.first : '';
-        final categoriaNivel =
-            partes.length > 1 ? partes.sublist(1).join(' ') : '';
-
-        return TarjetaCategoria(
-          nombre: nombre,
-          categoriaEdad: categoriaEdad,
-          categoriaNivel: categoriaNivel,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ClasificacionPage(
-                  categoriaEdad: categoriaEdad,
-                  categoriaNivel: categoriaNivel,
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+  if (favoritas.isEmpty) {
+    return _buildEmptyState('No tienes ligas favoritas');
   }
+
+  return ListView.builder(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    itemCount: favoritas.length,
+    itemBuilder: (context, index) {
+      final nombre = favoritas[index];
+
+      // Buscar liga por nombre
+      final coincidencias = _todasLasLigas
+          .where((l) => l.nombreLiga.toLowerCase() == nombre.toLowerCase())
+          .toList();
+
+      Liga? liga;
+      if (coincidencias.isNotEmpty) {
+        liga = coincidencias.first;
+      }
+
+      final ligaId = liga?.id ?? 0;
+
+      return TarjetaCategoria(
+        nombre: nombre,
+        categoriaEdad: nombre,
+        categoriaNivel: '',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClasificacionPage(
+                categoria: nombre,
+                ligaId: ligaId,
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   /// Equipos favoritos
-  Widget _buildEquiposTab() {
-    final equipos = FavoritosManager().equiposFavoritos.toList();
+Widget _buildEquiposTab() {
+  final favoritos = FavoritosManager().equiposFavoritos.toList();
 
-    if (equipos.isEmpty) {
-      return _buildEmptyState('No tienes equipos favoritos');
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: equipos.length,
-      itemBuilder: (context, index) {
-        final nombre = equipos[index];
-
-        return TarjetaEquipo(
-          nombre: nombre,
-          posicion: '-',          // De momento sin datos reales
-          proximoPartido: '-',
-          rival: '-',
-          esLocal: false,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EquipoPage(nombreEquipo: nombre),
-              ),
-            );
-          },
-        );
-      },
-    );
+  if (favoritos.isEmpty) {
+    return _buildEmptyState('No tienes equipos favoritos');
   }
+
+  return ListView.builder(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    itemCount: favoritos.length,
+    itemBuilder: (context, index) {
+      final nombre = favoritos[index];
+
+      // Buscar equipo por nombre
+      final coincidencias = _todosLosEquipos
+          .where((e) => e.nombre.toLowerCase() == nombre.toLowerCase())
+          .toList();
+
+      Equipo? equipo;
+      if (coincidencias.isNotEmpty) {
+        equipo = coincidencias.first;
+      }
+
+      final equipoId = equipo?.id ?? 0;
+
+      return TarjetaEquipo(
+        nombre: nombre,
+        posicion: '-',
+        proximoPartido: '-',
+        rival: '-',
+        esLocal: false,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EquipoPage(equipoId: equipoId),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   /// Jugadores favoritos
   Widget _buildJugadoresTab() {
@@ -180,59 +226,27 @@ class _FavoritosPageState extends State<FavoritosPage>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: jugadores.length,
       itemBuilder: (context, index) {
-        final nombre = jugadores[index];
+      final nombre = jugadores[index];
 
-        return TarjetaJugador(
-          nombre: nombre,
-          equipo: '-',      // De momento sin datos reales
-          puntos: 0,
-          rebotes: 0,
-          asistencias: 0,
+        return ListTile(
+          title: Text(
+            nombre,
+            style: const TextStyle(color: Colors.white),
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Colors.white),
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => JugadorPage(
-                  nombreJugador: nombre,
-                  nombreEquipo: '-',
-                ),
-              ),
-            );
+            // Aquí puedes navegar a la página del jugador si la tienes
           },
         );
       },
     );
   }
 
-  /// Estado vacío
   Widget _buildEmptyState(String mensaje) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.star_border,
-            size: 80,
-            color: AppColors.blancoOpacidad70,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            mensaje,
-            style: const TextStyle(
-              color: AppColors.blanco,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Añade tus favoritos desde las otras pantallas',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.blancoOpacidad70,
-              fontSize: 14,
-            ),
-          ),
-        ],
+      child: Text(
+        mensaje,
+        style: const TextStyle(color: Colors.white70, fontSize: 16),
       ),
     );
   }

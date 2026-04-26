@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
+import 'package:tfg_appfede/models/equipo.dart';
+import 'package:tfg_appfede/models/jugador.dart';
+import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/Jugadores.dart';
 
+import 'package:tfg_appfede/services/PartidoService.dart';
+import 'package:tfg_appfede/services/equipoService.dart';
+import 'package:tfg_appfede/services/jugadorService.dart';
+
 class EquipoPage extends StatefulWidget {
-  final String nombreEquipo;
+  final int equipoId;
 
   const EquipoPage({
     super.key,
-    required this.nombreEquipo,
+    required this.equipoId,
   });
 
   @override
@@ -17,70 +24,131 @@ class EquipoPage extends StatefulWidget {
 
 class _EquipoPageState extends State<EquipoPage> {
   bool _esFavorito = false;
-  
-  late final Map<String, dynamic> _equipoInfo;
-  late final List<Map<String, dynamic>> _jugadores;
+  Equipo? _equipo;
+  List<Jugador> _jugadores = [];
+  List<Partido> _partidos = [];
+  int _victorias = 0;
+  int _derrotas = 0;
+  double _puntosAFavor = 0.0;
+  double _puntosEnContra = 0.0;
+  bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
-    _esFavorito = FavoritosManager().esEquipoFavorito(widget.nombreEquipo);
-    
-    // Datos de ejemplo del equipo (luego vendrás de la BD)
-    _equipoInfo = {
-      'nombre': widget.nombreEquipo,
-      'victorias': 18,
-      'derrotas': 12,
-      'puntosAFavor': 82.5,
-      'puntosEnContra': 76.3,
-    };
-    
-    _jugadores = [
-      {
-        'nombreCompleto': 'Juan González',
-        'nombre': 'Juan',
-        'posicion': 'Escolta',
-        'promedioPuntos': 18.6,
-        'promedioRebotes': 6.2,
-        'promedioAsistencias': 3.8,
-      },
-      {
-        'nombreCompleto': 'Carlos Rodríguez',
-        'nombre': 'Carlos',
-        'posicion': 'Base',
-        'promedioPuntos': 14.2,
-        'promedioRebotes': 4.5,
-        'promedioAsistencias': 7.1,
-      },
-      {
-        'nombreCompleto': 'Miguel Fernández',
-        'nombre': 'Miguel',
-        'posicion': 'Ala-Pívot',
-        'promedioPuntos': 12.8,
-        'promedioRebotes': 8.3,
-        'promedioAsistencias': 2.2,
-      },
-      {
-        'nombreCompleto': 'David López',
-        'nombre': 'David',
-        'posicion': 'Pívot',
-        'promedioPuntos': 10.5,
-        'promedioRebotes': 11.2,
-        'promedioAsistencias': 1.5,
-      },
-      {
-        'nombreCompleto': 'Roberto Martínez',
-        'nombre': 'Roberto',
-        'posicion': 'Alero',
-        'promedioPuntos': 9.3,
-        'promedioRebotes': 5.8,
-        'promedioAsistencias': 2.9,
-      },
-    ];
+    _cargarDatos();
   }
+
+  void _cargarDatos() async {
+  try {
+    // Cargar equipo desde backend
+    final equipo = await EquipoService.obtenerEquipo(widget.equipoId);
+
+    // Cargar jugadores del equipo
+    final jugadores = await JugadorService.listarJugadoresPorEquipo(widget.equipoId);
+
+    // Cargar partidos del equipo
+    final local = await PartidoService.obtenerPartidosPorEquipoLocal(widget.equipoId);
+    final visitante = await PartidoService.obtenerPartidosPorEquipoVisitante(widget.equipoId);
+
+    // Unificar sin duplicados
+    final Set<Partido> partidosSet = {};
+    partidosSet.addAll(local);
+    partidosSet.addAll(visitante);
+    final partidos = partidosSet.toList();
+
+    // Calcular estadísticas
+    int victorias = 0;
+    int derrotas = 0;
+    double totalPuntosAFavor = 0;
+    double totalPuntosEnContra = 0;
+    int partidosJugados = 0;
+
+    for (final partido in partidos) {
+      if (partido.estado == 'PROGRAMADO') continue;
+
+      partidosJugados++;
+
+      final esLocal = int.parse(partido.idLocal) == widget.equipoId;
+
+      if (esLocal) {
+        totalPuntosAFavor += partido.puntosLocal;
+        totalPuntosEnContra += partido.puntosVisitante;
+
+        if (partido.puntosLocal > partido.puntosVisitante) victorias++;
+        else derrotas++;
+      } else {
+        totalPuntosAFavor += partido.puntosVisitante;
+        totalPuntosEnContra += partido.puntosLocal;
+
+        if (partido.puntosVisitante > partido.puntosLocal) victorias++;
+        else derrotas++;
+      }
+    }
+
+    final divisor = partidosJugados > 0 ? partidosJugados : 1;
+    final puntosAFavor = totalPuntosAFavor / divisor;
+    final puntosEnContra = totalPuntosEnContra / divisor;
+
+    // ============================
+    // 5. Actualizar estado
+    // ============================
+    setState(() {
+      _equipo = equipo;
+      _jugadores = jugadores;
+      _partidos = partidos;
+      _victorias = victorias;
+      _derrotas = derrotas;
+      _puntosAFavor = puntosAFavor;
+      _puntosEnContra = puntosEnContra;
+      _cargando = false;
+    });
+
+    // ============================
+    // 6. Favoritos
+    // ============================
+    if (equipo != null) {
+      _esFavorito = FavoritosManager().esEquipoFavorito(equipo.nombre);
+    }
+
+  } catch (e) {
+    print("Error cargando datos del equipo: $e");
+    setState(() => _cargando = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: AppColors.gradienteAragon,
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppColors.blanco),
+          ),
+        ),
+      );
+    }
+
+    if (_equipo == null) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: AppColors.gradienteAragon,
+          ),
+          child: const Center(
+            child: Text(
+              'Equipo no encontrado',
+              style: TextStyle(color: AppColors.blanco, fontSize: 18),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -133,7 +201,7 @@ class _EquipoPageState extends State<EquipoPage> {
           ),
           Expanded(
             child: Text(
-              widget.nombreEquipo,
+              _equipo?.nombre ?? 'Equipo',
               style: const TextStyle(
                 color: AppColors.blanco,
                 fontSize: 20,
@@ -148,22 +216,24 @@ class _EquipoPageState extends State<EquipoPage> {
               size: 28,
             ),
             onPressed: () {
-              FavoritosManager().toggleEquipoFavorito(widget.nombreEquipo);
+              if (_equipo != null) {
+                FavoritosManager().toggleEquipoFavorito(_equipo!.nombre);
 
-              setState(() {
-                _esFavorito = FavoritosManager().esEquipoFavorito(widget.nombreEquipo);
-              });
+                setState(() {
+                  _esFavorito = FavoritosManager().esEquipoFavorito(_equipo!.nombre);
+                });
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _esFavorito
-                        ? 'Equipo añadido a favoritos'
-                        : 'Equipo eliminado de favoritos',
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _esFavorito
+                          ? 'Equipo añadido a favoritos'
+                          : 'Equipo eliminado de favoritos',
+                    ),
+                    duration: const Duration(seconds: 1),
                   ),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
+                );
+              }
             },
           ),
         ],
@@ -202,16 +272,16 @@ class _EquipoPageState extends State<EquipoPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('Victorias', '${_equipoInfo['victorias']}', Colors.green),
-              _buildStatColumn('Derrotas', '${_equipoInfo['derrotas']}', Colors.red),
+              _buildStatColumn('Victorias', '$_victorias', Colors.green),
+              _buildStatColumn('Derrotas', '$_derrotas', Colors.red),
             ],
           ),
           const Divider(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('Pts a favor', (_equipoInfo['puntosAFavor'] as double).toStringAsFixed(1), AppColors.naranja),
-              _buildStatColumn('Pts en contra', (_equipoInfo['puntosEnContra'] as double).toStringAsFixed(1), Colors.grey),
+              _buildStatColumn('Pts a favor', _puntosAFavor.toStringAsFixed(1), AppColors.naranja),
+              _buildStatColumn('Pts en contra', _puntosEnContra.toStringAsFixed(1), AppColors.naranja),
             ],
           ),
         ],
@@ -277,21 +347,29 @@ class _EquipoPageState extends State<EquipoPage> {
         children: [
           const Text('Plantilla', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          ..._jugadores.map((j) => _buildJugadorCard(j)),
+          if (_jugadores.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('No hay jugadores registrados'),
+              ),
+            )
+          else
+            ..._jugadores.map((j) => _buildJugadorCard(j)),
         ],
       ),
     );
   }
 
-  Widget _buildJugadorCard(Map<String, dynamic> jugador) {
+  Widget _buildJugadorCard(Jugador jugador) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => JugadorPage(
-              nombreJugador: jugador['nombreCompleto'],
-              nombreEquipo: widget.nombreEquipo,
+              nombreJugador: '${jugador.nombre} ${jugador.apellido}',
+              nombreEquipo: _equipo?.nombre ?? '',
             ),
           ),
         );
@@ -314,7 +392,7 @@ class _EquipoPageState extends State<EquipoPage> {
               ),
               child: Center(
                 child: Text(
-                  (jugador['nombre'] as String)[0],
+                  jugador.nombre[0],
                   style: const TextStyle(color: AppColors.blanco, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -324,15 +402,15 @@ class _EquipoPageState extends State<EquipoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(jugador['nombreCompleto'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('${jugador.nombre} ${jugador.apellido}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _buildMiniStat('${jugador['promedioPuntos']}', 'Pts'),
+                      _buildMiniStat('${jugador.promedioPuntos ?? 0}', 'Pts'),
                       const SizedBox(width: 12),
-                      _buildMiniStat('${jugador['promedioRebotes']}', 'Reb'),
+                      _buildMiniStat('${jugador.promedioRebotes ?? 0}', 'Reb'),
                       const SizedBox(width: 12),
-                      _buildMiniStat('${jugador['promedioAsistencias']}', 'Ast'),
+                      _buildMiniStat('${jugador.promedioAsistencias ?? 0}', 'Ast'),
                     ],
                   ),
                 ],

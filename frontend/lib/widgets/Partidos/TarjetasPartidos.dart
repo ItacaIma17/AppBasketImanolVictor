@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/role.dart';
+import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/DetallesPartido.dart';
 import 'package:tfg_appfede/screens/Equipos.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
@@ -8,7 +9,7 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 /// Widget reutilizable para mostrar la tarjeta de un partido
 /// Muestra información del partido con equipos, resultado y detalles
 class TarjetaPartido extends StatefulWidget {
-  final Map<String, dynamic> partido;
+  final Partido partido;
 
   const TarjetaPartido({
     super.key,
@@ -37,7 +38,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
 
   @override
   Widget build(BuildContext context) {
-    final bool esPendiente = widget.partido['pendiente'] ?? false;
+    final bool esPendiente = widget.partido.estado == 'PROGRAMADO';
 
     return GestureDetector(
       onTap: esPendiente
@@ -72,7 +73,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(
-                  '${widget.partido['fecha']} - ${widget.partido['hora']}',
+                  '${widget.partido.fecha ?? '-'} - ${widget.partido.hora ?? '-'}',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Colors.grey,
@@ -91,21 +92,23 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EquipoPage(
-                            nombreEquipo: widget.partido['equipoLocal'],
+                      if (widget.partido.idLocal.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EquipoPage(
+                              equipoId: int.tryParse(widget.partido.idLocal) ?? 0,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                     child: Column(
                       children: [
                         const Icon(Icons.shield, size: 32, color: AppColors.naranja),
                         const SizedBox(height: 6),
                         Text(
-                          widget.partido['equipoLocal'],
+                          widget.partido.nombreLocal,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
@@ -141,7 +144,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                       : Row(
                           children: [
                             Text(
-                              '${widget.partido['resultadoLocal']}',
+                              '${widget.partido.puntosLocal}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -159,7 +162,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                               ),
                             ),
                             Text(
-                              '${widget.partido['resultadoVisitante']}',
+                              '${widget.partido.puntosVisitante}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -176,21 +179,23 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EquipoPage(
-                            nombreEquipo: widget.partido['equipoVisitante'],
+                      if (widget.partido.idVisitante.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EquipoPage(
+                              equipoId: int.tryParse(widget.partido.idVisitante) ?? 0,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                     child: Column(
                       children: [
                         const Icon(Icons.shield, size: 32, color: AppColors.amarilloAragon),
                         const SizedBox(height: 6),
                         Text(
-                          widget.partido['equipoVisitante'],
+                          widget.partido.nombreVisitante,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
@@ -216,7 +221,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
-                    widget.partido['pabellon'],
+                    widget.partido.pabellon ?? '-',
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey,

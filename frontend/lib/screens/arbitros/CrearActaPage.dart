@@ -52,7 +52,9 @@ class _CrearActaPageState extends State<CrearActaPage> {
 
     try {
       // Usar el ArbitroService correctamente
-      final alineaciones = await ArbitroService.getAlineacionesPartido(widget.partido.id!);
+      final alineaciones = await ArbitroService.getAlineacionesPartido(
+        int.parse(widget.partido.id),
+      );
       setState(() {
         _alineaciones = alineaciones;
 
@@ -101,8 +103,8 @@ class _CrearActaPageState extends State<CrearActaPage> {
       ),
       builder: (context) => EventoForm(
         equipos: [
-          {'nombre': widget.partido.equipoLocal, 'jugadores': _jugadoresLocal},
-          {'nombre': widget.partido.equipoVisitante, 'jugadores': _jugadoresVisitante},
+          {'nombre': widget.partido.nombreLocal, 'jugadores': _jugadoresLocal},
+          {'nombre': widget.partido.nombreVisitante, 'jugadores': _jugadoresVisitante},
         ],
         onGuardar: (evento) {
           setState(() {
@@ -217,17 +219,18 @@ class _CrearActaPageState extends State<CrearActaPage> {
         child: Column(
           children: [
             Text(
-              '${widget.partido.equipoLocal} vs ${widget.partido.equipoVisitante}',
+              '${widget.partido.nombreLocal} vs ${widget.partido.nombreVisitante}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              DateFormat('dd/MM/yyyy HH:mm').format(widget.partido.fecha),
+              '${widget.partido.fecha} ${widget.partido.hora}',
               style: const TextStyle(color: Colors.grey),
             ),
+
             const SizedBox(height: 4),
             Text(
-              widget.partido.ubicacion ?? 'Sin ubicación',
+              widget.partido.direccionPabellon ?? 'Sin ubicación',
               style: const TextStyle(color: Colors.grey),
             ),
           ],
@@ -253,7 +256,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                 Expanded(
                   child: TextFormField(
                     decoration: InputDecoration(
-                      labelText: widget.partido.equipoLocal,
+                      labelText: widget.partido.nombreLocal,
                       border: const OutlineInputBorder(),
                       suffixText: 'pts',
                     ),
@@ -268,7 +271,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                 Expanded(
                   child: TextFormField(
                     decoration: InputDecoration(
-                      labelText: widget.partido.equipoVisitante,
+                      labelText: widget.partido.nombreVisitante,
                       border: const OutlineInputBorder(),
                       suffixText: 'pts',
                     ),

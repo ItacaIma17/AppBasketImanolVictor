@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/EstadisticasPartido.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/MarcadorPartido.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetallePartidoPage extends StatefulWidget {
-  final Map<String, dynamic> partido;
+  final Partido partido;
   final Role? userRole;
 
   const DetallePartidoPage({
@@ -36,39 +37,38 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
   }
 
   void _cargarEstadisticas() {
-    _estadisticas = {
-      'equipoLocal': {
-        'puntos': widget.partido['resultadoLocal'],
-        'rebotes': 42,
-        'asistencias': 18,
-        'robos': 8,
-        'tapones': 5,
-        'faltas': 20,
-      },
-      'equipoVisitante': {
-        'puntos': widget.partido['resultadoVisitante'],
-        'rebotes': 38,
-        'asistencias': 15,
-        'robos': 6,
-        'tapones': 3,
-        'faltas': 22,
-      },
-    };
-  }
+  _estadisticas = {
+    'equipoLocal': {
+      'puntos': widget.partido.puntosLocal,
+      'rebotes': 42,
+      'asistencias': 18,
+      'robos': 8,
+      'tapones': 5,
+      'faltas': 20,
+    },
+    'equipoVisitante': {
+      'puntos': widget.partido.puntosVisitante,
+      'rebotes': 38,
+      'asistencias': 15,
+      'robos': 6,
+      'tapones': 3,
+      'faltas': 22,
+    },
+  };
+}
+
 
   void _cargarActa() {
-    
-    setState(() {
-      _actaPartido = {
-        'url': 'https://ejemplo.com/acta.pdf',
-        'nombreArchivo': 'Acta_Jornada_${widget.partido['jornada']}.pdf',
-        'fechaSubida': '08/03/2026 20:30',
-        'arbitro': 'Pedro Martínez',
-      };
-      // Descomentar para simular sin acta:
-      // _actaPartido = null;
-    });
-  }
+  setState(() {
+    _actaPartido = {
+      'url': 'https://ejemplo.com/acta.pdf',
+      'nombreArchivo': 'Acta_Partido_${widget.partido.id}.pdf',
+      'fechaSubida': '08/03/2026 20:30',
+      'arbitro': 'Pedro Martínez',
+    };
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +140,7 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
                 ),
               ),
               Text(
-                'Jornada ${widget.partido['jornada']} - ${widget.partido['fecha']}',
+                'Partido ${widget.partido.id} - ${widget.partido.fecha}',
                 style: TextStyle(
                   color: AppColors.blancoOpacidad70,
                   fontSize: 13,

@@ -274,153 +274,163 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
       SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Gestión de Partidos', style: TextStyle(color: AppColors.blanco, fontSize: 24, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Programar Partido'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
-                onPressed: _mostrarDialogoCrear,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-                : RefreshIndicator(
-              onRefresh: _cargarDatos,
-              child: ListView.builder(
-                itemCount: _partidos.length,
-                itemBuilder: (context, index) {
-                  final partido = _partidos[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
-                      title: Text('${partido.equipoLocal} vs ${partido.equipoVisitante}'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('📅 ${_formatFecha(partido.fecha)}'),
-                          Text('📍 ${partido.ubicacion ?? 'Sin ubicación'}'),
-                          if (partido.resultadoLocal != null)
-                            Text('🏆 Resultado: ${partido.resultadoLocal} - ${partido.resultadoVisitante}'),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _actualizarResultado(partido),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _eliminarPartido(partido),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatFecha(DateTime fecha) {
-    return '${fecha.day}/${fecha.month}/${fecha.year} ${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _actualizarResultado(Partido partido) async {
-    final resultadoLocalCtrl = TextEditingController(text: partido.resultadoLocal?.toString());
-    final resultadoVisitanteCtrl = TextEditingController(text: partido.resultadoVisitante?.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Actualizar Resultado'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+@override
+Widget build(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextFormField(
-              controller: resultadoLocalCtrl,
-              decoration: const InputDecoration(labelText: 'Resultado Local'),
-              keyboardType: TextInputType.number,
+            const Text(
+              'Gestión de Partidos',
+              style: TextStyle(
+                color: AppColors.blanco,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: resultadoVisitanteCtrl,
-              decoration: const InputDecoration(labelText: 'Resultado Visitante'),
-              keyboardType: TextInputType.number,
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Programar Partido'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
+              onPressed: _mostrarDialogoCrear,
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+        const SizedBox(height: 20),
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _cargarDatos,
+                      child: ListView.builder(
+                        itemCount: _partidos.length,
+                        itemBuilder: (context, index) {
+                          final partido = _partidos[index];
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
+                              title: Text('${partido.nombreLocal} vs ${partido.nombreVisitante}'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('📅 ${partido.fecha} ${partido.hora}'),
+                                  Text('📍 ${partido.pabellon}'),
+                                  if (partido.puntosLocal != 0 || partido.puntosVisitante != 0)
+                                    Text('🏆 Resultado: ${partido.puntosLocal} - ${partido.puntosVisitante}'),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.blue),
+                                    onPressed: () => _actualizarResultado(partido),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () => _eliminarPartido(partido),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+        ),
+      ],
+    ),
+  );
+}
+
+    Future<void> _actualizarResultado(Partido partido) async {
+  final resultadoLocalCtrl =
+      TextEditingController(text: partido.puntosLocal.toString());
+  final resultadoVisitanteCtrl =
+      TextEditingController(text: partido.puntosVisitante.toString());
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Actualizar Resultado'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: resultadoLocalCtrl,
+            decoration: const InputDecoration(labelText: 'Puntos Local'),
+            keyboardType: TextInputType.number,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              await PartidoService.actualizarResultado(partido.id!, {
-                'resultadoLocal': int.tryParse(resultadoLocalCtrl.text),
-                'resultadoVisitante': int.tryParse(resultadoVisitanteCtrl.text),
-              });
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: resultadoVisitanteCtrl,
+            decoration: const InputDecoration(labelText: 'Puntos Visitante'),
+            keyboardType: TextInputType.number,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            try {
+              await PartidoService.actualizarResultado(
+                int.parse(partido.id),
+                {
+                  'puntosLocal': int.tryParse(resultadoLocalCtrl.text),
+                  'puntosVisitante': int.tryParse(resultadoVisitanteCtrl.text),
+                },
+              );
+
               Navigator.pop(context);
-              await _cargarDatos(); // ✅ Recargar sin recargar página
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
-  }
+              await _cargarDatos();
 
-  Future<void> _eliminarPartido(Partido partido) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
-        content: Text('¿Eliminar el partido entre ${partido.equipoLocal} y ${partido.equipoVisitante}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Resultado modificado exitosamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              _mostrarError('Error al modificar resultado: $e');
+            }
+          },
+          child: const Text('Guardar'),
+        ),
+      ],
+    ),
+  );
+}
 
-    if (confirmar == true) {
-      setState(() => _isLoading = true);
+    Future<void> _eliminarPartido(Partido partido) async {
       try {
-        await PartidoService.eliminarPartido(partido.id!);
-        await _cargarDatos(); // ✅ Recargar sin recargar página
+        await PartidoService.eliminarPartido(int.parse(partido.id));
+        await _cargarDatos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Partido eliminado'), backgroundColor: Colors.green),
+            const SnackBar(content: Text('✅ Partido eliminado exitosamente'), backgroundColor: Colors.green),
           );
         }
       } catch (e) {
-        _mostrarError('Error al eliminar: $e');
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+        _mostrarError('Error al eliminar partido: $e');
       }
-    }
   }
 }

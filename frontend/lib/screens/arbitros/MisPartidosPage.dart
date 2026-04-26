@@ -181,10 +181,14 @@ class _MisPartidosPageState extends State<MisPartidosPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
+          // Convertir IDs correctamente
+          final partidoId = int.tryParse(partido.id.toString()) ?? 0;
+
           if (tieneActa && estaFinalizado) {
-            _verActa(partido.id!);
+            _verActa(partidoId);
+
           } else if (!tieneActa && !estaFinalizado) {
-            _crearActa(partido);
+            _crearActa(partido); // esta función recibe un Partido, no un int
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -198,7 +202,7 @@ class _MisPartidosPageState extends State<MisPartidosPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${partido.equipoLocal} vs ${partido.equipoVisitante}',
+                      '${partido.nombreLocal} vs ${partido.nombreVisitante}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -214,16 +218,22 @@ class _MisPartidosPageState extends State<MisPartidosPage> {
                   const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
-                    DateFormat('dd/MM/yyyy').format(partido.fecha),
+                    DateFormat('dd/MM/yyyy HH:mm').format(
+                      DateTime.parse('${partido.fecha} ${partido.hora}'),
+                    ),
                     style: const TextStyle(color: Colors.grey),
                   ),
+
                   const SizedBox(width: 16),
                   const Icon(Icons.access_time, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
-                    DateFormat('HH:mm').format(partido.fecha),
+                    DateFormat('dd/MM/yyyy HH:mm').format(
+                      DateTime.parse('${partido.fecha} ${partido.hora}'),
+                    ),
                     style: const TextStyle(color: Colors.grey),
                   ),
+
                 ],
               ),
               const SizedBox(height: 8),
@@ -233,7 +243,7 @@ class _MisPartidosPageState extends State<MisPartidosPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      partido.ubicacion ?? 'Sin ubicación',
+                      partido.direccionPabellon ?? 'Sin ubicación',
                       style: const TextStyle(color: Colors.grey),
                     ),
                   ),
@@ -289,9 +299,12 @@ class _MisPartidosPageState extends State<MisPartidosPage> {
   }
 
   Widget _buildAccionButton(Partido partido, bool tieneActa, bool estaFinalizado) {
+    // Convertir id de String a int
+    final partidoId = int.tryParse(partido.id.toString()) ?? 0;
+
     if (estaFinalizado && tieneActa) {
       return ElevatedButton.icon(
-        onPressed: () => _verActa(partido.id!),
+        onPressed: () => _verActa(partidoId),
         icon: const Icon(Icons.visibility, size: 18),
         label: const Text('Ver Acta'),
         style: ElevatedButton.styleFrom(

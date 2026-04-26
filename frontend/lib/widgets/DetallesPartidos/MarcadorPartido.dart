@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/models/partido.dart';
 
 /// Widget que muestra el marcador principal del partido
 /// con equipos, resultado y ganador
 class MarcadorPartido extends StatelessWidget {
-  final Map<String, dynamic> partido;
+  final Partido partido;
 
   const MarcadorPartido({
     super.key,
@@ -13,7 +14,7 @@ class MarcadorPartido extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool localGano = partido['resultadoLocal'] > partido['resultadoVisitante'];
+    final bool localGano = partido.puntosLocal > partido.puntosVisitante;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -33,16 +34,16 @@ class MarcadorPartido extends StatelessWidget {
           Row(
             children: [
               _EquipoWidget(
-                nombre: partido['equipoLocal'],
+                nombre: partido.nombreLocal,
                 color: AppColors.naranja,
                 esGanador: localGano,
               ),
               _ResultadoWidget(
-                local: partido['resultadoLocal'],
-                visitante: partido['resultadoVisitante'],
+                local: partido.puntosLocal,
+                visitante: partido.puntosVisitante,
               ),
               _EquipoWidget(
-                nombre: partido['equipoVisitante'],
+                nombre: partido.nombreVisitante,
                 color: AppColors.amarilloAragon,
                 esGanador: !localGano,
               ),
@@ -50,14 +51,15 @@ class MarcadorPartido extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _InfoPartidoWidget(
-            pabellon: partido['pabellon'],
-            hora: partido['hora'],
+            pabellon: partido.pabellon,
+            hora: partido.hora,
           ),
         ],
       ),
     );
   }
 }
+
 
 /// Widget de equipo (escudo, nombre, badge ganador)
 class _EquipoWidget extends StatelessWidget {
