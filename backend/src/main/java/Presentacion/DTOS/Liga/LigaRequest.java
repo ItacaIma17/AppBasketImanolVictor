@@ -1,3 +1,4 @@
+// Presentacion/DTOS/Liga/LigaRequest.java
 package Presentacion.DTOS.Liga;
 
 import Dominio.Entity.Liga;
@@ -14,11 +15,14 @@ public class LigaRequest {
     private String nombreLiga;
     private String pais;
     private Integer numeroEquipos;
+    private String temporada;
 
     public Liga toEntity() {
         Liga liga = new Liga();
         liga.setNombreLiga(this.nombreLiga);
-        liga.setNumeroEquipos(this.numeroEquipos);
+        liga.setPais(this.pais);
+        liga.setNumeroEquipos(this.numeroEquipos != null ? this.numeroEquipos : 0);
+        liga.setTemporada(this.temporada);
         return liga;
     }
 }

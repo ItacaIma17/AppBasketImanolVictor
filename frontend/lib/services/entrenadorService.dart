@@ -5,6 +5,7 @@ import '../config/api_config.dart';
 import '../models/entrenador.dart';
 import '../models/entrenadorEquipo.dart';
 import '../models/equipo.dart';
+import '../models/jugador.dart';
 import 'autenticacion_service.dart';
 
 class EntrenadorService {
@@ -114,6 +115,56 @@ class EntrenadorService {
     } catch (e) {
       print('❌ Error obteniendo mi equipo: $e');
       rethrow;
+    }
+  }
+
+
+  // lib/services/entrenadorService.dart
+
+  // lib/services/entrenadorService.dart
+
+  static Future<List<Jugador>> getMisJugadores() async {
+    try {
+      final token = AutenticacionService.token;
+      if (token == null) {
+        print('❌ No hay token disponible');
+        return [];
+      }
+
+      print('📡 Obteniendo jugadores del entrenador');
+      print('🔑 Token disponible: ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
+
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiUrl}/entrenadores/mis-jugadores'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',  // ← Asegurar que se envía
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      print('📡 Status code: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print('✅ Jugadores encontrados: ${data.length}');
+        return data.map((j) => Jugador.fromJson(j)).toList();
+      } else if (response.statusCode == 401) {
+        print('❌ Token expirado o inválido, refrescando...');
+        // Intentar refrescar el token
+        final refreshed = await AutenticacionService.refreshTokenUser();
+        if (refreshed) {
+          print('✅ Token refrescado, reintentando...');
+          return await getMisJugadores();  // Reintentar
+        }
+        return [];
+      } else {
+        print('❌ Error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('❌ Error obteniendo jugadores: $e');
+      return [];
     }
   }
 

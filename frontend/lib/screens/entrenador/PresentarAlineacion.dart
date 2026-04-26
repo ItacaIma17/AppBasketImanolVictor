@@ -6,6 +6,7 @@ import '../../models/partido.dart';
 import '../../models/jugador.dart';
 import '../../models/equipo.dart';
 import '../../services/alineacionService.dart';
+import '../../services/entrenadorService.dart';
 import '../../services/equipoService.dart';
 import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
@@ -37,36 +38,37 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
     _cargarJugadores();
   }
 
+  // lib/screens/Entrenador/PresentarAlineacionPage.dart
+
+  // lib/screens/Entrenador/PresentarAlineacionPage.dart
+
   Future<void> _cargarJugadores() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final equipoId = widget.esLocal
-          ? widget.partido.equipoLocalId
-          : widget.partido.equipoVisitanteId;
-
-      if (equipoId == null) {
-        throw Exception('ID de equipo no disponible');
-      }
-
-      final equipo = await EquipoService.obtenerEquipo(equipoId);
+      // Usar el método del entrenador en lugar del de equipo
+      final jugadores = await EntrenadorService.getMisJugadores();
 
       setState(() {
-        _jugadoresEquipo = equipo.jugadores ?? [];
+        _jugadoresEquipo = jugadores;
         _isLoading = false;
       });
+
+      if (jugadores.isEmpty) {
+        print('⚠️ No hay jugadores en este equipo');
+      } else {
+        print('✅ Cargados ${jugadores.length} jugadores');
+      }
     } catch (e) {
-      print('Error cargando jugadores: $e');
+      print('❌ Error cargando jugadores: $e');
       setState(() {
         _isLoading = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error cargando jugadores: $e'), backgroundColor: Colors.red),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error cargando jugadores: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 

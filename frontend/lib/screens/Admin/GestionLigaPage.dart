@@ -21,6 +21,8 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _temporadaController = TextEditingController();
+  final _paisController = TextEditingController();
+
 
   @override
   void initState() {
@@ -58,26 +60,20 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
 
   // lib/screens/Admin/GestionLigasPage.dart
 
+  // lib/screens/Admin/GestionLigasPage.dart (parte del método crear)
+
   Future<void> _crearLiga() async {
     if (!_formKey.currentState!.validate()) return;
-
-    // Verificar permisos
-    if (AutenticacionService.isAdmin()==false) {
-      _mostrarError('No tienes permisos de administrador');
-      return;
-    }
 
     setState(() => _isLoading = true);
 
     try {
-      // CORREGIDO: Usar los campos correctos que espera el backend
       final ligaData = {
         'nombreLiga': _nombreController.text.trim(),
-        'pais': _descripcionController.text.trim().isEmpty ? 'España' : _descripcionController.text.trim(),
-        'numeroEquipos': 0,  // Inicialmente 0 equipos
+        'pais': _paisController.text.trim().isEmpty ? 'España' : _paisController.text.trim(),
+        'numeroEquipos': 0,
+        'temporada': _temporadaController.text.trim(),
       };
-
-      print('📝 Enviando datos de liga: $ligaData');
 
       await LigaService.crearLiga(ligaData);
 
@@ -86,12 +82,9 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Liga creada exitosamente'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('✅ Liga creada exitosamente'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context); // Cerrar diálogo
+        Navigator.pop(context);
       }
     } catch (e) {
       _mostrarError('Error al crear liga: $e');

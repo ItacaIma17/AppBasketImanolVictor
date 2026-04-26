@@ -1,3 +1,5 @@
+// Presentacion/Controllers/EquipoController.java
+
 package Presentacion.Controllers;
 
 import Aplicacion.Services.EquipoService;
@@ -5,6 +7,7 @@ import Presentacion.DTOS.Equipo.EquipoRequest;
 import Presentacion.DTOS.Equipo.EquipoResponse;
 import Presentacion.DTOS.Equipo.SolicitarEquipoDTO;
 import Presentacion.DTOS.Equipo.AprobarSolicitudDTO;
+import Presentacion.DTOS.Jugador.JugadorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,37 +27,34 @@ public class EquipoController {
 
     private final EquipoService equipoService;
 
+    // ============================================================
+    // CREAR EQUIPO
+    // ============================================================
+
     @PostMapping("/crear")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipoResponse> crearEquipo(@Valid @RequestBody EquipoRequest dto) {
-        log.info("🏀 Creando nuevo equipo: {}", dto.getNombre());
+        log.info("🏀 Creando equipo: {}", dto.getNombre());
         return ResponseEntity.status(HttpStatus.CREATED).body(equipoService.crearEquipo(dto));
     }
+
+    // ============================================================
+    // SOLICITUDES DE ENTRENADOR
+    // ============================================================
 
     @PostMapping("/solicitar")
     @PreAuthorize("hasRole('ENTRENADOR')")
     public ResponseEntity<Void> solicitarDirigirEquipo(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody SolicitarEquipoDTO dto) {
-
-        // VALIDAR que userDetails no es null
-        if (userDetails == null) {
-            log.error("UserDetails es null - No hay usuario autenticado");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String username = userDetails.getUsername();
-        log.info("📨 Entrenador {} solicita equipo con código: {}", username, dto.getCodigoSolicitud());
-
-        // Verificar que el username no sea null o vacío
-        if (username == null || username.isEmpty()) {
-            log.error("Username es null o vacío");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        equipoService.solicitarDirigirEquipo(username, dto);
+        log.info("📨 Entrenador {} solicita equipo con código: {}", userDetails.getUsername(), dto.getCodigoSolicitud());
+        equipoService.solicitarDirigirEquipo(userDetails.getUsername(), dto);
         return ResponseEntity.ok().build();
     }
+
+    // ============================================================
+    // APROBAR SOLICITUD (ADMIN)
+    // ============================================================
 
     @PostMapping("/aprobar-solicitud")
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,6 +64,10 @@ public class EquipoController {
         log.info("✅ Admin {} aprobando/rechazando solicitud", admin.getUsername());
         return ResponseEntity.ok(equipoService.aprobarSolicitud(dto, admin.getUsername()));
     }
+
+    // ============================================================
+    // LISTAR EQUIPOS
+    // ============================================================
 
     @GetMapping("/listar")
     public ResponseEntity<List<EquipoResponse>> listarEquipos() {
@@ -85,6 +89,10 @@ public class EquipoController {
         return ResponseEntity.ok(equipoService.listarEquiposConSolicitudPendiente());
     }
 
+    // ============================================================
+    // OBTENER EQUIPO (SÓLO UNO)
+    // ============================================================
+
     @GetMapping("/{id}")
     public ResponseEntity<EquipoResponse> obtenerEquipo(@PathVariable Long id) {
         log.info("🔍 Obteniendo equipo con ID: {}", id);
@@ -95,5 +103,55 @@ public class EquipoController {
     public ResponseEntity<EquipoResponse> obtenerEquipoPorCodigo(@PathVariable String codigo) {
         log.info("🔍 Obteniendo equipo con código: {}", codigo);
         return ResponseEntity.ok(equipoService.obtenerEquipoPorCodigo(codigo));
+    }
+
+    // ============================================================
+    // JUGADORES DEL EQUIPO
+    // ============================================================
+
+    // Presentacion/Controllers/EquipoController.java
+
+    @GetMapping("/{equipoId}/jugadores")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ENTRENADOR', 'ARBITRO')")
+    public ResponseEntity<List<JugadorResponse>> getJugadoresByEquipo(@PathVariable Long equipoId) {
+        log.info("📋 Obteniendo jugadores del equipo: {}", equipoId);
+        List<JugadorResponse> jugadores = equipoService.getJugadoresByEquipoId(equipoId);
+        return ResponseEntity.ok(jugadores);
+    }
+
+    // ============================================================
+    // ACTUALIZAR EQUIPO
+    // ============================================================
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EquipoResponse> actualizarEquipo(
+            @PathVariable Long id,
+            @Valid @RequestBody EquipoRequest dto) {
+        log.info("✏️ Actualizando equipo ID: {}", id);
+        return ResponseEntity.ok(equipoService.actualizarEquipo(id, dto));
+    }
+
+    // ============================================================
+    // ELIMINAR EQUIPO
+    // ============================================================
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> eliminarEquipo(@PathVariable Long id) {
+        log.info("🗑️ Eliminando equipo ID: {}", id);
+        equipoService.eliminarEquipo(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============================================================
+    // REGENERAR CÓDIGO
+    // ============================================================
+
+    @PostMapping("/{equipoId}/regenerar-codigo")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EquipoResponse> regenerarCodigoSolicitud(@PathVariable Long equipoId) {
+        log.info("🔄 Regenerando código para equipo ID: {}", equipoId);
+        return ResponseEntity.ok(equipoService.regenerarCodigoSolicitud(equipoId));
     }
 }

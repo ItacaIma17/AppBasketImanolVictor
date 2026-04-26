@@ -10,6 +10,10 @@ import '../models/DTOS/Registro/registroBaseDTO.dart';
 import '../models/DTOS/updateUser/ActualizarUsuarioDTO.dart';
 import '../models/role.dart';
 import '../models/usuario.dart';
+import '../models/entrenador.dart';
+import '../models/jugador.dart';
+import '../models/arbitro.dart';
+import 'loggerService.dart';
 
 class AutenticacionService {
   static String get baseUrl => AppConfig.apiUrl;
@@ -17,10 +21,16 @@ class AutenticacionService {
   static String? _token;
   static String? _refreshToken;
   static Usuario? _usuarioActual;
+  static Entrenador? _entrenadorActual;
+  static Jugador? _jugadorActual;
+  static Arbitro? _arbitroActual;
 
   static String? get token => _token;
   static String? get refreshToken => _refreshToken;
   static Usuario? get usuarioActual => _usuarioActual;
+  static Entrenador? get entrenadorActual => _entrenadorActual;
+  static Jugador? get jugadorActual => _jugadorActual;
+  static Arbitro? get arbitroActual => _arbitroActual;
 
   static Map<String, String> get _headers {
     final headers = {'Content-Type': 'application/json'};
@@ -45,43 +55,71 @@ class AutenticacionService {
         if (userJson != null && userJson.isNotEmpty) {
           try {
             _usuarioActual = Usuario.fromJson(json.decode(userJson));
-            print('✅ Sesión restaurada para: ${_usuarioActual?.username}');
+            await cargarEntidadEspecifica(_usuarioActual!);
+            LoggerService.info('Sesión restaurada para: ${_usuarioActual?.username}');
           } catch (e) {
-            print('Error restaurando usuario: $e');
+            LoggerService.error('Error restaurando usuario: $e');
             await _limpiarSesion();
           }
         }
       }
     } catch (e) {
-      print('Error en init: $e');
+      LoggerService.error('Error en init: $e');
     }
   }
 
-  // En autenticacion_service.dart
-  static Future<bool> refreshTokenUser() async {
-    if (_refreshToken == null) return false;
+  static Future<void> cargarEntidadEspecifica(Usuario usuario) async {
+    if (usuario.isEntrenador) {
+      await cargarEntrenadorActual(usuario.username);
+    } else if (usuario.isJugador) {
+      await cargarJugadorActual(usuario.username);
+    } else if (usuario.isArbitro) {
+      await cargarArbitroActual(usuario.username);
+    }
+  }
 
+  static Future<void> cargarEntrenadorActual(String username) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/refresh-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'refreshToken': _refreshToken}),
+      final response = await http.get(
+        Uri.parse('$baseUrl/entrenadores/username/$username'),
+        headers: _headers,
       );
-
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _token = data['token'];
-        _refreshToken = data['refreshToken'];
-        await _guardarSesion();
-        print('✅ Token refrescado exitosamente');
-        return true;
-      } else {
-        print('❌ Error refrescando token: ${response.statusCode}');
-        return false;
+        _entrenadorActual = Entrenador.fromJson(json.decode(response.body));
+        LoggerService.info('Entrenador cargado: ${_entrenadorActual?.nombre}');
       }
     } catch (e) {
-      print('❌ Excepción refrescando token: $e');
-      return false;
+      LoggerService.error('Error cargando entrenador: $e');
+    }
+  }
+
+  static Future<void> cargarJugadorActual(String username) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/jugadores/username/$username'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        _jugadorActual = Jugador.fromJson(json.decode(response.body));
+        LoggerService.info('Jugador cargado: ${_jugadorActual?.nombre}');
+      }
+    } catch (e) {
+      LoggerService.error('Error cargando jugador: $e');
+    }
+  }
+
+  static Future<void> cargarArbitroActual(String username) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/arbitros/username/$username'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        _arbitroActual = Arbitro.fromJson(json.decode(response.body));
+        LoggerService.info('Árbitro cargado: ${_arbitroActual?.nombre}');
+      }
+    } catch (e) {
+      LoggerService.error('Error cargando árbitro: $e');
     }
   }
 
@@ -93,166 +131,11 @@ class AutenticacionService {
     _token = null;
     _refreshToken = null;
     _usuarioActual = null;
+    _entrenadorActual = null;
+    _jugadorActual = null;
+    _arbitroActual = null;
   }
 
-
-
-  // ============================================================
-  // LOGIN CORREGIDO
-  // ============================================================
-
-  // lib/services/autenticacion_service.dart
-
-  static Future<bool> login(String username, String password) async {
-    try {
-      print('========================================');
-      print('🔐 Intentando login para: $username');
-      print('🌐 URL: $baseUrl/usuarios/login');
-
-      final request = LoginRequest(username: username, password: password);
-      final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(request.toJson()),
-      ).timeout(const Duration(seconds: 30));
-
-      print('📡 Response status: ${response.statusCode}');
-      print('📡 Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        if (response.body.isEmpty) {
-          print('❌ Respuesta vacía del servidor');
-          return false;
-        }
-
-        final data = json.decode(response.body);
-        print('📦 Datos del login: $data');
-
-        // Validar que los datos necesarios existen
-        if (data['token'] == null || data['refreshToken'] == null) {
-          print('❌ Token o refreshToken no encontrados en respuesta');
-          return false;
-        }
-
-        _token = data['token'];
-        _refreshToken = data['refreshToken'];
-
-        // Obtener username de la respuesta o decodificar del token
-        String usernameActual = data['username'] ?? username;
-        String? roleFromResponse = data['role'];
-
-        print('👤 Username de respuesta: $usernameActual');
-        print('🎭 Role de respuesta: $roleFromResponse');
-
-        // Cargar usuario actual
-        final cargado = await cargarUsuarioActual(usernameActual);
-
-        if (cargado != null) {
-          await _guardarSesion();
-          print('✅ Login exitoso para: ${_usuarioActual?.username}');
-          print('🎭 Rol del usuario: ${_usuarioActual?.role}');
-          print('👑 Es administrador: ${_usuarioActual?.isAdmin}');
-          print('========================================');
-          return true;
-        } else {
-          print('❌ No se pudo cargar el usuario');
-          print('========================================');
-          return false;
-        }
-      } else {
-        String errorMsg = 'Error desconocido';
-        try {
-          if (response.body.isNotEmpty) {
-            final error = json.decode(response.body);
-            errorMsg = error['message'] ?? 'Credenciales incorrectas';
-          }
-        } catch (e) {
-          errorMsg = 'Credenciales incorrectas';
-        }
-        print('❌ Login error: $errorMsg');
-        print('========================================');
-        return false;
-      }
-    } catch (e) {
-      print('❌ Login exception: $e');
-      print('========================================');
-      return false;
-    }
-  }
-
-  // ============================================================
-  // CARGAR USUARIO ACTUAL CORREGIDO
-  // ============================================================
-
-  static Future<Usuario?> cargarUsuarioActual(String username) async {
-    if (_token == null) {
-      print('No hay token para cargar usuario');
-      return null;
-    }
-
-    try {
-      final url = '$baseUrl/usuarios/perfil/$username';
-      print('Cargando perfil desde: $url');
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: _headers,
-      ).timeout(const Duration(seconds: 30));
-
-      print('Perfil response status: ${response.statusCode}');
-      print('Perfil response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        if (response.body.isEmpty) {
-          print('Respuesta de perfil vacía');
-          return null;
-        }
-
-        final data = json.decode(response.body);
-        print('Datos del perfil: $data');
-
-        if (data['username'] == null) {
-          print('Username no encontrado en respuesta');
-          return null;
-        }
-
-        // Obtener el rol del backend
-        final rolString = data['rol'] ?? 'USUARIO';
-        print('Rol recibido del backend: $rolString');
-
-        // ✅ USAR fromString PARA CONVERTIR EL STRING A ENUM
-        final role = Role.fromString(rolString);
-        print('Role convertido: ${role.displayName}');
-
-        _usuarioActual = Usuario(
-          id: data['id'],
-          email: data['email'] ?? '',
-          username: data['username'] ?? '',
-          nombre: data['nombre'] ?? '',
-          apellido: data['apellido'],
-          licencia: data['licencia'],
-          edad: data['edad'] ?? 0,
-          role: role,  // ← Aquí usas el Role convertido
-          verificado: data['verificado'] ?? false,
-          bloqueado: data['bloqueado'] ?? false,
-        );
-
-        print('Usuario cargado: ${_usuarioActual?.username}, rol: ${_usuarioActual?.role.displayName}');
-        return _usuarioActual;
-      } else {
-        print('Error cargando perfil: ${response.statusCode} - ${response.body}');
-        return null;
-      }
-    } catch (e) {
-      print('Exception cargando perfil: $e');
-      return null;
-    }
-  }
-
-  // lib/services/autenticacion_service.dart
-// Añadir este método en la clase AutenticacionService
-
-  // autenticacion_service.dart - método actualizarPerfil mejorado
   static Future<Map<String, dynamic>> actualizarPerfil({
     String? username,
     String? oldPassword,
@@ -272,25 +155,16 @@ class AutenticacionService {
       final bodyClean = Map.from(body)
         ..removeWhere((key, value) => value == null);
 
-      print('═══════════════════════════════════════════');
-      print('🔑 Token: ${_token!.substring(0, _token!.length > 20 ? 20 : _token!.length)}...');
-      print('📏 Longitud token: ${_token!.length}');
-      print('📦 Body a enviar: $bodyClean');
-      print('🌐 URL: ${AppConfig.apiUrl}/usuarios/actualizar');
-      print('═══════════════════════════════════════════');
+      LoggerService.info('Actualizando perfil', tag: 'PERFIL');
 
       final response = await http.put(
         Uri.parse('${AppConfig.apiUrl}/usuarios/actualizar'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_token',
-          'Accept': 'application/json',
-        },
+        headers: _headers,
         body: json.encode(bodyClean),
-      );
+      ).timeout(const Duration(seconds: 30));
 
-      print('📡 Response status: ${response.statusCode}');
-      print('📡 Response body: ${response.body}');
+      LoggerService.apiCall('PUT', '${AppConfig.apiUrl}/usuarios/actualizar',
+          statusCode: response.statusCode, response: response.body);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -303,7 +177,7 @@ class AutenticacionService {
 
         return data;
       } else if (response.statusCode == 401 || response.statusCode == 403) {
-        throw Exception('Sesión expirada o no autorizado. Por favor, inicia sesión nuevamente.');
+        throw Exception('Sesión expirada o no autorizado');
       } else {
         String errorMsg = 'Error al actualizar perfil';
         try {
@@ -315,156 +189,196 @@ class AutenticacionService {
         throw Exception(errorMsg);
       }
     } catch (e) {
-      print('❌ Error actualizando perfil: $e');
+      LoggerService.error('Error actualizando perfil', tag: 'PERFIL', error: e);
       rethrow;
     }
   }
 
-  // ============================================================
-  // GUARDAR SESIÓN
-  // ============================================================
-
   static Future<void> _guardarSesion() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (_token != null) {
-        await prefs.setString('auth_token', _token!);
-      }
-      if (_refreshToken != null) {
-        await prefs.setString('refresh_token', _refreshToken!);
-      }
+      if (_token != null) await prefs.setString('auth_token', _token!);
+      if (_refreshToken != null) await prefs.setString('refresh_token', _refreshToken!);
       if (_usuarioActual != null) {
         await prefs.setString('usuario_actual', json.encode(_usuarioActual!.toJson()));
       }
-      print('✅ Sesión guardada correctamente');
+      LoggerService.info('Sesión guardada correctamente');
     } catch (e) {
-      print('❌ Error guardando sesión: $e');
+      LoggerService.error('Error guardando sesión: $e');
     }
   }
 
   // ============================================================
-  // OBTENER USUARIO ACTUAL
+  // LOGIN
   // ============================================================
 
-  static Future<Usuario?> obtenerUsuarioActual() async {
-    if (_usuarioActual != null) {
-      print('📦 Usuario en memoria: ${_usuarioActual?.username}');
-      return _usuarioActual;
-    }
-
-    // Intentar cargar de SharedPreferences
+  static Future<bool> login(String username, String password) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final userJson = prefs.getString('usuario_actual');
+      LoggerService.info('Intentando login para: $username');
 
-      if (token != null && userJson != null && userJson.isNotEmpty) {
-        _token = token;
-        _usuarioActual = Usuario.fromJson(json.decode(userJson));
-        print('📦 Usuario cargado de SharedPreferences: ${_usuarioActual?.username}');
-        return _usuarioActual;
-      }
-    } catch (e) {
-      print('Error cargando de SharedPreferences: $e');
-    }
+      final request = LoginRequest(username: username, password: password);
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(request.toJson()),
+      ).timeout(const Duration(seconds: 30));
 
-    print('❌ No hay usuario logueado');
-    return null;
-  }
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          LoggerService.error('Respuesta vacía del servidor');
+          return false;
+        }
 
-  static Future<bool> isAdmin() async {
-    try {
-      // Asegurar que tenemos el usuario actual
-      if (_usuarioActual == null) {
-        // Intentar cargar de SharedPreferences
-        await obtenerUsuarioActual();
-      }
+        final data = json.decode(response.body);
 
-      if (_usuarioActual == null) {
-        print('No hay usuario logueado');
+        if (data['token'] == null || data['refreshToken'] == null) {
+          LoggerService.error('Token o refreshToken no encontrados');
+          return false;
+        }
+
+        _token = data['token'];
+        _refreshToken = data['refreshToken'];
+        String usernameActual = data['username'] ?? username;
+
+        final cargado = await cargarUsuarioActual(usernameActual);
+
+        if (cargado != null) {
+          await cargarEntidadEspecifica(cargado);
+          await _guardarSesion();
+          LoggerService.info('Login exitoso para: ${_usuarioActual?.username}');
+          return true;
+        }
+        return false;
+      } else {
+        String errorMsg = 'Error desconocido';
+        try {
+          if (response.body.isNotEmpty) {
+            final error = json.decode(response.body);
+            errorMsg = error['message'] ?? 'Credenciales incorrectas';
+          }
+        } catch (e) {
+          errorMsg = 'Credenciales incorrectas';
+        }
+        LoggerService.error('Login error: $errorMsg');
         return false;
       }
-
-      final esAdmin = _usuarioActual!.role == Role.ADMIN;
-      print('Verificando si ${_usuarioActual!.username} es admin: $esAdmin');
-      print('Rol actual: ${_usuarioActual!.role}');
-
-      return esAdmin;
     } catch (e) {
-      print('Error verificando admin: $e');
+      LoggerService.error('Login exception: $e');
       return false;
     }
   }
 
-  // ============================================================
-  // VERIFICAR SESIÓN
-  // ============================================================
+  static Future<Usuario?> cargarUsuarioActual(String username) async {
+    if (_token == null) return null;
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/usuarios/perfil/$username'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) return null;
+
+        final data = json.decode(response.body);
+        String rolString = data['role'] ?? data['rol'] ?? 'USUARIO';
+        final role = Role.fromString(rolString);
+
+        _usuarioActual = Usuario(
+          id: data['id'],
+          email: data['email'] ?? '',
+          username: data['username'] ?? '',
+          nombre: data['nombre'] ?? '',
+          apellido: data['apellido'],
+          licencia: data['licencia'],
+          edad: data['edad'] ?? 0,
+          role: role,
+          verificado: data['verificado'] ?? false,
+          bloqueado: data['bloqueado'] ?? false,
+        );
+
+        return _usuarioActual;
+      }
+      return null;
+    } catch (e) {
+      LoggerService.error('Exception cargando perfil: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> refreshTokenUser() async {
+    if (_refreshToken == null) return false;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/refresh-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'refreshToken': _refreshToken}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _token = data['token'];
+        _refreshToken = data['refreshToken'];
+        await _guardarSesion();
+        LoggerService.info('Token refrescado exitosamente');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      LoggerService.error('Excepción refrescando token: $e');
+      return false;
+    }
+  }
 
   static Future<bool> isLoggedIn() async {
     if (_token != null) return true;
-
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       final userJson = prefs.getString('usuario_actual');
-
       if (token != null && userJson != null && userJson.isNotEmpty) {
         _token = token;
         _usuarioActual = Usuario.fromJson(json.decode(userJson));
+        await cargarEntidadEspecifica(_usuarioActual!);
         return true;
       }
     } catch (e) {
-      print('Error verificando sesión: $e');
+      LoggerService.error('Error verificando sesión: $e');
     }
-
     return false;
   }
 
-  // ============================================================
-  // CERRAR SESIÓN
-  // ============================================================
-
-  static Future<void> cerrarSesion() async {
+  static Future<Usuario?> obtenerUsuarioActual() async {
+    if (_usuarioActual != null) return _usuarioActual;
     try {
-      if (_usuarioActual != null && _token != null) {
-        await http.post(
-          Uri.parse('$baseUrl/usuarios/logout?username=${_usuarioActual!.username}'),
-          headers: _headers,
-        ).timeout(const Duration(seconds: 5));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userJson = prefs.getString('usuario_actual');
+      if (token != null && userJson != null && userJson.isNotEmpty) {
+        _token = token;
+        _usuarioActual = Usuario.fromJson(json.decode(userJson));
+        await cargarEntidadEspecifica(_usuarioActual!);
+        return _usuarioActual;
       }
     } catch (e) {
-      print('Error en logout: $e');
+      LoggerService.error('Error cargando de SharedPreferences: $e');
     }
-
-    await _limpiarSesion();
-    print('✅ Sesión cerrada');
+    return null;
   }
-
-  // ============================================================
-  // REGISTRO
-  // ============================================================
 
   static Future<bool> registrarUsuarioConDTO(RegistroBaseDTO dto) async {
     try {
-      // ✅ CORREGIDO: Usar el endpoint correcto
-      final url = '$baseUrl/usuarios/registro';  // ← Cambiado de 'auth/register' a 'usuarios/registro'
-      print('📝 Enviando registro a: $url');
-      print('📝 Datos: ${dto.toJson()}');
-
+      final url = '$baseUrl/usuarios/registro';
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(dto.toJson()),
       ).timeout(const Duration(seconds: 30));
 
-      print('📡 Registro response: ${response.statusCode}');
-      print('📡 Registro body: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Registro exitoso');
         return true;
       } else if (response.statusCode == 403) {
-        print('❌ Clave de administrador incorrecta');
         throw Exception('Clave de administrador incorrecta');
       } else {
         String errorMsg = 'Error en el registro';
@@ -473,47 +387,31 @@ class AutenticacionService {
             final error = json.decode(response.body);
             errorMsg = error['message'] ?? error['error'] ?? errorMsg;
           }
-        } catch (e) {
-          print('Error parseando respuesta: $e');
-        }
+        } catch (e) {}
         throw Exception(errorMsg);
       }
     } catch (e) {
-      print('❌ Excepción en registro: $e');
+      LoggerService.error('Excepción en registro: $e');
       rethrow;
     }
   }
 
-  // ============================================================
-  // VERIFICACIÓN
-  // ============================================================
-
   static Future<LoginResponse?> verificarCodigo(String codigo, String email) async {
     try {
-      // ✅ Usar el endpoint correcto para verificación
       final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/verificar'),  // Este parece correcto según logs
+        Uri.parse('$baseUrl/usuarios/verificar'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,     // ← Asegurar que envía el email
-          'codigo': codigo,
-        }),
+        body: json.encode({'email': email, 'codigo': codigo}),
       ).timeout(const Duration(seconds: 30));
 
-      print('📡 Verificación response: ${response.statusCode}');
-      print('📡 Verificación body: ${response.body}');
-
       if (response.statusCode == 200) {
-        if (response.body.isEmpty) {
-          print('✅ Verificación exitosa sin contenido');
-          return null;
-        }
-
+        if (response.body.isEmpty) return null;
         final data = json.decode(response.body);
         final loginResponse = LoginResponse.fromJson(data);
         _token = loginResponse.token;
         _refreshToken = loginResponse.refreshToken;
         await cargarUsuarioActual(loginResponse.username);
+        await cargarEntidadEspecifica(_usuarioActual!);
         await _guardarSesion();
         return loginResponse;
       } else {
@@ -527,7 +425,7 @@ class AutenticacionService {
         throw Exception(errorMsg);
       }
     } catch (e) {
-      print('❌ Excepción en verificación: $e');
+      LoggerService.error('Excepción en verificación: $e');
       rethrow;
     }
   }
@@ -538,7 +436,6 @@ class AutenticacionService {
         Uri.parse('$baseUrl/usuarios/reenviar-codigo?email=$email'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 30));
-
       if (response.statusCode != 200) {
         final error = json.decode(response.body);
         throw Exception(error['message'] ?? 'Error al reenviar código');
@@ -546,5 +443,32 @@ class AutenticacionService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  static Future<void> cerrarSesion() async {
+    try {
+      if (_usuarioActual != null && _token != null) {
+        await http.post(
+          Uri.parse('$baseUrl/usuarios/logout?username=${_usuarioActual!.username}'),
+          headers: _headers,
+        ).timeout(const Duration(seconds: 5));
+      }
+    } catch (e) {
+      LoggerService.error('Error en logout: $e');
+    }
+    await _limpiarSesion();
+    LoggerService.info('Sesión cerrada');
+  }
+
+  static bool isAdmin() {
+    return _usuarioActual?.role == Role.ADMIN;
+  }
+
+  static Map<String, String> getHeaders() {
+    final headers = {'Content-Type': 'application/json'};
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token';
+    }
+    return headers;
   }
 }

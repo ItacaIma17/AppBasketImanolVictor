@@ -2,11 +2,15 @@
 package Presentacion.Controllers;
 
 import Aplicacion.Services.EntrenadorService;
+import Aplicacion.Services.EquipoService;
+import Dominio.Entity.Entrenador;
+import Dominio.Repositorys.EntrenadorRepository;
 import Presentacion.Config.JwtTokenProvider;
 import Presentacion.DTOS.Entrenador.AsignarEquipoDTO;
 import Presentacion.DTOS.Entrenador.EntrenadorEquipoDTO;
 import Presentacion.DTOS.Entrenador.EntrenadorRequest;
 import Presentacion.DTOS.Entrenador.CrearEntrenadorDTO;
+import Presentacion.DTOS.Jugador.JugadorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,6 +35,8 @@ public class EntrenadorController {
 
     private final EntrenadorService entrenadorService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EntrenadorRepository entrenadorRepository;
+    private final EquipoService equipoService;
 
     @GetMapping("/mi-equipo")
     @PreAuthorize("hasRole('ENTRENADOR')")
@@ -157,5 +166,50 @@ public class EntrenadorController {
     public ResponseEntity<Void> eliminarEntrenador(@PathVariable Long id) {
         entrenadorService.eliminarEntrenador(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Presentacion/Controllers/EntrenadorController.java
+
+    // Presentacion/Controllers/EntrenadorController.java
+
+    @GetMapping("/mis-jugadores")
+    @PreAuthorize("hasRole('ENTRENADOR')")
+    public ResponseEntity<List<JugadorResponse>> getMisJugadores(
+            HttpServletRequest request) {  // ✅ Cambiar a HttpServletRequest
+
+        // Extraer token del header manualmente
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("❌ No hay token de autenticación");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String token = authHeader.substring(7);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+
+        if (username == null) {
+            log.error("❌ No se pudo extraer username del token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        log.info("📋 Obteniendo jugadores del entrenador: {}", username);
+
+        // Buscar el entrenador
+        Entrenador entrenador = entrenadorRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Entrenador no encontrado: " + username));
+
+        if (entrenador.getEquipo() == null) {
+            log.warn("⚠️ Entrenador {} no tiene equipo asignado", username);
+            return ResponseEntity.ok(List.of());
+        }
+
+        Long equipoId = entrenador.getEquipo().getId();
+        log.info("✅ Entrenador {} tiene equipo ID: {}", username, equipoId);
+
+        List<JugadorResponse> jugadores = equipoService.getJugadoresByEquipoId(equipoId);
+        log.info("📊 Se encontraron {} jugadores", jugadores.size());
+
+        return ResponseEntity.ok(jugadores);
     }
 }

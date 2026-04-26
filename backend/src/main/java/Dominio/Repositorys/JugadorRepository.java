@@ -16,4 +16,6 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
     List<Jugador> findByEquipoId(Long equipoId);
     List<Jugador> findByEquipoIsNull();
     List<Jugador> findByPosicion(String posicion);
+    long countByEquipoId(Long equipoId);
+
 }

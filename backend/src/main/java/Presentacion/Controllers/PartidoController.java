@@ -4,6 +4,7 @@ import Aplicacion.Services.PartidoService;
 import Presentacion.DTOS.Partido.PartidoRequestDTO;
 import Presentacion.DTOS.Partido.PartidoResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 import java.util.Map;
 
@@ -24,12 +27,29 @@ public class    PartidoController {
 
     private final PartidoService partidoService;
 
+    // Presentacion/Controllers/PartidoController.java
+
     @PostMapping("/crear")
-    @PreAuthorize("hasRole('ADMIN')")  // ✅ Añadir esta anotación
-    public ResponseEntity<PartidoResponseDTO> crearPartido(@RequestBody PartidoRequestDTO dto) {
-        log.info("🏀 Creando nuevo partido: {} vs {}", dto.getEquipoLocalId(), dto.getEquipoVisitanteId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(partidoService.crearPartido(dto));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> crearPartido(@Valid @RequestBody PartidoRequestDTO dto) {
+        try {
+            log.info("🏀 Creando nuevo partido: local={}, visitante={}",
+                    dto.getEquipoLocalId(), dto.getEquipoVisitanteId());
+
+            PartidoResponseDTO partido = partidoService.crearPartido(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(partido);
+
+        } catch (ResponseStatusException e) {
+            log.error("Error creando partido: {}", e.getReason());
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            log.error("Error inesperado creando partido: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno del servidor: " + e.getMessage()));
+        }
     }
+
+
 
     @GetMapping("/listar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ENTRENADOR', 'ARBITRO', 'JUGADOR')")
@@ -77,9 +97,17 @@ public class    PartidoController {
 
     @DeleteMapping("/{partidoId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> eliminarPartido(@PathVariable Long partidoId) {
-        log.info("🗑️ Eliminando partido: {}", partidoId);
-        partidoService.eliminarPartido(partidoId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> eliminarPartido(@PathVariable Long partidoId) {
+        try {
+            log.info("🗑️ Eliminando partido: {}", partidoId);
+            partidoService.eliminarPartido(partidoId);
+            return ResponseEntity.ok(Map.of("message", "Partido eliminado correctamente"));
+
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

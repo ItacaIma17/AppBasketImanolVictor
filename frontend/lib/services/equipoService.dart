@@ -160,20 +160,36 @@ class EquipoService {
   }
 
   // Obtener jugadores de equipo
+  // lib/services/equipoService.dart
+
+  // lib/services/equipoService.dart
+
   static Future<List<Jugador>> getJugadoresEquipo(int equipoId) async {
     try {
+      final token = AutenticacionService.token;
+      if (token == null) {
+        print('❌ No hay token disponible');
+        return [];
+      }
+
       final response = await http.get(
         Uri.parse('$baseUrl/equipos/$equipoId/jugadores'),
-        headers: _headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
+        print('✅ Jugadores encontrados en equipo $equipoId: ${data.length}');
         return data.map((j) => Jugador.fromJson(j)).toList();
+      } else {
+        print('❌ Error obteniendo jugadores: ${response.statusCode}');
+        return [];
       }
-      return [];
     } catch (e) {
-      print('❌ Error obteniendo jugadores: $e');
+      print('❌ Error obteniendo jugadores del equipo: $e');
       return [];
     }
   }

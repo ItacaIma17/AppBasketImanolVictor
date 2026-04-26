@@ -1,4 +1,5 @@
 // lib/models/entrenador.dart
+
 class Entrenador {
   final int? id;
   final String nombre;
@@ -10,6 +11,9 @@ class Entrenador {
   final String? telefono;
   final String? experiencia;
   final bool verificado;
+  final bool tieneEquipo;
+  final int? equipoId;
+  final String? nombreEquipo;
 
   Entrenador({
     this.id,
@@ -22,6 +26,9 @@ class Entrenador {
     this.telefono,
     this.experiencia,
     this.verificado = false,
+    this.tieneEquipo = false,
+    this.equipoId,
+    this.nombreEquipo,
   });
 
   factory Entrenador.fromJson(Map<String, dynamic> json) {
@@ -36,21 +43,11 @@ class Entrenador {
       telefono: json['telefono'],
       experiencia: json['experiencia'],
       verificado: json['verificado'] ?? false,
+      tieneEquipo: json['tieneEquipo'] ?? false,
+      equipoId: json['equipoId'],
+      nombreEquipo: json['nombreEquipo'],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'apellido': apellido,
-      'username': username,
-      'email': email,
-      'edad': edad,
-      'codigoEntrenador': codigoEntrenador,
-      'telefono': telefono,
-      'experiencia': experiencia,
-      'verificado': verificado,
-    };
-  }
+  String get nombreCompleto => '$nombre ${apellido ?? ''}'.trim();
 }

@@ -3,13 +3,16 @@ package Aplicacion.Services;
 import Dominio.Entity.Equipo;
 import Dominio.Entity.Liga;
 import Dominio.Entity.Entrenador;
+import Dominio.Entity.Jugador;
 import Dominio.Repositorys.EquipoRepository;
 import Dominio.Repositorys.LigaRepository;
 import Dominio.Repositorys.EntrenadorRepository;
+import Dominio.Repositorys.JugadorRepository;
 import Presentacion.DTOS.Equipo.EquipoRequest;
 import Presentacion.DTOS.Equipo.EquipoResponse;
 import Presentacion.DTOS.Equipo.SolicitarEquipoDTO;
 import Presentacion.DTOS.Equipo.AprobarSolicitudDTO;
+import Presentacion.DTOS.Jugador.JugadorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,12 +28,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EquipoService {
 
+    // ✅ Eliminada la dependencia circular: ya no se inyecta a sí mismo
     private final EquipoRepository equipoRepository;
     private final LigaRepository ligaRepository;
     private final EntrenadorRepository entrenadorRepository;
+    private final JugadorRepository jugadorRepository;  // ← Añadido para obtener jugadores
 
     private static final String CODIGO_PREFIX = "EQ-";
     private static final SecureRandom random = new SecureRandom();
+
+    // ============================================================
+    // MÉTODOS PRIVADOS
+    // ============================================================
 
     private String generarCodigoSolicitud() {
         String codigo;
@@ -41,9 +50,13 @@ public class EquipoService {
         return codigo;
     }
 
+    // ============================================================
+    // CREAR EQUIPO
+    // ============================================================
+
     @Transactional
     public EquipoResponse crearEquipo(EquipoRequest dto) {
-        log.info("Creando equipo: {}", dto.getNombre());
+        log.info("🏀 Creando equipo: {}", dto.getNombre());
 
         if (equipoRepository.findByNombre(dto.getNombre()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -54,23 +67,23 @@ public class EquipoService {
         if (dto.getLigaId() != null) {
             liga = ligaRepository.findById(dto.getLigaId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Liga no encontrada"));
+                            "Liga no encontrada con ID: " + dto.getLigaId()));
         }
 
         Equipo equipo = dto.toEntity();
         equipo.setLiga(liga);
-
-        // Generar código de solicitud
         equipo.setCodigoSolicitud(generarCodigoSolicitud());
         equipo.setSolicitudPendiente(false);
 
         Equipo saved = equipoRepository.save(equipo);
-        log.info("Equipo creado con ID: {} y código: {}", saved.getId(), saved.getCodigoSolicitud());
+        log.info("✅ Equipo creado con ID: {} y código: {}", saved.getId(), saved.getCodigoSolicitud());
 
         return EquipoResponse.fromEntity(saved);
     }
 
-    // Aplicacion/Services/EquipoService.java
+    // ============================================================
+    // SOLICITUDES DE ENTRENADOR
+    // ============================================================
 
     @Transactional
     public void solicitarDirigirEquipo(String username, SolicitarEquipoDTO dto) {
@@ -89,7 +102,7 @@ public class EquipoService {
                     "Código de solicitud no proporcionado");
         }
 
-        // Buscar el entrenador por username (NO por UserDetails)
+        // Buscar el entrenador por username
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.error("❌ Entrenador no encontrado con username: {}", username);
@@ -149,14 +162,18 @@ public class EquipoService {
         log.info("========================================");
     }
 
+    // ============================================================
+    // APROBAR/RECHAZAR SOLICITUD
+    // ============================================================
+
     @Transactional
     public EquipoResponse aprobarSolicitud(AprobarSolicitudDTO dto, String adminUsername) {
-        log.info("Admin {} procesando solicitud para equipo código: {}",
+        log.info("👑 Admin {} procesando solicitud para equipo código: {}",
                 adminUsername, dto.getCodigoSolicitud());
 
         Equipo equipo = equipoRepository.findByCodigoSolicitud(dto.getCodigoSolicitud())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Código de equipo inválido"));
+                        "Código de equipo inválido: " + dto.getCodigoSolicitud()));
 
         if (!Boolean.TRUE.equals(equipo.getSolicitudPendiente())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -165,7 +182,7 @@ public class EquipoService {
 
         Entrenador entrenador = entrenadorRepository.findById(dto.getEntrenadorId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Entrenador no encontrado"));
+                        "Entrenador no encontrado con ID: " + dto.getEntrenadorId()));
 
         if (dto.getAprobar()) {
             // Asignar equipo al entrenador
@@ -192,8 +209,43 @@ public class EquipoService {
         return EquipoResponse.fromEntity(equipo);
     }
 
+    // ============================================================
+    // OBTENER JUGADORES (CORREGIDO - SIN DEPENDENCIA CIRCULAR)
+    // ============================================================
+
+    @Transactional(readOnly = true)
+    public List<JugadorResponse> getJugadoresByEquipoId(Long equipoId) {
+        log.info("🔍 Buscando jugadores para equipo ID: {}", equipoId);
+
+        // Verificar que el equipo existe
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Equipo no encontrado con ID: " + equipoId));
+
+        // Buscar jugadores directamente desde el repositorio (sin pasar por Equipo)
+        List<Jugador> jugadores = jugadorRepository.findByEquipoId(equipoId);
+
+        if (jugadores == null || jugadores.isEmpty()) {
+            log.warn("⚠️ El equipo '{}' no tiene jugadores asignados", equipo.getNombre());
+            return List.of();
+        }
+
+        log.info("✅ Se encontraron {} jugadores en el equipo '{}'", jugadores.size(), equipo.getNombre());
+
+        return jugadores.stream()
+                .map(JugadorResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+
+
+    // ============================================================
+    // LISTAR EQUIPOS
+    // ============================================================
+
     @Transactional(readOnly = true)
     public List<EquipoResponse> listarTodosEquipos() {
+        log.info("📋 Listando todos los equipos");
         return equipoRepository.findAll().stream()
                 .map(EquipoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -201,6 +253,7 @@ public class EquipoService {
 
     @Transactional(readOnly = true)
     public List<EquipoResponse> listarEquiposSinEntrenador() {
+        log.info("📋 Listando equipos sin entrenador");
         return equipoRepository.findEquiposSinEntrenador().stream()
                 .map(EquipoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -208,24 +261,133 @@ public class EquipoService {
 
     @Transactional(readOnly = true)
     public List<EquipoResponse> listarEquiposConSolicitudPendiente() {
+        log.info("📋 Listando equipos con solicitudes pendientes");
         return equipoRepository.findEquiposConSolicitudPendiente().stream()
                 .map(EquipoResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    // ============================================================
+    // OBTENER EQUIPO
+    // ============================================================
+
     @Transactional(readOnly = true)
     public EquipoResponse obtenerEquipoPorId(Long id) {
+        log.info("🔍 Obteniendo equipo por ID: {}", id);
         Equipo equipo = equipoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Equipo no encontrado"));
+                        "Equipo no encontrado con ID: " + id));
         return EquipoResponse.fromEntity(equipo);
     }
 
     @Transactional(readOnly = true)
     public EquipoResponse obtenerEquipoPorCodigo(String codigo) {
+        log.info("🔍 Obteniendo equipo por código: {}", codigo);
         Equipo equipo = equipoRepository.findByCodigoSolicitud(codigo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Código de equipo inválido"));
+                        "Código de equipo inválido: " + codigo));
         return EquipoResponse.fromEntity(equipo);
+    }
+
+    // ============================================================
+    // ACTUALIZAR EQUIPO
+    // ============================================================
+
+    @Transactional
+    public EquipoResponse actualizarEquipo(Long id, EquipoRequest dto) {
+        log.info("✏️ Actualizando equipo con ID: {}", id);
+
+        Equipo equipo = equipoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Equipo no encontrado con ID: " + id));
+
+        if (dto.getNombre() != null && !dto.getNombre().equals(equipo.getNombre())) {
+            if (equipoRepository.findByNombre(dto.getNombre()).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un equipo con el nombre: " + dto.getNombre());
+            }
+            equipo.setNombre(dto.getNombre());
+        }
+
+        if (dto.getCiudad() != null) {
+            equipo.setCiudad(dto.getCiudad());
+        }
+
+        if (dto.getNombreEstadio() != null) {
+            equipo.setNombreEstadio(dto.getNombreEstadio());
+        }
+
+        if (dto.getAnoFundacion() != null) {
+            equipo.setAnoFundacion(dto.getAnoFundacion());
+        }
+
+        if (dto.getEscudoUrl() != null) {
+            equipo.setEscudoUrl(dto.getEscudoUrl());
+        }
+
+        if (dto.getLigaId() != null) {
+            Liga liga = ligaRepository.findById(dto.getLigaId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Liga no encontrada con ID: " + dto.getLigaId()));
+            equipo.setLiga(liga);
+        }
+
+        Equipo saved = equipoRepository.save(equipo);
+        log.info("✅ Equipo actualizado: {}", saved.getNombre());
+
+        return EquipoResponse.fromEntity(saved);
+    }
+
+    // ============================================================
+    // ELIMINAR EQUIPO
+    // ============================================================
+
+    @Transactional
+    public void eliminarEquipo(Long id) {
+        log.info("🗑️ Eliminando equipo con ID: {}", id);
+
+        Equipo equipo = equipoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Equipo no encontrado con ID: " + id));
+
+        // Verificar si el equipo tiene entrenador asignado
+        if (equipo.getEntrenador() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede eliminar el equipo porque tiene un entrenador asignado: " +
+                            equipo.getEntrenador().getNombre());
+        }
+
+        // Verificar si el equipo tiene jugadores asignados
+        long jugadoresCount = jugadorRepository.countByEquipoId(id);
+        if (jugadoresCount > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede eliminar el equipo porque tiene " + jugadoresCount + " jugadores asignados");
+        }
+
+        equipoRepository.deleteById(id);
+        log.info("✅ Equipo eliminado: {}", id);
+    }
+
+    // ============================================================
+    // REGENERAR CÓDIGO DE SOLICITUD
+    // ============================================================
+
+    @Transactional
+    public EquipoResponse regenerarCodigoSolicitud(Long equipoId) {
+        log.info("🔄 Regenerando código de solicitud para equipo ID: {}", equipoId);
+
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Equipo no encontrado con ID: " + equipoId));
+
+        String nuevoCodigo = generarCodigoSolicitud();
+        equipo.setCodigoSolicitud(nuevoCodigo);
+        equipo.setSolicitudPendiente(false);
+        equipo.setEntrenadorSolicitanteId(null);
+
+        Equipo saved = equipoRepository.save(equipo);
+        log.info("✅ Nuevo código generado para equipo {}: {}", equipo.getNombre(), nuevoCodigo);
+
+        return EquipoResponse.fromEntity(saved);
     }
 }
