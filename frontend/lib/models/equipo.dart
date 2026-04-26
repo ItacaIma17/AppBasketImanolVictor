@@ -3,7 +3,7 @@ import 'jugador.dart';
 
 class Equipo {
   final int? id;
-  final id_liga;
+  final int? id_liga;
   final String nombre;
   final String ciudad;
   final String nombreEstadio;

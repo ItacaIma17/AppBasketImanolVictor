@@ -153,9 +153,8 @@ class _SeleccionarPartidoActaPageState
                     DateFormat('dd/MM/yyyy HH:mm').format(
                       DateTime.parse('${partido.fecha} ${partido.hora}'),
                     ),
-  style: const TextStyle(color: Colors.grey),
-),
-
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
