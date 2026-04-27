@@ -69,7 +69,7 @@ class _EquipoPageState extends State<EquipoPage> {
 
       partidosJugados++;
 
-      final esLocal = int.parse(partido.idLocal) == widget.equipoId;
+      final esLocal = partido.idLocal == widget.equipoId;
 
       if (esLocal) {
         totalPuntosAFavor += partido.puntosLocal;

@@ -12,6 +12,7 @@ class HeaderApp extends StatelessWidget implements PreferredSizeWidget {
     this.actions,  // ← Añadir
   });
 
+
   @override
   Widget build(BuildContext context) {
     return AppBar(

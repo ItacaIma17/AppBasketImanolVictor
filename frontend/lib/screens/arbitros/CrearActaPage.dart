@@ -53,7 +53,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
     try {
       // Usar el ArbitroService correctamente
       final alineaciones = await ArbitroService.getAlineacionesPartido(
-        int.parse(widget.partido.id),
+        widget.partido.id,
       );
       setState(() {
         _alineaciones = alineaciones;

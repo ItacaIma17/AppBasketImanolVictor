@@ -1,3 +1,11 @@
+package Presentacion.DTOS.Equipo;
+
+import Dominio.Entity.Equipo;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Data
 @Builder
 @NoArgsConstructor

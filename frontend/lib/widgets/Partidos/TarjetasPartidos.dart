@@ -92,12 +92,12 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      if (widget.partido.idLocal.isNotEmpty) {
+                      if (widget.partido.idLocal != 0 && widget.partido.idLocal != null) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => EquipoPage(
-                              equipoId: int.tryParse(widget.partido.idLocal) ?? 0,
+                              equipoId: widget.partido.idLocal ?? 0,
                             ),
                           ),
                         );
@@ -179,12 +179,12 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      if (widget.partido.idVisitante.isNotEmpty) {
+                      if (widget.partido.idVisitante != 0 && widget.partido.idVisitante != null) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => EquipoPage(
-                              equipoId: int.tryParse(widget.partido.idVisitante) ?? 0,
+                              equipoId: widget.partido.idVisitante ?? 0,
                             ),
                           ),
                         );

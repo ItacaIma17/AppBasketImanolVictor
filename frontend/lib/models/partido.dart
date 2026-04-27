@@ -1,7 +1,7 @@
 class Partido {
-  final String id;
-  final String idLocal;
-  final String idVisitante;
+  final int id;
+  final int idLocal;
+  final int idVisitante;
   final String nombreLocal;
   final String nombreVisitante;
   final int puntosLocal;
@@ -55,10 +55,10 @@ class Partido {
 
   factory Partido.fromJson(dynamic json) {
     return Partido(
-      id: (json['id'] ?? '').toString(),
+      id: (json['id'] ?? ''),
 
-      idLocal: (json['equipo_local_id'] ?? json['idLocal'] ?? '').toString(),
-      idVisitante: (json['equipo_visitante_id'] ?? json['idVisitante'] ?? '').toString(),
+      idLocal: (json['equipo_local_id'] ?? json['idLocal'] ?? ''),
+      idVisitante: (json['equipo_visitante_id'] ?? json['idVisitante'] ?? ''),
 
       nombreLocal: json['nombreLocal'] ?? '',
       nombreVisitante: json['nombreVisitante'] ?? '',

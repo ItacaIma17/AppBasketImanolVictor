@@ -62,11 +62,11 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
 
     switch (_filtro) {
       case 'PROXIMOS':
-        return _partidos.where((p) => p.fecha.isAfter(now) && p.estado != 'FINALIZADO').toList()
-          ..sort((a, b) => a.fecha.compareTo(b.fecha));
+        return _partidos.where((p) => DateTime.parse(p.fecha).isAfter(now) && p.estado != 'FINALIZADO').toList()
+          ..sort((a, b) => DateTime.parse(a.fecha).compareTo(DateTime.parse(b.fecha)));
       case 'FINALIZADOS':
         return _partidos.where((p) => p.estado == 'FINALIZADO').toList()
-          ..sort((a, b) => b.fecha.compareTo(a.fecha));
+          ..sort((a, b) => DateTime.parse(b.fecha).compareTo(DateTime.parse(a.fecha)));
       default:
         return _partidos;
     }
@@ -203,16 +203,17 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
   }
 
   Widget _buildPartidoCard(Partido partido) {
-    final esLocal = partido.equipoLocal == _miEquipo!.nombreEquipo;
-    final rival = esLocal ? partido.equipoVisitante : partido.equipoLocal;
+    final esLocal = partido.nombreLocal == _miEquipo!.nombreEquipo;
+    final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
     final esLocalJuego = esLocal;
 
     // Determinar estado
     final now = DateTime.now();
-    final isPast = partido.fecha.isBefore(now);
-    final isToday = partido.fecha.year == now.year &&
-        partido.fecha.month == now.month &&
-        partido.fecha.day == now.day;
+    final fechaParsed = DateTime.parse(partido.fecha);
+    final isPast = fechaParsed.isBefore(now);
+    final isToday = fechaParsed.year == now.year &&
+        fechaParsed.month == now.month &&
+        fechaParsed.day == now.day;
 
     String estadoTexto;
     Color estadoColor;
@@ -282,7 +283,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                 const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
                 Text(
-                  DateFormat('EEEE, dd MMMM yyyy', 'es_ES').format(partido.fecha),
+                  DateFormat('EEEE, dd MMMM yyyy', 'es_ES').format(DateTime.parse(partido.fecha)),
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],
@@ -293,7 +294,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
                 Text(
-                  DateFormat('HH:mm').format(partido.fecha),
+                  DateFormat('HH:mm').format(DateTime.parse(partido.fecha)),
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],
@@ -305,7 +306,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    partido.ubicacion ?? 'Sin ubicación',
+                    partido.direccionPabellon ?? 'Sin ubicación',
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ),
@@ -360,7 +361,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                 ),
               ),
             // Resultado si está finalizado
-            if (partido.estado == 'FINALIZADO' && partido.resultadoLocal != null)
+            if (partido.estado == 'FINALIZADO' && partido.puntosLocal != null)
               Container(
                 margin: const EdgeInsets.only(top: 12),
                 padding: const EdgeInsets.all(12),
@@ -374,7 +375,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                     const Icon(Icons.emoji_events, color: Colors.green),
                     const SizedBox(width: 8),
                     Text(
-                      'Resultado: ${partido.resultadoLocal} - ${partido.resultadoVisitante}',
+                      'Resultado: ${partido.puntosLocal} - ${partido.puntosVisitante}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],

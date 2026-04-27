@@ -75,7 +75,7 @@ class _SeleccionarPartidoPageState extends State<SeleccionarPartidoPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => VerAlineacionesPage(
-                              partidoId: int.parse(partido.id),
+                              partidoId: partido.id,
                             ),
                           ),
                         );

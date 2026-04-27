@@ -236,8 +236,8 @@ class _LigasPageState extends State<LigasPage> {
           context,
           MaterialPageRoute(
             builder: (context) => ClasificacionPage(
-              categoriaEdad: liga.nombreLiga,
-              categoriaNivel: '',
+              id_categoria: liga.id ?? 0,
+              categoria: liga.nombreLiga,
             ),
           ),
         );
@@ -314,14 +314,19 @@ class _LigasPageState extends State<LigasPage> {
   }
 
   Widget _buildLigaFavoritaCard(String nombreLiga) {
+    final liga = _ligasBD.firstWhere(
+      (l) => l.nombreLiga == nombreLiga,
+      orElse: () => Liga(id: 0, nombreLiga: nombreLiga,numeroEquipos:0, numeroEquiposRegistrados: 0),
+    );
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ClasificacionPage(
-              categoriaEdad: nombreLiga,
-              categoriaNivel: '',
+              id_categoria: liga.id ?? 0,
+              categoria: liga.nombreLiga,
             ),
           ),
         );

@@ -391,7 +391,7 @@ Widget build(BuildContext context) {
           onPressed: () async {
             try {
               await PartidoService.actualizarResultado(
-                int.parse(partido.id),
+                partido.id,
                 {
                   'puntosLocal': int.tryParse(resultadoLocalCtrl.text),
                   'puntosVisitante': int.tryParse(resultadoVisitanteCtrl.text),
@@ -422,7 +422,7 @@ Widget build(BuildContext context) {
 
     Future<void> _eliminarPartido(Partido partido) async {
       try {
-        await PartidoService.eliminarPartido(int.parse(partido.id));
+        await PartidoService.eliminarPartido(partido.id);
         await _cargarDatos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

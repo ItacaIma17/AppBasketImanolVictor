@@ -157,7 +157,7 @@ Widget _buildLigasTab() {
             MaterialPageRoute(
               builder: (context) => ClasificacionPage(
                 categoria: nombre,
-                ligaId: ligaId,
+                id_categoria: ligaId,
               ),
             ),
           );

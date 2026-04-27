@@ -276,18 +276,18 @@ class _PanelArbitroPageState extends State<PanelArbitroPage> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
-        title: Text('${partido.equipoLocal} vs ${partido.equipoVisitante}'),
+        title: Text('${partido.nombreLocal} vs ${partido.nombreVisitante}'),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year} - ${partido.ubicacion ?? "Sin ubicación"}'),
+            Text('${DateTime.parse(partido.fecha).day}/${DateTime.parse(partido.fecha).month}/${DateTime.parse(partido.fecha).year} - ${partido.direccionPabellon ?? "Sin ubicación"}'),
             if (!alineacionesListas)
               const Text('Esperando alineaciones', style: TextStyle(color: Colors.orange, fontSize: 12)),
           ],
         ),
         trailing: partido.tieneActa == true
             ? ElevatedButton(
-          onPressed: () => _navigateTo(VerActaArbitroPage(partidoId: partido.id!)),
+          onPressed: () => _navigateTo(VerActaArbitroPage(partidoId:partido.id)),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
           child: const Text('Ver Acta'),
         )

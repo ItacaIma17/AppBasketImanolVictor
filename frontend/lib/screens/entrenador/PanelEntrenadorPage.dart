@@ -285,15 +285,15 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   }
 
   Widget _buildPartidoCard(Partido partido) {
-    final esLocal = partido.equipoLocal == _miEquipo!.nombreEquipo;
-    final rival = esLocal ? partido.equipoVisitante : partido.equipoLocal;
+    final esLocal = partido.nombreLocal == _miEquipo!.nombreEquipo;
+    final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
         title: Text('vs $rival'),
-        subtitle: Text('${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year} - ${partido.ubicacion ?? "Sin ubicación"}'),
+        subtitle: Text('${DateTime.parse(partido.fecha).day}/${DateTime.parse(partido.fecha).month}/${DateTime.parse(partido.fecha).year} - ${partido.direccionPabellon ?? "Sin ubicación"}'),
         trailing: ElevatedButton(
           onPressed: () => _navigateTo(PresentarAlineacionPage(partido: partido, esLocal: esLocal)),
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),

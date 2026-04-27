@@ -63,11 +63,11 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
   int get partidosGanados {
     return _partidos.where((p) {
       if (p.estado != 'FINALIZADO') return false;
-      final esLocal = p.equipoLocal == _miEquipo?.nombreEquipo;
+      final esLocal = p.nombreLocal == _miEquipo?.nombreEquipo;
       if (esLocal) {
-        return (p.resultadoLocal ?? 0) > (p.resultadoVisitante ?? 0);
+        return (p.puntosLocal ?? 0) > (p.puntosVisitante ?? 0);
       } else {
-        return (p.resultadoVisitante ?? 0) > (p.resultadoLocal ?? 0);
+        return (p.puntosVisitante ?? 0) > (p.puntosLocal ?? 0);
       }
     }).length;
   }
@@ -395,9 +395,9 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
       itemCount: partidosFinalizados.length,
       itemBuilder: (context, index) {
         final partido = partidosFinalizados[index];
-        final esLocal = partido.equipoLocal == _miEquipo!.nombreEquipo;
-        final puntosFavor = esLocal ? partido.resultadoLocal : partido.resultadoVisitante;
-        final puntosContra = esLocal ? partido.resultadoVisitante : partido.resultadoLocal;
+        final esLocal = partido.nombreLocal == _miEquipo!.nombreEquipo;
+        final puntosFavor = esLocal ? partido.puntosLocal : partido.puntosVisitante;
+        final puntosContra = esLocal ? partido.puntosVisitante : partido.puntosLocal;
         final esVictoria = (puntosFavor ?? 0) > (puntosContra ?? 0);
 
         return Card(
@@ -410,7 +410,7 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${partido.equipoLocal} vs ${partido.equipoVisitante}',
+                        '${partido.nombreLocal} vs ${partido.nombreVisitante}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -447,7 +447,7 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year}',
+                  '${DateTime.parse(partido.fecha).day}/${DateTime.parse(partido.fecha).month}/${DateTime.parse(partido.fecha).year}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],

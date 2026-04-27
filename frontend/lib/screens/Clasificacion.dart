@@ -3,36 +3,47 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../data/gestorFavoritos.dart';
 import '../models/equipo.dart';
-import '../models/liga.dart';
 import '../services/equipoService.dart';
-import '../services/autenticacion_service.dart';
 import '../widgets/Header.dart';
 import '../widgets/MenuLateral.dart';
 import 'equipos/DetalleEquipoPage.dart';
 
 class ClasificacionPage extends StatefulWidget {
-  final String categoriaEdad;
-  final String categoriaNivel;
+  final int id_categoria;
+  final String categoria;
+
 
   const ClasificacionPage({
     super.key,
-    required this.categoriaEdad,
-    required this.categoriaNivel,
+    required this.id_categoria,
+    required this.categoria,
+    
   });
 
   @override
   State<ClasificacionPage> createState() => _ClasificacionPageState();
 }
 
-class _ClasificacionPageState extends State<ClasificacionPage> {
+class _ClasificacionPageState extends State<ClasificacionPage> 
+  with SingleTickerProviderStateMixin{
+  
+  late TabController _tabController;
   List<Equipo> _equipos = [];
   bool _isLoading = true;
   String? _error;
+  bool _esFavoritaLiga = false;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _esFavoritaLiga = FavoritosManager().esCategoriaFavorita(widget.categoria);
     _cargarClasificacion();
+  }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _cargarClasificacion() async {
@@ -46,7 +57,7 @@ class _ClasificacionPageState extends State<ClasificacionPage> {
 
       // Filtrar equipos por liga
       final equiposFiltrados = todosEquipos.where((e) =>
-      e.nombreLiga == widget.categoriaEdad
+      e.nombreLiga == widget.categoria
       ).toList();
 
       // Ordenar por puntos (descendente)
@@ -64,20 +75,83 @@ class _ClasificacionPageState extends State<ClasificacionPage> {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const MenuLateral(),
-      appBar: const HeaderApp(titulo: "Clasificación"),
+      appBar: HeaderApp(
+        titulo: widget.categoria,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _esFavoritaLiga ? Icons.star : Icons.star_border,
+              color: _esFavoritaLiga ? Colors.amber : AppColors.blanco,
+            ),
+            onPressed: () {
+              setState(() {
+                _esFavoritaLiga = !_esFavoritaLiga;
+                FavoritosManager().toggleCategoriaFavorita(widget.categoria);
+              });
+            },
+          ),
+        ],
+      ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
         child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorWidget()
-              : _buildClasificacion(),
+          child: Column(
+            children: [
+              _buildTabs(),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.blanco))
+                    : _error != null
+                        ? _buildErrorWidget()
+                        : TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildClasificacion(),
+                              _buildResultadosTab(),
+                            ],
+                          ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildResultadosTab() {
+    return const Center(
+      child: Text(
+        'Próximamente',
+        style: TextStyle(color: Colors.white54, fontSize: 16),
+      ),
+    );
+  }
+  
+  Widget _buildTabs() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.negroOpacidad50,
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: AppColors.gradienteNaranjaAmarillo,
+        ),
+        labelColor: AppColors.blanco,
+        unselectedLabelColor: AppColors.blancoOpacidad70,
+        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        tabs: const [
+          Tab(text: 'Clasificación'),
+          Tab(text: 'Resultados'),
+        ],
       ),
     );
   }
@@ -118,51 +192,17 @@ class _ClasificacionPageState extends State<ClasificacionPage> {
       );
     }
 
-    return Column(
-      children: [
-        _buildHeaderLiga(),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _equipos.length,
-            itemBuilder: (context, index) {
-              final equipo = _equipos[index];
-              final esFavorito = FavoritosManager().equiposFavoritos.contains(equipo.nombre);
-              return _buildEquipoRow(equipo, index + 1, esFavorito);
-            },
-          ),
-        ),
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16), // ← separación arriba
+      itemCount: _equipos.length,
+      itemBuilder: (context, index) {
+        final equipo = _equipos[index];
+        final esFavorito = FavoritosManager().equiposFavoritos.contains(equipo.nombre);
+        return _buildEquipoRow(equipo, index + 1, esFavorito);
+      },
     );
   }
 
-  Widget _buildHeaderLiga() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: AppColors.gradienteNaranjaAmarillo,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(
-            widget.categoriaEdad,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_equipos.length} equipos',
-            style: const TextStyle(color: Colors.white70),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEquipoRow(Equipo equipo, int posicion, bool esFavorito) {
     return GestureDetector(

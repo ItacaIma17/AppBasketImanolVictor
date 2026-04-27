@@ -300,10 +300,10 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
       itemCount: _partidos.length,
       itemBuilder: (context, index) {
         final partido = _partidos[index];
-        final esLocal = partido.equipoLocal == widget.equipo.nombre;
-        final rival = esLocal ? partido.equipoVisitante : partido.equipoLocal;
-        final resultado = partido.resultadoLocal != null
-            ? '${partido.resultadoLocal} - ${partido.resultadoVisitante}'
+        final esLocal = partido.nombreLocal == widget.equipo.nombre;
+        final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
+        final resultado = partido.puntosLocal != null
+            ? '${partido.puntosLocal} - ${partido.puntosLocal}'
             : 'vs $rival';
 
         return Card(
@@ -311,7 +311,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
             leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
             title: Text(resultado),
             subtitle: Text(
-              '${partido.fecha.day}/${partido.fecha.month}/${partido.fecha.year} - ${partido.ubicacion ?? "Sin ubicación"}',
+              '${DateTime.parse(partido.fecha).day}/${DateTime.parse(partido.fecha).month}/${DateTime.parse(partido.fecha).year} - ${partido.direccionPabellon ?? "Sin ubicación"}',
             ),
             trailing: partido.estado == 'FINALIZADO'
                 ? const Chip(label: Text('Finalizado'), backgroundColor: Colors.green)
