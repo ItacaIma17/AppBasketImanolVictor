@@ -7,7 +7,7 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import '../screens/Admin/GestionEntrenadoresPage.dart';
 import '../screens/Admin/PanelAdminPage.dart';
 import '../screens/Entrenador/MiEquipoPage.dart';
-import '../screens/Entrenador/PanelEntrenadorPage.dart' hide ProximosPartidosPage, EstadisticasEquipoPage;  // ✅ Ocultar el conflictivo
+import '../screens/Entrenador/PanelEntrenadorPage.dart' hide ProximosPartidosPage, EstadisticasEquipoPage; 
 import '../screens/Entrenador/ProximosPartidosPage.dart';
 import '../screens/Entrenador/EstadisticasEquipoPage.dart';
 import '../screens/InicioApp.dart';
@@ -59,6 +59,11 @@ class MenuLateral extends StatelessWidget {
             // ============================================
             if (rol == Role.ENTRENADOR && entrenador != null) ...[
               _buildDrawerItem(
+                icon: Icons.dashboard,
+                title: 'Panel de Entrenador',
+                onTap: () => _navigateTo(context, const PanelEntrenadorPage()),
+              ),
+              _buildDrawerItem(
                 icon: Icons.sports_basketball,
                 title: 'Mi Equipo',
                 onTap: () => _navigateTo(context, const MiEquipoPage()),
@@ -73,17 +78,18 @@ class MenuLateral extends StatelessWidget {
                 ),
               ],
 
+
               // Mostrar opciones solo si TIENE equipo
               if (entrenador.tieneEquipo && entrenador.equipoId != null) ...[
                 _buildDrawerItem(
                   icon: Icons.calendar_today,
                   title: 'Próximos Partidos',
-                  onTap: () => _navigateTo(context, const ProximosPartidosPage()),  // ✅ Ahora funciona
+                  onTap: () => _navigateTo(context, const ProximosPartidosPage()), 
                 ),
                 _buildDrawerItem(
                   icon: Icons.bar_chart,
                   title: 'Estadísticas Equipo',
-                  onTap: () => _navigateTo(context, EstadisticasEquipoPage()),  // ✅ Sin const
+                  onTap: () => _navigateTo(context, EstadisticasEquipoPage()),  
                 ),
                 _buildDrawerItem(
                   icon: Icons.calendar_today,
@@ -98,7 +104,7 @@ class MenuLateral extends StatelessWidget {
                 _buildDrawerItem(
                   icon: Icons.settings,
                   title: 'Configuración',
-                  onTap: () => _navigateTo(context, ConfiguracionPage()),
+                  onTap: () => _navigateTo(context, const ConfiguracionPage()),
                 ),
               ],
               const Divider(color: AppColors.blancoOpacidad70),
@@ -176,7 +182,7 @@ class MenuLateral extends StatelessWidget {
             _buildDrawerItem(
               icon: Icons.settings,
               title: 'Configuración',
-              onTap: () {},
+              onTap: () => _navigateTo(context, const ConfiguracionPage()),
             ),
             _buildDrawerItem(
               icon: Icons.info,

@@ -23,6 +23,7 @@ class Partido {
   final bool? tieneAlineacionVisitante;
   final int? alineacionLocalId;
   final int? alineacionVisitanteId;
+  final int? jornada;
 
   Partido({
     required this.id,
@@ -51,6 +52,7 @@ class Partido {
     this.tieneAlineacionVisitante,
     this.alineacionLocalId,
     this.alineacionVisitanteId,
+    this.jornada,
   });
 
   factory Partido.fromJson(dynamic json) {
@@ -90,6 +92,7 @@ class Partido {
       tieneAlineacionVisitante: json['tieneAlineacionVisitante'],
       alineacionLocalId: json['alineacionLocalId'],
       alineacionVisitanteId: json['alineacionVisitanteId'],
+      jornada: json['jornada'],
     );
   }
 

@@ -45,6 +45,8 @@ public class Partido {
     @Column(nullable = false)
     private String estado;
 
+    private Integer jornada;
+
     @OneToOne(mappedBy = "partido", cascade = CascadeType.ALL)
     private ActaPartido acta;
 
