@@ -216,17 +216,22 @@ public class PartidoService {
     // PARTIDOS POR ÁRBITRO
     // ============================================================
 
-    @Transactional(readOnly = true)
+
     public List<PartidoResponseDTO> getPartidosByArbitro(String username) {
-        log.info("📋 Buscando partidos para árbitro: {}", username);
-
         Arbitro arbitro = arbitroRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Árbitro no encontrado: " + username));
+                .orElseThrow(() -> new RuntimeException("Árbitro no encontrado"));
 
-        return partidoRepository.findByArbitroId(arbitro.getId()).stream()
+        List<Partido> partidos = partidoRepository.findByArbitroId(arbitro.getId());
+
+        return partidos.stream()
                 .map(PartidoResponseDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PartidoResponseDTO getPartidoById(Long partidoId) {
+        Partido partido = partidoRepository.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
+        return PartidoResponseDTO.fromEntity(partido);
     }
 
     // ============================================================

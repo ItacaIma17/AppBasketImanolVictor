@@ -24,7 +24,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -95,6 +97,57 @@ public class AdminService {
                 .stream()
                 .map(UsuarioPerfilDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Map<String, Object> obtenerEstadisticas() {
+        Map<String, Object> stats = new HashMap<>();
+
+        stats.put("totalUsuarios", userRepository.count());
+        stats.put("totalEntrenadores", entrenadorRepository.count());
+        stats.put("totalJugadores", jugadorRepository.count());
+        stats.put("totalArbitros", arbitroRepository.count());
+        stats.put("totalEquipos", equipoRepository.count());
+        stats.put("totalLigas", ligaRepository.count());
+        stats.put("totalPartidos", partidoRepository.count());
+        stats.put("usuariosActivos", userRepository.countByBloqueado(false));
+        stats.put("partidosHoy", partidoRepository.countPartidosHoy());
+        stats.put("partidosFinalizados", partidoRepository.countByEstado("FINALIZADO"));
+        stats.put("partidosPendientes", partidoRepository.countByEstado("PROGRAMADO"));
+
+        log.info("📊 Estadísticas obtenidas: Usuarios={}, Equipos={}, Partidos={}",
+                stats.get("totalUsuarios"), stats.get("totalEquipos"), stats.get("totalPartidos"));
+
+        return stats;
+    }
+
+    @Transactional
+    public List<Map<String, Object>> obtenerActividadReciente() {
+        List<Map<String, Object>> actividades = new ArrayList<>();
+
+        // Últimos usuarios registrados
+        userRepository.findTop5ByOrderByIdDesc().forEach(user -> {
+            Map<String, Object> actividad = new HashMap<>();
+            actividad.put("accion", "Nuevo usuario registrado");
+            actividad.put("usuario", user.getUsername());
+            actividad.put("rol", user.getRole().toString());
+            actividad.put("fecha", user.getId().toString());
+            actividad.put("tipo", "usuario");
+            actividades.add(actividad);
+        });
+
+        // Últimos partidos programados
+        partidoRepository.findTop5ByOrderByFechaDesc().forEach(partido -> {
+            Map<String, Object> actividad = new HashMap<>();
+            actividad.put("accion", "Partido programado");
+            actividad.put("usuario", "admin");
+            actividad.put("detalle", partido.getEquipoLocal().getNombre() + " vs " + partido.getEquipoVisitante().getNombre());
+            actividad.put("fecha", partido.getFecha().toString());
+            actividad.put("tipo", "partido");
+            actividades.add(actividad);
+        });
+
+        return actividades;
     }
 
 
@@ -220,9 +273,6 @@ public class AdminService {
         }
     }
 
-    // ── GESTIÓN DE ÁRBITROS ───────────────────────────────
-
-    // Añade estos métodos a AdminService.java
 
 // ── GESTIÓN DE ÁRBITROS (mejorada) ─────────────────────
 
@@ -254,7 +304,7 @@ public class AdminService {
                         HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
         // Verificar que el partido no tenga ya un acta
-        if (partido.getActa() != null) {
+        if (partido.getActaPartido() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Este partido ya tiene un acta finalizada");
         }
@@ -283,7 +333,7 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        if (partido.getActa() != null) {
+        if (partido.getActaPartido() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "No se puede desasignar el árbitro porque el partido ya tiene acta");
         }

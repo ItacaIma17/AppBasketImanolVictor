@@ -417,7 +417,7 @@ public class DataLoader implements CommandLineRunner {
                 .findFirst()
                 .orElse(null);
 
-        if (partidoRealBarça != null && partidoRealBarça.getActa() == null) {
+        if (partidoRealBarça != null && partidoRealBarça.getActaPartido() == null) {
 
 
                 Arbitro arbitro = partidoRealBarça.getArbitro();

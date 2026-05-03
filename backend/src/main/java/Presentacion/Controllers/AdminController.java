@@ -14,16 +14,20 @@ import Presentacion.DTOS.Jugador.JugadorResponse;
 import Presentacion.DTOS.Usuarios.UsuarioPerfilDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@Slf4j
+
 public class AdminController {
 
     private final AdminService adminService;
@@ -96,6 +100,19 @@ public class AdminController {
         requireAdmin(request);
         adminService.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @GetMapping("/estadisticas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
+        log.info("📊 Obteniendo estadísticas del dashboard");
+        return ResponseEntity.ok(adminService.obtenerEstadisticas());
+    }
+
+    @GetMapping("/actividad-reciente")
+    public ResponseEntity<List<Map<String, Object>>> obtenerActividadReciente() {
+        log.info("📋 Obteniendo actividad reciente");
+        return ResponseEntity.ok(adminService.obtenerActividadReciente());
     }
 
     // ── JUGADORES ─────────────────────────────────────────

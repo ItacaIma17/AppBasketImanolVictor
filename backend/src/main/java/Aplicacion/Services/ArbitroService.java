@@ -196,7 +196,7 @@ public class ArbitroService {
                         "Partido no encontrado con ID: " + dto.getPartidoId()));
 
         // Verificar que el partido no tenga ya un acta
-        if (partido.getActa() != null) {
+        if (partido.getActaPartido() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Este partido ya tiene un acta finalizada");
         }

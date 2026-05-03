@@ -1,9 +1,14 @@
 package Presentacion.Controllers;
 
 import Aplicacion.Services.PartidoService;
+import Dominio.Entity.Arbitro;
+import Dominio.Entity.Partido;
+import Dominio.Entity.Roles.Roles;
+import Dominio.Repositorys.ArbitroRepository;
+import Dominio.Repositorys.PartidoRepository;
+import Presentacion.DTOS.Arbitro.ArbitroResponse;
 import Presentacion.DTOS.Partido.PartidoRequestDTO;
 import Presentacion.DTOS.Partido.PartidoResponseDTO;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,23 +16,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/partidos")
 @RequiredArgsConstructor
-public class    PartidoController {
+public class PartidoController {
 
     private final PartidoService partidoService;
-
-    // Presentacion/Controllers/PartidoController.java
+    private final PartidoRepository partidoRepository;
+    private final ArbitroRepository arbitroRepository;
 
     @PostMapping("/crear")
     @PreAuthorize("hasRole('ADMIN')")
@@ -49,8 +54,6 @@ public class    PartidoController {
         }
     }
 
-
-
     @GetMapping("/listar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ENTRENADOR', 'ARBITRO', 'JUGADOR')")
     public ResponseEntity<List<PartidoResponseDTO>> listarPartidos() {
@@ -58,13 +61,9 @@ public class    PartidoController {
         return ResponseEntity.ok(partidoService.listarTodosPartidos());
     }
 
-    // Presentacion/Controllers/PartidoController.java
-
     @GetMapping("/entrenador/mis-partidos")
     @PreAuthorize("hasRole('ENTRENADOR')")
-    public ResponseEntity<List<PartidoResponseDTO>> getPartidosEntrenador(HttpServletRequest request) {
-
-        // Obtener username del SecurityContextHolder
+    public ResponseEntity<List<PartidoResponseDTO>> getPartidosEntrenador() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -78,6 +77,20 @@ public class    PartidoController {
         return ResponseEntity.ok(partidos);
     }
 
+    @GetMapping("/equipo/{equipoId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<PartidoResponseDTO>> getPartidosByEquipo(@PathVariable Long equipoId) {
+        log.info("📋 Listando partidos del equipo: {}", equipoId);
+        return ResponseEntity.ok(partidoService.getPartidosByEquipo(equipoId));
+    }
+
+    @GetMapping("/{partidoId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PartidoResponseDTO> getPartidoById(@PathVariable Long partidoId) {
+        log.info("📋 Obteniendo partido: {}", partidoId);
+        PartidoResponseDTO partido = partidoService.getPartidoById(partidoId);
+        return ResponseEntity.ok(partido);
+    }
 
     @PutMapping("/{partidoId}/resultado")
     @PreAuthorize("hasAnyRole('ADMIN', 'ARBITRO')")
@@ -105,13 +118,57 @@ public class    PartidoController {
         }
     }
 
+    // ==================== ENDPOINTS PARA ÁRBITROS ====================
 
-    // Presentacion/Controllers/PartidoController.java
+    @PutMapping("/{partidoId}/arbitro/{arbitroId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> asignarArbitro(
+            @PathVariable Long partidoId,
+            @PathVariable Long arbitroId) {
 
-    @GetMapping("/equipo/{equipoId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PartidoResponseDTO>> getPartidosByEquipo(@PathVariable Long equipoId) {
-        log.info("📋 Listando partidos del equipo: {}", equipoId);
-        return ResponseEntity.ok(partidoService.getPartidosByEquipo(equipoId));
+        try {
+            Partido partido = partidoRepository.findById(partidoId)
+                    .orElseThrow(() -> new RuntimeException("Partido no encontrado"));
+
+            Arbitro arbitro = arbitroRepository.findById(arbitroId)
+                    .orElseThrow(() -> new RuntimeException("Árbitro no encontrado"));
+
+            partido.setArbitro(arbitro);
+            partidoRepository.save(partido);
+
+            log.info("✅ Árbitro {} asignado al partido {}", arbitroId, partidoId);
+            return ResponseEntity.ok(Map.of("message", "Árbitro asignado correctamente"));
+
+        } catch (Exception e) {
+            log.error("Error asignando árbitro: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/arbitros/disponibles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ArbitroResponse>> getArbitrosDisponibles() {
+        List<Arbitro> arbitros = arbitroRepository.findAll();
+        List<ArbitroResponse> response = arbitros.stream()
+                .map(ArbitroResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/arbitro/mis-partidos")
+    @PreAuthorize("hasRole('ARBITRO')")
+    public ResponseEntity<List<PartidoResponseDTO>> getMisPartidosArbitro() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = authentication.getName();
+        log.info("Listando partidos del árbitro: {}", username);
+
+        List<PartidoResponseDTO> partidos = partidoService.getPartidosByArbitro(username);
+        return ResponseEntity.ok(partidos);
     }
 }

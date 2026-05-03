@@ -4,6 +4,7 @@ import Dominio.Entity.Arbitro;
 import Dominio.Entity.EstadoPartido.EstadoPartido;
 import lombok.Builder;
 import lombok.Data;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,7 @@ public class ArbitroResponse {
         private String equipoLocal;
         private String equipoVisitante;
         private String fecha;
+        private String hora;
         private String ubicacion;
     }
 
@@ -35,6 +37,9 @@ public class ArbitroResponse {
         if (arbitro == null) {
             return null;
         }
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         ArbitroResponseBuilder builder = ArbitroResponse.builder()
                 .id(arbitro.getId())
@@ -49,13 +54,13 @@ public class ArbitroResponse {
         if (arbitro.getPartidos() != null && !arbitro.getPartidos().isEmpty()) {
             builder.partidosAsignados(arbitro.getPartidos().size())
                     .proximosPartidos(arbitro.getPartidos().stream()
-                            // CORREGIDO: comparar enum directamente, sin .name()
-                            .filter(p -> EstadoPartido.PROGRAMADO.name().equals(p.getEstado()))
+                            .filter(p -> !EstadoPartido.FINALIZADO.name().equals(p.getEstado()))
                             .map(p -> PartidoAsignadoDTO.builder()
                                     .partidoId(p.getId())
                                     .equipoLocal(p.getEquipoLocal().getNombre())
                                     .equipoVisitante(p.getEquipoVisitante().getNombre())
-                                    .fecha(p.getFecha().toString())
+                                    .fecha(p.getFecha().format(dateFormatter))
+                                    .hora(p.getFecha().format(timeFormatter))
                                     .ubicacion(p.getUbicacion() != null ? p.getUbicacion() : p.getPabellon())
                                     .build())
                             .collect(Collectors.toList()));

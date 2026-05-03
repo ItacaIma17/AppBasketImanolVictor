@@ -1,11 +1,8 @@
 package Dominio.Entity;
 
-import Presentacion.DTOS.Entrenador.AlineacionResponseDTO;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "partidos")
@@ -17,6 +14,7 @@ public class Partido {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "liga_id")
     private Liga liga;
 
     @ManyToOne
@@ -34,29 +32,25 @@ public class Partido {
     @Column(nullable = false)
     private LocalDateTime fecha;
 
-    private String ubicacion;
+    private String ubicacion;  // Esto es direccionPabellon
 
     private String pabellon;
 
-    private Integer resultadoLocal;
+    private Integer resultadoLocal;  // puntosLocal
 
-    private Integer resultadoVisitante;
+    private Integer resultadoVisitante;  // puntosVisitante
 
     @Column(nullable = false)
-    private String estado;
+    private String estado;  // PROGRAMADO, EN_CURSO, FINALIZADO
 
-    @OneToOne(mappedBy = "partido", cascade = CascadeType.ALL)
-    private ActaPartido acta;
-
-    @OneToOne(mappedBy = "partido", cascade = CascadeType.ALL)
-    private Alineacion alineacionLocal;
-
-    @OneToOne(mappedBy = "partido", cascade = CascadeType.ALL)
-    private Alineacion alineacionVisitante;
+    @ManyToOne
+    @JoinColumn(name = "acta_partido_id")
+    private ActaPartido actaPartido;
 
     public boolean participaEquipo(Equipo equipo) {
         if (equipo == null) return false;
         return (equipoLocal != null && equipoLocal.getId().equals(equipo.getId())) ||
                 (equipoVisitante != null && equipoVisitante.getId().equals(equipo.getId()));
     }
+
 }
