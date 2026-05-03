@@ -11,6 +11,7 @@ import '../screens/Entrenador/PanelEntrenadorPage.dart' hide ProximosPartidosPag
 import '../screens/Entrenador/ProximosPartidosPage.dart';
 import '../screens/Entrenador/EstadisticasEquipoPage.dart';
 import '../screens/InicioApp.dart';
+import '../screens/Inicio/InicioSesion.dart';
 import '../screens/Partidos/SeleccionarPartidoPage.dart';
 import '../screens/Perfil.dart';
 import '../screens/arbitros/MisPartidosPage.dart';
@@ -245,7 +246,10 @@ class MenuLateral extends StatelessWidget {
               await AutenticacionService.cerrarSesion();
               if (context.mounted) {
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/login');
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const InicioSesionPage()),
+                );
               }
             },
             child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),

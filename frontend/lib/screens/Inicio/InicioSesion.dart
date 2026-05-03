@@ -204,28 +204,16 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Botones Google / Facebook
+                // Boton Google
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: _socialButton(
                     text: "Continuar con Google",
                     icon: Icons.g_mobiledata,
                     onPressed: () {
-                      // TODO: Implementar login con Google
                     },
                   ),
-                ),
-                const SizedBox(height: 12),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: _socialButton(
-                    text: "Continuar con Facebook",
-                    icon: Icons.facebook,
-                    onPressed: () {
-                      // TODO: Implementar login con Facebook
-                    },
-                  ),
-                ),
+                ),           
 
                 const SizedBox(height: 30),
 
