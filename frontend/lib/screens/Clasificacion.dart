@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../data/gestorFavoritos.dart';
 import '../models/equipo.dart';
+import '../models/partido.dart';
 import '../services/equipoService.dart';
+import '../services/partidoService.dart';
 import '../widgets/Header.dart';
 import '../widgets/MenuLateral.dart';
 import 'equipos/DetalleEquipoPage.dart';
@@ -29,6 +31,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
   
   late TabController _tabController;
   List<Equipo> _equipos = [];
+  List<Partido> _partidos = [];
   bool _isLoading = true;
   String? _error;
   bool _esFavoritaLiga = false;
@@ -54,10 +57,16 @@ class _ClasificacionPageState extends State<ClasificacionPage>
 
     try {
       final todosEquipos = await EquipoService.listarEquipos();
+      final todosPartidos = await PartidoService.listarPartidos();
 
       // Filtrar equipos por liga
       final equiposFiltrados = todosEquipos.where((e) =>
       e.nombreLiga == widget.categoria
+      ).toList();
+
+      // Filtrar partidos por liga
+      final partidosFiltrados = todosPartidos.where((p) =>
+      p.ligaId == widget.id_categoria.toString()
       ).toList();
 
       // Ordenar por puntos (descendente)
@@ -65,6 +74,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
 
       setState(() {
         _equipos = equiposFiltrados;
+        _partidos = partidosFiltrados;
         _isLoading = false;
       });
     } catch (e) {
@@ -123,10 +133,132 @@ class _ClasificacionPageState extends State<ClasificacionPage>
   }
 
   Widget _buildResultadosTab() {
-    return const Center(
-      child: Text(
-        'Próximamente',
-        style: TextStyle(color: Colors.white54, fontSize: 16),
+    if (_partidos.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sports_basketball, size: 64, color: Colors.white54),
+            SizedBox(height: 16),
+            Text(
+              'No hay resultados disponibles',
+              style: TextStyle(color: Colors.white54, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Agrupar partidos por jornada
+    final jornadasMap = <int?, List<Partido>>{};
+    for (var partido in _partidos) {
+      final jornada = partido.jornada ?? 0;
+      if (!jornadasMap.containsKey(jornada)) {
+        jornadasMap[jornada] = [];
+      }
+      jornadasMap[jornada]!.add(partido);
+    }
+
+    // Ordenar jornadas de menor a mayor
+    final jornadasOrdenadas = jornadasMap.keys.toList()..sort();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: jornadasOrdenadas.length,
+      itemBuilder: (context, index) {
+        final jornada = jornadasOrdenadas[index];
+        final partidos = jornadasMap[jornada]!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado de la jornada
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Jornada $jornada',
+                style: const TextStyle(
+                  color: AppColors.blanco,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Partidos de la jornada
+            ...partidos.map((partido) => _buildPartidoResultado(partido)),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPartidoResultado(Partido partido) {
+    final String resultado;
+    if (partido.estaFinalizado) {
+      resultado = '${partido.puntosLocal} - ${partido.puntosVisitante}';
+    } else {
+      resultado = '-';
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    partido.nombreLocal,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    resultado,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: partido.estaFinalizado ? AppColors.naranja : Colors.grey,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    partido.nombreVisitante,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.end,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estado: ${partido.estado}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (partido.direccionPabellon.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                partido.direccionPabellon,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
