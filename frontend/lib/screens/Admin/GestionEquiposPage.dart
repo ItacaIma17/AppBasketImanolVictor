@@ -21,6 +21,18 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
   bool _isLoading = true;
   String? _error;
 
+  String _filtroNombre = '';
+  int? _filtroLigaId;
+
+  List<Equipo> get _equiposFiltrados {
+    return _equipos.where((equipo) {
+      final coincideNombre = _filtroNombre.isEmpty ||
+          equipo.nombre.toLowerCase().contains(_filtroNombre.toLowerCase());
+      final coincideLiga = _filtroLigaId == null || equipo.ligaId == _filtroLigaId;
+      return coincideNombre && coincideLiga;
+    }).toList();
+  }
+
   // Controladores para el formulario
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
@@ -403,6 +415,42 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
             ],
           ),
           const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.negro.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(children: [
+              Expanded(
+                child: TextField(
+                  onChanged: (v) => setState(() => _filtroNombre = v),
+                  style: const TextStyle(color: AppColors.blanco),
+                  decoration: const InputDecoration(
+                    hintText: 'Filtrar por nombre',
+                    hintStyle: TextStyle(color: AppColors.blancoOpacidad70),
+                    prefixIcon: Icon(Icons.search, color: AppColors.blanco),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              DropdownButton<int?>(
+                value: _filtroLigaId,
+                dropdownColor: AppColors.negro,
+                hint: const Text('Liga', style: TextStyle(color: AppColors.blanco)),
+                items: [
+                  const DropdownMenuItem<int?>(value: null, child: Text('Todas', style: TextStyle(color: AppColors.blanco))),
+                  ..._ligas.map((l) => DropdownMenuItem<int?>(
+                    value: l['id'] as int?,
+                    child: Text(l['nombreLiga']?.toString() ?? 'Liga', style: const TextStyle(color: AppColors.blanco)),
+                  )),
+                ],
+                onChanged: (value) => setState(() => _filtroLigaId = value),
+              )
+            ]),
+          ),
+          const SizedBox(height: 16),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -415,9 +463,9 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              itemCount: _equipos.length,
+              itemCount: _equiposFiltrados.length,
               itemBuilder: (context, index) {
-                final equipo = _equipos[index];
+                final equipo = _equiposFiltrados[index];
                 return _buildEquipoCard(equipo);
               },
             ),
@@ -431,6 +479,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
 
   Widget _buildEquipoCard(Equipo equipo) {
     return Card(
+      color: AppColors.blanco,
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(

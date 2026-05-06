@@ -1,5 +1,6 @@
 // lib/screens/Entrenador/PresentarAlineacionPage.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/JugadorAlineacionTemp.dart';
 import '../../models/partido.dart';
@@ -31,6 +32,7 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
   List<JugadorAlineacionTemp> _suplentes = [];
   bool _isLoading = true;
   bool _confirmada = false;
+  String get _claveAlineacionFija => 'alineacion_fija_equipo_${widget.esLocal ? widget.partido.idLocal : widget.partido.idVisitante}';
 
   @override
   void initState() {
@@ -179,6 +181,56 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
     }
   }
 
+  Future<void> _guardarComoFija() async {
+    if (_titulares.length != 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes tener 5 titulares para guardar alineación fija')),
+      );
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final titularesIds = _titulares.map((e) => e.jugador.id).join(',');
+    final suplentesIds = _suplentes.map((e) => e.jugador.id).join(',');
+    await prefs.setString(_claveAlineacionFija, '$titularesIds|$suplentesIds');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Alineación fija guardada')),
+      );
+    }
+  }
+
+  Future<void> _cargarAlineacionFija() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_claveAlineacionFija);
+    if (raw == null || raw.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay alineación fija guardada para este equipo')),
+      );
+      return;
+    }
+    final parts = raw.split('|');
+    final titularesIds = (parts.isNotEmpty ? parts[0] : '')
+        .split(',')
+        .where((e) => e.isNotEmpty)
+        .map(int.parse)
+        .toSet();
+    final suplentesIds = (parts.length > 1 ? parts[1] : '')
+        .split(',')
+        .where((e) => e.isNotEmpty)
+        .map(int.parse)
+        .toSet();
+    setState(() {
+      _titulares = _jugadoresEquipo
+          .where((j) => titularesIds.contains(j.id))
+          .map((j) => JugadorAlineacionTemp(jugador: j, dorsal: j.dorsal ?? 0, posicion: j.posicion))
+          .toList();
+      _suplentes = _jugadoresEquipo
+          .where((j) => suplentesIds.contains(j.id))
+          .map((j) => JugadorAlineacionTemp(jugador: j, dorsal: j.dorsal ?? 0, posicion: j.posicion))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final nombreEquipo = widget.esLocal
@@ -230,6 +282,26 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
                       _buildSeccionTitulares(),
                       const SizedBox(height: 16),
                       _buildSeccionSuplentes(),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _cargarAlineacionFija,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Usar alineación fija'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _guardarComoFija,
+                              icon: const Icon(Icons.save),
+                              label: const Text('Guardar fija'),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [

@@ -209,4 +209,20 @@ static Future<List<Partido>> obtenerPartidosPorEquipoVisitante(int equipoId) asy
       rethrow;
     }
   }
+
+  static Future<void> asignarArbitro(int partidoId, int arbitroId) async {
+    final payload = {'partidoId': partidoId, 'arbitroId': arbitroId};
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/arbitros/asignar'),
+        headers: _headers,
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('No se pudo asignar árbitro');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

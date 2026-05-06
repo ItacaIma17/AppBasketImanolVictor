@@ -103,4 +103,23 @@ class ArbitroService {
       return false;
     }
   }
+
+  // Listado de árbitros disponibles para designación (admin)
+  static Future<List<Map<String, dynamic>>> getArbitrosSinAsignar() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/arbitros/sin-asignar'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      LoggerService.error('Error listando árbitros sin asignar', tag: 'ARBITRO', error: e);
+      return [];
+    }
+  }
 }
