@@ -8,6 +8,7 @@ import '../../services/autenticacion_service.dart';
 import '../../services/equipoService.dart';
 import '../../services/loggerService.dart';
 import '../../services/partidoService.dart';
+import '../../services/arbitroService.dart';
 
 class GestionPartidosPage extends StatefulWidget {
   const GestionPartidosPage({super.key});
@@ -19,6 +20,7 @@ class GestionPartidosPage extends StatefulWidget {
 class _GestionPartidosPageState extends State<GestionPartidosPage> {
   List<Partido> _partidos = [];
   List<Equipo> _equipos = [];
+  List<Map<String, dynamic>> _arbitrosDisponibles = [];
   bool _isLoading = true;
   String? _error;
 
@@ -28,6 +30,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
   DateTime _fechaPartido = DateTime.now();
   TimeOfDay _horaPartido = TimeOfDay.now();
   String _ubicacion = '';
+  Map<String, dynamic>? _arbitroSeleccionado;
 
   @override
   void initState() {
@@ -63,10 +66,12 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
 
       final partidos = await PartidoService.listarPartidos();
       final equipos = await EquipoService.listarEquipos();
+      final arbitros = await ArbitroService.getArbitrosSinAsignar();
 
       setState(() {
         _partidos = partidos;
         _equipos = equipos;
+        _arbitrosDisponibles = arbitros;
         _isLoading = false;
       });
 
@@ -124,7 +129,13 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
         'estado': 'PROGRAMADO',
       };
 
-      await PartidoService.crearPartido(partidoData);
+      final partidoCreado = await PartidoService.crearPartido(partidoData);
+      if (_arbitroSeleccionado != null && partidoCreado['id'] != null) {
+        await PartidoService.asignarArbitro(
+          int.parse(partidoCreado['id'].toString()),
+          int.parse(_arbitroSeleccionado!['id'].toString()),
+        );
+      }
 
       // ✅ Recargar datos sin recargar toda la página
       await _cargarDatos();
@@ -150,6 +161,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
       _fechaPartido = DateTime.now();
       _horaPartido = TimeOfDay.now();
       _ubicacion = '';
+      _arbitroSeleccionado = null;
     });
   }
 
@@ -247,6 +259,22 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                     TextFormField(
                       decoration: const InputDecoration(labelText: 'Ubicación'),
                       onChanged: (value) => _ubicacion = value,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<Map<String, dynamic>>(
+                      decoration: const InputDecoration(labelText: 'Árbitro designado (opcional)'),
+                      value: _arbitroSeleccionado,
+                      items: _arbitrosDisponibles.map((arbitro) {
+                        final nombre = arbitro['nombre'] ?? '';
+                        final apellido = arbitro['apellido'] ?? '';
+                        return DropdownMenuItem<Map<String, dynamic>>(
+                          value: arbitro,
+                          child: Text('$nombre $apellido'.trim()),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setDialogState(() => _arbitroSeleccionado = value);
+                      },
                     ),
                   ],
                 ),

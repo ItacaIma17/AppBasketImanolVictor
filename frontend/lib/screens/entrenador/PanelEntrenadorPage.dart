@@ -211,7 +211,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   Widget _buildEstadisticaCard(IconData icon, String label, String value, Color color) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           children: [
             Icon(icon, size: 28, color: color),
@@ -236,7 +236,7 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.9,
           children: [
             _buildMenuCard('Mi Equipo', Icons.people, Colors.blue, () => _navigateTo(const MiEquipoPage())),
             _buildMenuCard('Jugadores', Icons.sports_basketball, Colors.green, () => _navigateTo(JugadoresEquipoPage(equipoId: _miEquipo!.equipoId))),
@@ -259,13 +259,13 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 32, color: color),
+              Icon(icon, size: 24, color: color),
               const SizedBox(height: 8),
-              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+              Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
             ],
           ),
         ),

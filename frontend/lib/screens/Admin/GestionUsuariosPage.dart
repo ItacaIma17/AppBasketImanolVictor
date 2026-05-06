@@ -22,7 +22,9 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: Container(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,6 +128,7 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
