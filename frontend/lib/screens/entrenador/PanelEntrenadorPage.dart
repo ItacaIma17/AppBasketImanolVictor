@@ -15,8 +15,8 @@ import '../equipos/SolicitarEquipoPage.dart';
 import 'MiEquipoPage.dart';
 import 'PresentarAlineacion.dart';
 import 'SeleccionarPartidoEntrenadorPage.dart';
-import 'ProximosPartidosPage.dart'; // ✅ Añadir import
-import 'EstadisticasEquipoPage.dart'; // ✅ Añadir import
+import 'ProximosPartidosPage.dart'; 
+import 'EstadisticasEquipoPage.dart'; 
 
 
 class PanelEntrenadorPage extends StatefulWidget {
@@ -240,7 +240,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
           children: [
             _buildMenuCard('Mi Equipo', Icons.people, Colors.blue, () => _navigateTo(const MiEquipoPage())),
             _buildMenuCard('Jugadores', Icons.sports_basketball, Colors.green, () => _navigateTo(JugadoresEquipoPage(equipoId: _miEquipo!.equipoId))),
-            // ✅ CORREGIDO: No pasar partidos como parámetro
             _buildMenuCard('Próximos Partidos', Icons.calendar_today, Colors.orange, () => _navigateTo(const ProximosPartidosPage())),
             _buildMenuCard('Presentar Alineación', Icons.line_style, Colors.purple, () => _navigateTo(const SeleccionarPartidoEntrenadorPage())),
             _buildMenuCard('Estadísticas', Icons.bar_chart, Colors.red, () => _navigateTo(const EstadisticasEquipoPage())),

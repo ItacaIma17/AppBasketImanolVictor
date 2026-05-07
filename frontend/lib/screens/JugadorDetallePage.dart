@@ -25,6 +25,7 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
     final esFavorito = FavoritosManager().esJugadorFavorito(widget.jugador.id!);
 
     return Scaffold(
+      backgroundColor: AppColors.gradienteAragon.colors.last,
       drawer: const MenuLateral(),
       appBar: HeaderApp(
         titulo: widget.jugador.nombreCompleto,
@@ -107,12 +108,6 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
                 ),
               ),
               const SizedBox(height: 8),
-              Chip(
-                label: Text(widget.jugador.posicion),
-                backgroundColor: Colors.white.withOpacity(0.3),
-                labelStyle: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [

@@ -50,6 +50,7 @@ class _PanelJugadorPageState extends State<PanelJugadorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.gradienteAragon.colors.last,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Mi Perfil"),
       body: Container(
@@ -117,12 +118,6 @@ class _PanelJugadorPageState extends State<PanelJugadorPage> {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
-              Chip(
-                label: Text(_jugador!.posicion),
-                backgroundColor: Colors.white.withOpacity(0.3),
-                labelStyle: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
