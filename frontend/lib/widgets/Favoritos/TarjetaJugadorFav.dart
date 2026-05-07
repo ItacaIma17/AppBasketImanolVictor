@@ -4,18 +4,14 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 class TarjetaJugador extends StatelessWidget {
   final String nombre;
   final String equipo;
-  final double puntos;
-  final double rebotes;
-  final double asistencias;
+  final int edad;
   final VoidCallback onTap;
 
   const TarjetaJugador({
     super.key,
     required this.nombre,
     required this.equipo,
-    required this.puntos,
-    required this.rebotes,
-    required this.asistencias,
+    required this.edad,
     required this.onTap,
   });
 
@@ -73,38 +69,20 @@ class TarjetaJugador extends StatelessWidget {
                         color: Colors.grey[700],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildStat('${puntos} Pts'),
-                        const SizedBox(width: 12),
-                        _buildStat('${rebotes} Reb'),
-                        const SizedBox(width: 12),
-                        _buildStat('${asistencias} Ast'),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Edad: $edad',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),
               ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStat(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.grisClaro,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

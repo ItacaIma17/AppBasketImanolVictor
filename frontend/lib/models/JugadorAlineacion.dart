@@ -20,15 +20,22 @@ class JugadorAlineacion {
   });
 
   factory JugadorAlineacion.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
     return JugadorAlineacion(
-      id: json['id'],
-      jugadorId: json['jugadorId'],
-      nombre: json['nombre'],
-      apellido: json['apellido'],
-      nombreCompleto: json['nombreCompleto'],
-      dorsal: json['dorsal'],
-      posicion: json['posicion'],
-      titular: json['titular'],
+      id: _parseInt(json['id']),
+      jugadorId: _parseInt(json['jugadorId']),
+      nombre: json['nombre'] ?? '',
+      apellido: json['apellido'] ?? '',
+      nombreCompleto: json['nombreCompleto'] ?? '',
+      dorsal: _parseInt(json['dorsal']),
+      posicion: json['posicion'] ?? '',
+      titular: json['titular'] ?? false,
     );
   }
 

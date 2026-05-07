@@ -53,4 +53,9 @@ public class Partido {
                 (equipoVisitante != null && equipoVisitante.getId().equals(equipo.getId()));
     }
 
+    @Column
+    private String hora;  
+
+    @Column
+    private Integer jornada;  
 }

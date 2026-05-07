@@ -12,6 +12,7 @@ public class PartidoResponse {
     private Long equipoVisitanteId;
     private String equipoVisitante;
     private LocalDateTime fecha;
+    private String hora;        // ← añadido
     private String ubicacion;
     private String pabellon;
     private Integer resultadoLocal;
@@ -21,15 +22,17 @@ public class PartidoResponse {
     private String ligaNombre;
     private Long arbitroId;
     private String arbitroNombre;
+    private Integer jornada;    // ← añadido
 
-    public static PartidoResponseDTO fromEntity(Partido partido) {
-        PartidoResponseDTO dto = new PartidoResponseDTO();
+    public static PartidoResponse fromEntity(Partido partido) {  // ← corregido tipo
+        PartidoResponse dto = new PartidoResponse();             // ← corregido tipo
         dto.setId(partido.getId());
-        dto.setEquipoLocalId(partido.getEquipoLocal().getId());
+        dto.setEquipoLocalId((long) partido.getEquipoLocal().getId());
         dto.setEquipoLocal(partido.getEquipoLocal().getNombre());
-        dto.setEquipoVisitanteId(partido.getEquipoVisitante().getId());
+        dto.setEquipoVisitanteId((long) partido.getEquipoVisitante().getId());
         dto.setEquipoVisitante(partido.getEquipoVisitante().getNombre());
         dto.setFecha(partido.getFecha());
+        dto.setHora(partido.getHora());             // ← añadido
         dto.setUbicacion(partido.getUbicacion());
         dto.setPabellon(partido.getPabellon());
         dto.setResultadoLocal(partido.getResultadoLocal());
@@ -39,6 +42,7 @@ public class PartidoResponse {
         dto.setLigaNombre(partido.getLiga() != null ? partido.getLiga().getNombreLiga() : null);
         dto.setArbitroId(partido.getArbitro() != null ? partido.getArbitro().getId() : null);
         dto.setArbitroNombre(partido.getArbitro() != null ? partido.getArbitro().getNombre() : null);
+        dto.setJornada(partido.getJornada());       // ← añadido
         return dto;
     }
 }

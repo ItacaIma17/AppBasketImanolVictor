@@ -31,21 +31,35 @@ class Alineacion {
   });
 
   factory Alineacion.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Alineacion(
-      id: json['id'],
-      partidoId: json['partidoId'],
-      equipoLocal: json['equipoLocal'],
-      equipoVisitante: json['equipoVisitante'],
-      equipoId: json['equipoId'],
-      nombreEquipo: json['nombreEquipo'],
-      entrenadorId: json['entrenadorId'],
-      nombreEntrenador: json['nombreEntrenador'],
+      id: _parseIntNullable(json['id']),
+      partidoId: _parseInt(json['partidoId']),
+      equipoLocal: json['equipoLocal'] ?? '',
+      equipoVisitante: json['equipoVisitante'] ?? '',
+      equipoId: _parseInt(json['equipoId']),
+      nombreEquipo: json['nombreEquipo'] ?? '',
+      entrenadorId: _parseIntNullable(json['entrenadorId']),
+      nombreEntrenador: json['nombreEntrenador'] ?? '',
       fechaPresentacion: DateTime.parse(json['fechaPresentacion']),
-      confirmada: json['confirmada'],
-      titulares: (json['titulares'] as List)
+      confirmada: json['confirmada'] ?? false,
+      titulares: (json['titulares'] as List? ?? [])
           .map((e) => JugadorAlineacion.fromJson(e))
           .toList(),
-      suplentes: (json['suplentes'] as List)
+      suplentes: (json['suplentes'] as List? ?? [])
           .map((e) => JugadorAlineacion.fromJson(e))
           .toList(),
     );

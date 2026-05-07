@@ -3,15 +3,11 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 class TarjetaCategoria extends StatelessWidget {
   final String nombre;
-  final String categoriaEdad;
-  final String categoriaNivel;
   final VoidCallback onTap;
 
   const TarjetaCategoria({
     super.key,
     required this.nombre,
-    required this.categoriaEdad,
-    required this.categoriaNivel,
     required this.onTap,
   });
 
@@ -62,13 +58,6 @@ class TarjetaCategoria extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '$categoriaEdad - $categoriaNivel',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
-                    ),
                   ],
                 ),
               ),

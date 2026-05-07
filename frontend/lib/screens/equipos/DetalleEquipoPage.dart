@@ -1,4 +1,4 @@
-// lib/screens/EquipoDetallePage.dart
+// lib/screens/equipos/EquipoDetallePage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../data/gestorFavoritos.dart';
@@ -11,17 +11,23 @@ import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
 import '../JugadorDetallePage.dart';
 
-
 class EquipoDetallePage extends StatefulWidget {
-  final Equipo equipo;
+  final Equipo? equipo;
+  final int? equipoId;
 
-  const EquipoDetallePage({super.key, required this.equipo});
+  const EquipoDetallePage({
+    super.key,
+    this.equipo,
+    this.equipoId,
+  }) : assert(equipo != null || equipoId != null,
+            'Debes pasar equipo o equipoId');
 
   @override
   State<EquipoDetallePage> createState() => _EquipoDetallePageState();
 }
 
 class _EquipoDetallePageState extends State<EquipoDetallePage> {
+  Equipo? _equipo;
   List<Jugador> _jugadores = [];
   List<Partido> _partidos = [];
   bool _isLoading = true;
@@ -30,42 +36,21 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   @override
   void initState() {
     super.initState();
+    _equipo = widget.equipo;
     _cargarDatos();
   }
 
-  // ✅ CORRECCIÓN 1: Cargar datos por separado (recomendado)
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
 
     try {
-      // Cargar jugadores y partidos por separado
-      final jugadores = await EquipoService.getJugadoresEquipo(widget.equipo.id!);
-      final partidos = await PartidoService.getPartidosByEquipo(widget.equipo.id!);
+      // Si no tenemos el equipo cargado, lo pedimos por id
+      if (_equipo == null) {
+        _equipo = await EquipoService.obtenerEquipo(widget.equipoId!);
+      }
 
-      setState(() {
-        _jugadores = jugadores;
-        _partidos = partidos;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error cargando datos: $e');
-      setState(() => _isLoading = false);
-    }
-  }
-
-  // ✅ CORRECCIÓN 2: Usar Future.wait con casting explícito (alternativa)
-  Future<void> _cargarDatosAlternativo() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final resultados = await Future.wait([
-        EquipoService.getJugadoresEquipo(widget.equipo.id!),
-        PartidoService.getPartidosByEquipo(widget.equipo.id!),
-      ]);
-
-      // ✅ CASTING EXPLÍCITO
-      final List<Jugador> jugadores = resultados[0] as List<Jugador>;
-      final List<Partido> partidos = resultados[1] as List<Partido>;
+      final jugadores = await EquipoService.getJugadoresEquipo(_equipo!.id!);
+      final partidos = await PartidoService.getPartidosByEquipo(_equipo!.id!);
 
       setState(() {
         _jugadores = jugadores;
@@ -80,12 +65,37 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
 
   @override
   Widget build(BuildContext context) {
-    final esFavorito = FavoritosManager().esEquipoFavorito(widget.equipo.nombre);
+    if (_isLoading) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppColors.blanco),
+          ),
+        ),
+      );
+    }
+
+    if (_equipo == null) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          child: const Center(
+            child: Text(
+              'Equipo no encontrado',
+              style: TextStyle(color: AppColors.blanco, fontSize: 18),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final esFavorito = FavoritosManager().esEquipoFavorito(_equipo!.id!);
 
     return Scaffold(
       drawer: const MenuLateral(),
       appBar: HeaderApp(
-        titulo: widget.equipo.nombre,
+        titulo: _equipo!.nombre,
         actions: [
           IconButton(
             icon: Icon(
@@ -94,8 +104,18 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
             ),
             onPressed: () {
               setState(() {
-                FavoritosManager().toggleEquipoFavorito(widget.equipo.nombre);
+                FavoritosManager().toggleEquipoFavorito(_equipo!.id!);
               });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    FavoritosManager().esEquipoFavorito(_equipo!.id!)
+                        ? 'Equipo añadido a favoritos'
+                        : 'Equipo eliminado de favoritos',
+                  ),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
             },
           ),
         ],
@@ -103,9 +123,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
         child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
+          child: Column(
             children: [
               _buildInfoEquipo(),
               _buildTabs(),
@@ -138,20 +156,23 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.equipo.nombre,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  _equipo!.nombre,
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Liga: ${widget.equipo.nombreLiga ?? "Sin liga"}',
+                  'Liga: ${_equipo!.nombreLiga ?? "Sin liga"}',
                   style: const TextStyle(color: Colors.white70),
                 ),
                 Text(
-                  'Estadio: ${widget.equipo.nombreEstadio}',
+                  'Estadio: ${_equipo!.nombreEstadio ?? "Sin estadio"}',
                   style: const TextStyle(color: Colors.white70),
                 ),
                 Text(
-                  'Ciudad: ${widget.equipo.ciudad}',
+                  'Ciudad: ${_equipo!.ciudad ?? "Sin ciudad"}',
                   style: const TextStyle(color: Colors.white70),
                 ),
               ],
@@ -185,11 +206,13 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
           decoration: BoxDecoration(
             color: isSelected ? AppColors.naranja : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? AppColors.naranja : Colors.white24),
+            border: Border.all(
+                color: isSelected ? AppColors.naranja : Colors.white24),
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? Colors.white : Colors.white70, size: 20),
+              Icon(icon,
+                  color: isSelected ? Colors.white : Colors.white70, size: 20),
               const SizedBox(height: 4),
               Text(
                 title,
@@ -208,7 +231,8 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   Widget _buildJugadoresList() {
     if (_jugadores.isEmpty) {
       return const Center(
-        child: Text('No hay jugadores en este equipo', style: TextStyle(color: Colors.white54)),
+        child: Text('No hay jugadores en este equipo',
+            style: TextStyle(color: Colors.white54)),
       );
     }
 
@@ -216,14 +240,13 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
       padding: const EdgeInsets.all(16),
       itemCount: _jugadores.length,
       itemBuilder: (context, index) {
-        final jugador = _jugadores[index];
-        return _buildJugadorCard(jugador);
+        return _buildJugadorCard(_jugadores[index]);
       },
     );
   }
 
   Widget _buildJugadorCard(Jugador jugador) {
-    final esJugadorFavorito = FavoritosManager().esJugadorFavorito(jugador.nombreCompleto);
+    final esJugadorFavorito = FavoritosManager().esJugadorFavorito(jugador.id!);
 
     return GestureDetector(
       onTap: () {
@@ -232,7 +255,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
           MaterialPageRoute(
             builder: (context) => JugadorDetallePage(
               jugador: jugador,
-              equipoNombre: widget.equipo.nombre,
+              equipoNombre: _equipo!.nombre,
             ),
           ),
         );
@@ -247,7 +270,8 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
                 backgroundColor: AppColors.naranja.withOpacity(0.2),
                 child: Text(
                   jugador.dorsal.toString(),
-                  style: const TextStyle(color: AppColors.naranja, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: AppColors.naranja, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 12),
@@ -260,7 +284,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '${jugador.posicion} | Altura: ${jugador.altura}m | Peso: ${jugador.peso}kg',
+                      '${jugador.posicion} | ${jugador.altura}m | ${jugador.peso}kg',
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -273,11 +297,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
                 ),
                 onPressed: () {
                   setState(() {
-                    if (esJugadorFavorito) {
-                      FavoritosManager().eliminarJugadorFavorito(jugador.nombreCompleto);
-                    } else {
-                      FavoritosManager().agregarJugadorFavorito(jugador.nombreCompleto);
-                    }
+                    FavoritosManager().toggleJugadorFavorito(jugador.id!);
                   });
                 },
               ),
@@ -291,7 +311,8 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   Widget _buildPartidosList() {
     if (_partidos.isEmpty) {
       return const Center(
-        child: Text('No hay partidos programados', style: TextStyle(color: Colors.white54)),
+        child: Text('No hay partidos programados',
+            style: TextStyle(color: Colors.white54)),
       );
     }
 
@@ -300,22 +321,31 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
       itemCount: _partidos.length,
       itemBuilder: (context, index) {
         final partido = _partidos[index];
-        final esLocal = partido.nombreLocal == widget.equipo.nombre;
-        final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
+        final esLocal = partido.nombreLocal == _equipo!.nombre;
+        final rival =
+            esLocal ? partido.nombreVisitante : partido.nombreLocal;
         final resultado = partido.puntosLocal != null
-            ? '${partido.puntosLocal} - ${partido.puntosLocal}'
+            ? '${partido.puntosLocal} - ${partido.puntosVisitante}'
             : 'vs $rival';
 
         return Card(
           child: ListTile(
-            leading: const Icon(Icons.sports_basketball, color: AppColors.naranja),
+            leading: const Icon(Icons.sports_basketball,
+                color: AppColors.naranja),
             title: Text(resultado),
             subtitle: Text(
-              '${DateTime.parse(partido.fecha).day}/${DateTime.parse(partido.fecha).month}/${DateTime.parse(partido.fecha).year} - ${partido.direccionPabellon ?? "Sin ubicación"}',
+              '${DateTime.parse(partido.fecha).day}/'
+              '${DateTime.parse(partido.fecha).month}/'
+              '${DateTime.parse(partido.fecha).year}'
+              ' - ${partido.direccionPabellon ?? "Sin ubicación"}',
             ),
             trailing: partido.estado == 'FINALIZADO'
-                ? const Chip(label: Text('Finalizado'), backgroundColor: Colors.green)
-                : const Chip(label: Text('Programado'), backgroundColor: Colors.orange),
+                ? const Chip(
+                    label: Text('Finalizado'),
+                    backgroundColor: Colors.green)
+                : const Chip(
+                    label: Text('Programado'),
+                    backgroundColor: Colors.orange),
           ),
         );
       },

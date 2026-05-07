@@ -23,7 +23,7 @@ public interface ArbitroRepository extends JpaRepository<Arbitro, Long> {
 
     boolean existsByCodigoArbitro(String codigoArbitro);
 
-    // ✅ Método para encontrar árbitros sin partidos asignados
+    // Método para encontrar árbitros sin partidos asignados
     @Query("SELECT a FROM Arbitro a WHERE a.id NOT IN (SELECT p.arbitro.id FROM Partido p WHERE p.arbitro IS NOT NULL AND p.estado != 'FINALIZADO')")
     List<Arbitro> findArbitrosSinPartidos();
 }

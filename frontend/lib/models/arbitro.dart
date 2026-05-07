@@ -64,18 +64,25 @@ class Arbitro {
   // ============================================================
 
   factory Arbitro.fromJson(Map<String, dynamic> json) {
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Arbitro(
-      id: json['id'],
+      id: _parseIntNullable(json['id']),
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       nombre: json['nombre'],
       apellidos: json['apellidos'] ?? json['apellido'],
-      edad: json['edad'],
+      edad: _parseIntNullable(json['edad']),
       codigoArbitro: json['codigoArbitro'] ?? json['codigo_arbitro'],
       verificado: json['verificado'] ?? false,
       telefono: json['telefono']?.toString(),
-      tienePartidos: json['partidosAsignados'] != null && json['partidosAsignados'] > 0,
-      partidosAsignados: json['partidosAsignados'],
+      tienePartidos: json['partidosAsignados'] != null && (json['partidosAsignados'] is int ? json['partidosAsignados'] : int.tryParse(json['partidosAsignados'].toString()) ?? 0) > 0,
+      partidosAsignados: _parseIntNullable(json['partidosAsignados']),
       proximosPartidos: json['proximosPartidos'] != null
           ? (json['proximosPartidos'] as List)
           .map((p) => PartidoAsignado.fromJson(p))

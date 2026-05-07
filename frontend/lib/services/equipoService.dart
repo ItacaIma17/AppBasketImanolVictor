@@ -30,11 +30,17 @@ class EquipoService {
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
-      print('📡 Listar equipos response: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((e) => Equipo.fromJson(e)).toList();
+        final equipos = <Equipo>[];
+        for (int i = 0; i < data.length; i++) {
+          try {
+            equipos.add(Equipo.fromJson(data[i]));
+          } catch (e) {
+            print('❌ Error parseando equipo[$i]: $e');
+          }
+        }
+        return equipos;
       } else {
         throw Exception('Error al cargar equipos: ${response.statusCode}');
       }

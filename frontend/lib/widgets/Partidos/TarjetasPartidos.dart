@@ -3,7 +3,7 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/screens/DetallesPartido.dart';
-import 'package:tfg_appfede/screens/Equipos.dart';
+import 'package:tfg_appfede/screens/equipos/DetalleEquipoPage.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 
 /// Widget reutilizable para mostrar la tarjeta de un partido
@@ -96,7 +96,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EquipoPage(
+                            builder: (context) => EquipoDetallePage(
                               equipoId: widget.partido.idLocal ?? 0,
                             ),
                           ),
@@ -183,7 +183,7 @@ class _TarjetaPartidoState extends State<TarjetaPartido> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EquipoPage(
+                            builder: (context) => EquipoDetallePage(
                               equipoId: widget.partido.idVisitante ?? 0,
                             ),
                           ),

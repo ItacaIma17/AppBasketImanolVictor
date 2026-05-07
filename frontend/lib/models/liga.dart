@@ -17,13 +17,27 @@ class Liga {
   });
 
   factory Liga.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Liga(
-      id: json['id'],
+      id: _parseIntNullable(json['id']),
       nombreLiga: json['nombreLiga'] ?? '',
       pais: json['pais'],
-      numeroEquipos: json['numeroEquipos'] ?? 0,
+      numeroEquipos: _parseInt(json['numeroEquipos']),
       temporada: json['temporada'],
-      numeroEquiposRegistrados: json['numeroEquiposRegistrados'] ?? 0,
+      numeroEquiposRegistrados: _parseInt(json['numeroEquiposRegistrados']),
     );
   }
 

@@ -29,18 +29,32 @@ class ActaPartido {
   });
 
   factory ActaPartido.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return ActaPartido(
-      id: json['id'],
-      partidoId: json['partidoId'],
-      equipoLocal: json['equipoLocal'],
-      equipoVisitante: json['equipoVisitante'],
-      resultadoLocal: json['resultadoLocal'],
-      resultadoVisitante: json['resultadoVisitante'],
-      arbitroId: json['arbitroId'],
-      arbitroNombre: json['arbitroNombre'],
+      id: _parseIntNullable(json['id']),
+      partidoId: _parseInt(json['partidoId']),
+      equipoLocal: json['equipoLocal'] ?? '',
+      equipoVisitante: json['equipoVisitante'] ?? '',
+      resultadoLocal: json['resultadoLocal'] ?? '',
+      resultadoVisitante: json['resultadoVisitante'] ?? '',
+      arbitroId: _parseIntNullable(json['arbitroId']),
+      arbitroNombre: json['arbitroNombre'] ?? '',
       fechaActa: DateTime.parse(json['fechaActa']),
       observaciones: json['observaciones'],
-      eventos: (json['eventos'] as List)
+      eventos: (json['eventos'] as List? ?? [])
           .map((e) => EventoActa.fromJson(e))
           .toList(),
       puedeEditar: json['puedeEditar'] ?? false,
@@ -87,15 +101,29 @@ class EventoActa {
   });
 
   factory EventoActa.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return EventoActa(
-      id: json['id'],
-      jugadorId: json['jugadorId'],
-      nombreJugador: json['nombreJugador'],
-      nombreEquipo: json['nombreEquipo'],
-      minuto: json['minuto'],
-      tipo: json['tipo'],
+      id: _parseIntNullable(json['id']),
+      jugadorId: _parseIntNullable(json['jugadorId']),
+      nombreJugador: json['nombreJugador'] ?? '',
+      nombreEquipo: json['nombreEquipo'] ?? '',
+      minuto: _parseInt(json['minuto']),
+      tipo: json['tipo'] ?? '',
       descripcion: json['descripcion'],
-      puntos: json['puntos'],
+      puntos: _parseIntNullable(json['puntos']),
     );
   }
 

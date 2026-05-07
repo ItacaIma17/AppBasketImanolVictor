@@ -25,13 +25,20 @@ class EntrenadorEquipo {
   });
 
   factory EntrenadorEquipo.fromJson(Map<String, dynamic> json) {
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return EntrenadorEquipo(
-      entrenadorId: json['entrenadorId'],
+      entrenadorId: _parseIntNullable(json['entrenadorId']),
       nombreEntrenador: json['nombreEntrenador'] ?? '',
       apellido: json['apellido'],
       email: json['email'] ?? '',
       username: json['username'] ?? '',
-      equipoId: json['equipoId'],
+      equipoId: _parseIntNullable(json['equipoId']),
       nombreEquipo: json['nombreEquipo'] ?? 'Sin equipo',
       nombreLiga: json['nombreLiga'] ?? 'Sin liga',
       nombreEstadio: json['nombreEstadio'] ?? 'Sin estadio',

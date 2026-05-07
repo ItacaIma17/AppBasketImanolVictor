@@ -246,7 +246,7 @@ class MenuLateral extends StatelessWidget {
               await AutenticacionService.cerrarSesion();
               if (context.mounted) {
                 Navigator.pop(context);
-                Navigator.pushReplacement(
+                     Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const InicioSesionPage()),
                 );

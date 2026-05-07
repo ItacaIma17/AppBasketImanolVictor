@@ -56,43 +56,47 @@ class Partido {
   });
 
   factory Partido.fromJson(dynamic json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Partido(
-      id: (json['id'] ?? ''),
-
-      idLocal: (json['equipo_local_id'] ?? json['idLocal'] ?? ''),
-      idVisitante: (json['equipo_visitante_id'] ?? json['idVisitante'] ?? ''),
-
+      id: _parseInt(json['id']),
+      idLocal: _parseInt(json['equipo_local_id'] ?? json['idLocal']),
+      idVisitante: _parseInt(json['equipo_visitante_id'] ?? json['idVisitante']),
       nombreLocal: json['nombreLocal'] ?? '',
       nombreVisitante: json['nombreVisitante'] ?? '',
-
-      puntosLocal: json['marcador_local'] ?? json['puntosLocal'] ?? 0,
-      puntosVisitante: json['marcador_visitante'] ?? json['puntosVisitante'] ?? 0,
-
+      puntosLocal: _parseInt(json['marcador_local'] ?? json['puntosLocal']),
+      puntosVisitante: _parseInt(json['marcador_visitante'] ?? json['puntosVisitante']),
       fecha: json['fecha'] ?? '',
       hora: json['hora'] ?? '',
-
       pabellon: json['pabellon'] ?? '',
       direccionPabellon: json['direccion_pabellon'] ?? '',
-
       ligaId: (json['liga_id'] ?? '').toString(),
       arbitroId: (json['arbitro_id'] ?? '').toString(),
-
       estado: json['estado'] ?? 'PROGRAMADO',
-
       actaUrl: json['acta_url'] ?? '',
       observaciones: json['observaciones'] ?? '',
-
       fechaCreacion: json['fecha_creacion'] ?? '',
       fechaActualizacion: json['fecha_actualizacion'] ?? '',
-
       // Extra
       tieneActa: json['tieneActa'],
-      actaId: json['actaId'],
+      actaId: _parseIntNullable(json['actaId']),
       tieneAlineacionLocal: json['tieneAlineacionLocal'],
       tieneAlineacionVisitante: json['tieneAlineacionVisitante'],
-      alineacionLocalId: json['alineacionLocalId'],
-      alineacionVisitanteId: json['alineacionVisitanteId'],
-      jornada: json['jornada'],
+      alineacionLocalId: _parseIntNullable(json['alineacionLocalId']),
+      alineacionVisitanteId: _parseIntNullable(json['alineacionVisitanteId']),
+      jornada: _parseIntNullable(json['jornada']),
     );
   }
 
