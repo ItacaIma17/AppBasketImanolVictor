@@ -1,5 +1,0 @@
-package Dominio.Entity;
-
-public enum TipoEevento {
-    CANASTA,FALTA,TIRO_LIBRE,EXPULSION,LESION,CAMBIOS,INICO_PARTIDO,DESCANSO,FIN_PARTIDO
-}
