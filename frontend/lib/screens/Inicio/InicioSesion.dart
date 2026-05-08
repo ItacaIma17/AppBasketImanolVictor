@@ -44,14 +44,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Botón atrás
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppColors.blanco),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
                 const SizedBox(height: 20),
-
                 // Logo + título
                 Center(
                   child: Column(

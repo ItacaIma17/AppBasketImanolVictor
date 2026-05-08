@@ -186,6 +186,10 @@ Widget _buildLigasTab() {
   /// Equipos favoritos
 Widget _buildEquiposTab() {
   final idsFavoritos = FavoritosManager().equiposFavoritos;
+  
+  // AÑADIR ESTAS DOS LÍNEAS:
+  print("🔍 IDs favoritos equipos: $idsFavoritos");
+  print("🔍 Equipos cargados: ${_todosLosEquipos.map((e) => '${e.id}:${e.nombre}').toList()}");
 
   if (idsFavoritos.isEmpty) {
     return _buildEmptyState('No tienes equipos favoritos');

@@ -2,14 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/screens/equipos/DetalleEquipoPage.dart';
 import '../../models/partido.dart';
 import '../../services/partidoService.dart';
 import '../../services/actaService.dart';
 import '../../services/equipoService.dart';
 import '../../models/actaPartido.dart';
-// ✅ FIX nav: para abrir el perfil del equipo desde el detalle del partido.
-import '../Equipos.dart';
-// ✅ FIX edit: reutilizamos el dialog ya existente (modo edición).
 import '../../widgets/Partidos/CrearPartidosCompletosDialog.dart';
 
 class DetallePartidoAdminPage extends StatefulWidget {
@@ -208,7 +206,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
                     : () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => EquipoPage(
+                            builder: (_) => EquipoDetallePage(
                               equipoId: widget.partido.equipoLocalId!,
                             ),
                           ),
@@ -255,7 +253,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
                     : () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => EquipoPage(
+                            builder: (_) => EquipoDetallePage(
                               equipoId: widget.partido.equipoVisitanteId!,
                             ),
                           ),

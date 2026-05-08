@@ -43,8 +43,6 @@ public class Partido {
     @Column(nullable = false)
     private String estado;  // PROGRAMADO, EN_CURSO, FINALIZADO
 
-    private Integer jornada;
-
     @ManyToOne
     @JoinColumn(name = "acta_partido_id")
     private ActaPartido actaPartido;

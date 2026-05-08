@@ -11,7 +11,7 @@ class TarjetaEquipo extends StatelessWidget {
     required this.onTap,
   });
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,

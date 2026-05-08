@@ -1,5 +1,4 @@
 // lib/data/gestorFavoritos.dart
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavoritosManager {
@@ -7,52 +6,36 @@ class FavoritosManager {
   factory FavoritosManager() => _instance;
   FavoritosManager._internal();
 
-  List<String> _equiposFavoritos = [];
-  List<String> _jugadoresFavoritos = [];
+
+  List<int> _equiposFavoritos = [];
+  List<int> _jugadoresFavoritos = [];
   List<String> _categoriasFavoritas = [];
 
-  List<String> get equiposFavoritos => _equiposFavoritos;
-  List<String> get jugadoresFavoritos => _jugadoresFavoritos;
+
+  List<int> get equiposFavoritos => _equiposFavoritos;
+  List<int> get jugadoresFavoritos => _jugadoresFavoritos;
   List<String> get categoriasFavoritas => _categoriasFavoritas;
 
   Future<void> cargarFavoritos() async {
     final prefs = await SharedPreferences.getInstance();
-    _equiposFavoritos = prefs.getStringList('equipos_favoritos') ?? [];
-    _jugadoresFavoritos = prefs.getStringList('jugadores_favoritos') ?? [];
-    _categoriasFavoritas = prefs.getStringList('categorias_favoritas') ?? [];
 
-    // ✅ FIX persistencia jugadores: JugadorDetallePage usa FavoritosService
-    // (clave "favoritos_app", mapa JSON por id). Mergeamos los nombres aquí
-    // para que los jugadores marcados como favoritos desde su perfil
-    // aparezcan en pantalla Favoritos sin tocar el resto del flujo.
-    try {
-      final raw = prefs.getString('favoritos_app');
-      if (raw != null && raw.isNotEmpty) {
-        final map = jsonDecode(raw);
-        if (map is Map) {
-          for (final entry in map.values) {
-            if (entry is Map && entry['tipo'] == 'jugador') {
-              final nombre = entry['nombre']?.toString();
-              if (nombre != null &&
-                  nombre.isNotEmpty &&
-                  !_jugadoresFavoritos.contains(nombre)) {
-                _jugadoresFavoritos.add(nombre);
-              }
-            }
-          }
-        }
-      }
-    } catch (_) {/* si el JSON está corrupto, ignoramos el merge */}
+    _equiposFavoritos = (prefs.getStringList('equipos_favoritos') ?? [])
+        .map((e) => int.parse(e)).toList();
+    _jugadoresFavoritos = (prefs.getStringList('jugadores_favoritos') ?? [])
+        .map((e) => int.parse(e)).toList();
+    _categoriasFavoritas = prefs.getStringList('categorias_favoritas') ?? [];
   }
 
   Future<void> _guardarEquipos() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('equipos_favoritos', _equiposFavoritos);
+    await prefs.setStringList('equipos_favoritos',
+        _equiposFavoritos.map((e) => e.toString()).toList());
   }
 
   Future<void> _guardarJugadores() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('jugadores_favoritos', _jugadoresFavoritos);
+    await prefs.setStringList('jugadores_favoritos',
+        _jugadoresFavoritos.map((e) => e.toString()).toList());
   }
 
   Future<void> _guardarCategorias() async {
@@ -60,57 +43,55 @@ class FavoritosManager {
     await prefs.setStringList('categorias_favoritas', _categoriasFavoritas);
   }
 
-  // ✅ Métodos para equipos
-  void agregarEquipoFavorito(String nombreEquipo) {
-    if (!_equiposFavoritos.contains(nombreEquipo)) {
-      _equiposFavoritos.add(nombreEquipo);
+ 
+  // ── EQUIPOS ──────────────────────────────────────────
+  void agregarEquipoFavorito(int id) {
+    if (!_equiposFavoritos.contains(id)) {
+      _equiposFavoritos.add(id);
       _guardarEquipos();
     }
   }
 
-  void eliminarEquipoFavorito(String nombreEquipo) {
-    _equiposFavoritos.remove(nombreEquipo);
+  void eliminarEquipoFavorito(int id) {
+    _equiposFavoritos.remove(id);
     _guardarEquipos();
   }
 
-  void toggleEquipoFavorito(String nombreEquipo) {
-    if (_equiposFavoritos.contains(nombreEquipo)) {
-      eliminarEquipoFavorito(nombreEquipo);
+  void toggleEquipoFavorito(int id) {
+    if (_equiposFavoritos.contains(id)) {
+      eliminarEquipoFavorito(id);
     } else {
-      agregarEquipoFavorito(nombreEquipo);
+      agregarEquipoFavorito(id);
     }
   }
 
-  bool esEquipoFavorito(String nombreEquipo) {
-    return _equiposFavoritos.contains(nombreEquipo);
-  }
+  bool esEquipoFavorito(int id) => _equiposFavoritos.contains(id);
 
-  // ✅ Métodos para jugadores
-  void agregarJugadorFavorito(String nombreJugador) {
-    if (!_jugadoresFavoritos.contains(nombreJugador)) {
-      _jugadoresFavoritos.add(nombreJugador);
+  // ── JUGADORES ─────────────────────────────────────────
+  void agregarJugadorFavorito(int id) {
+    if (!_jugadoresFavoritos.contains(id)) {
+      _jugadoresFavoritos.add(id);
       _guardarJugadores();
     }
   }
 
-  void eliminarJugadorFavorito(String nombreJugador) {
-    _jugadoresFavoritos.remove(nombreJugador);
+  void eliminarJugadorFavorito(int id) {
+    _jugadoresFavoritos.remove(id);
     _guardarJugadores();
   }
 
-  void toggleJugadorFavorito(String nombreJugador) {
-    if (_jugadoresFavoritos.contains(nombreJugador)) {
-      eliminarJugadorFavorito(nombreJugador);
+  void toggleJugadorFavorito(int id) {
+    if (_jugadoresFavoritos.contains(id)) {
+      eliminarJugadorFavorito(id);
     } else {
-      agregarJugadorFavorito(nombreJugador);
+      agregarJugadorFavorito(id);
     }
   }
 
-  bool esJugadorFavorito(String nombreJugador) {
-    return _jugadoresFavoritos.contains(nombreJugador);
-  }
 
-  // ✅ Métodos para ligas/categorías
+  bool esJugadorFavorito(int id) => _jugadoresFavoritos.contains(id);
+
+   // ── LIGAS/CATEGORÍAS ──────────────────────────────────
   void agregarCategoriaFavorita(String categoria) {
     if (!_categoriasFavoritas.contains(categoria)) {
       _categoriasFavoritas.add(categoria);
@@ -131,7 +112,6 @@ class FavoritosManager {
     }
   }
 
-  bool esCategoriaFavorita(String categoria) {
-    return _categoriasFavoritas.contains(categoria);
-  }
+  bool esCategoriaFavorita(String categoria) =>
+      _categoriasFavoritas.contains(categoria);
 }

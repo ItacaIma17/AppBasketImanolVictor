@@ -22,6 +22,7 @@ import 'package:tfg_appfede/screens/arbitros/SeleccionarPartidoActaPage.dart';
 import 'package:tfg_appfede/screens/equipos/SolicitarEquipoPage.dart';
 import 'package:tfg_appfede/screens/Favoritos.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
+import 'package:tfg_appfede/widgets/CerrarSesion.dart';
 
 import '../screens/Entrenador/ListadoEquipoPage.dart';
 
@@ -46,44 +47,39 @@ class MenuLateral extends StatelessWidget {
         : '?';
 
     return Drawer(
-      backgroundColor: Colors.transparent,
       child: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1A0A0A), Color(0xFF0D0D0D)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppColors.gradienteAragon,
         ),
         child: Column(
           children: [
             // ── HEADER ──────────────────────────────────────────
-            _buildHeader(inicialAvatar, nombreMostrar, emailMostrar, rol),
-
+            _buildDrawerHeader(inicialAvatar, nombreMostrar, emailMostrar, rol),
+            const Divider(color: AppColors.blancoOpacidad70), 
             // ── ITEMS CON SCROLL ────────────────────────────────
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.home_outlined,
                       iconoActivo: Icons.home,
                       titulo: 'Inicio',
                       onTap: () => _navegar(context, const InicioPage())),
 
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.emoji_events_outlined,
                       iconoActivo: Icons.emoji_events,
                       titulo: 'Ligas',
                       onTap: () => _navegar(context, const LigasPage())),
 
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.star_outline,
                       iconoActivo: Icons.star,
                       titulo: 'Favoritos',
                       onTap: () => _navegar(context, const FavoritosPage())),
 
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.person_outline,
                       iconoActivo: Icons.person,
                       titulo: 'Mi Perfil',
@@ -92,16 +88,17 @@ class MenuLateral extends StatelessWidget {
                   // ══ ENTRENADOR ══════════════════════════════════
                   if (rol == Role.ENTRENADOR && entrenador != null) ...[
                     _buildSeparador('MI EQUIPO'),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.dashboard_outlined,
                         iconoActivo: Icons.dashboard,
                         titulo: 'Panel Entrenador',
+                        accentColor: AppColors.amarilloAragon,
                         badge: null,
                         onTap: () =>
                             _navegar(context, const PanelEntrenadorPage())),
 
                     if (!entrenador.tieneEquipo)
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.vpn_key_outlined,
                           iconoActivo: Icons.vpn_key,
                           titulo: 'Solicitar Equipo',
@@ -110,32 +107,32 @@ class MenuLateral extends StatelessWidget {
                               _navegar(context, const SolicitarEquipoPage())),
 
                     if (entrenador.tieneEquipo) ...[
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.sports_basketball_outlined,
                           iconoActivo: Icons.sports_basketball,
                           titulo: 'Mi Equipo',
                           onTap: () =>
                               _navegar(context, const MiEquipoPage())),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.calendar_month_outlined,
                           iconoActivo: Icons.calendar_month,
                           titulo: 'Próximos Partidos',
                           onTap: () => _navegar(
                               context, const ProximosPartidosPage())),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.bar_chart_outlined,
                           iconoActivo: Icons.bar_chart,
                           titulo: 'Estadísticas',
                           onTap: () =>
                               _navegar(context, EstadisticasEquipoPage())),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.history_outlined,
                           iconoActivo: Icons.history,
                           titulo: 'Mis Partidos',
                           onTap: () => _navegar(
                               context,
                               const MisPartidosEntrenadorPage())),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.line_style_outlined,
                           iconoActivo: Icons.line_style,
                           titulo: 'Presentar Alineación',
@@ -149,20 +146,20 @@ class MenuLateral extends StatelessWidget {
                   // ══ ÁRBITRO ═════════════════════════════════════
                   if (rol == Role.ARBITRO) ...[
                     _buildSeparador('ÁRBITRO'),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.assignment_outlined,
                         iconoActivo: Icons.assignment,
                         titulo: 'Mis Partidos',
                         onTap: () =>
                             _navegar(context, const MisPartidosArbitroPage())),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.checklist_outlined,
                         iconoActivo: Icons.checklist,
                         titulo: 'Confirmar Alineaciones',
                         accentColor: Colors.blue.shade400,
                         onTap: () =>
                             _navegar(context, const MisPartidosArbitroPage())),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.description_outlined,
                         iconoActivo: Icons.description,
                         titulo: 'Subir Acta',
@@ -175,71 +172,74 @@ class MenuLateral extends StatelessWidget {
                   if (rol == Role.JUGADOR && jugador != null) ...[
                     _buildSeparador('JUGADOR'),
                     if (jugador.tieneEquipo) ...[
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.sports_basketball_outlined,
                           iconoActivo: Icons.sports_basketball,
                           titulo: 'Mi Equipo',
                           onTap: () {}),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.calendar_month_outlined,
                           iconoActivo: Icons.calendar_month,
                           titulo: 'Mis Partidos',
                           onTap: () {}),
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.assessment_outlined,
                           iconoActivo: Icons.assessment,
                           titulo: 'Mis Estadísticas',
                           onTap: () {}),
                     ] else
-                      _buildItem(context,
+                      _buildDrawerItem(context,
                           icono: Icons.sports_basketball_outlined,
                           iconoActivo: Icons.sports_basketball,
                           titulo: 'Sin equipo asignado',
                           enabled: false,
                           onTap: () {}),
                   ],
+                  const Divider(color: AppColors.blancoOpacidad70),
 
                   // ══ ADMIN ════════════════════════════════════════
                   if (rol == Role.ADMIN) ...[
                     _buildSeparador('ADMINISTRACIÓN'),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.admin_panel_settings_outlined,
                         iconoActivo: Icons.admin_panel_settings,
                         titulo: 'Panel de Control',
-                        accentColor: AppColors.amarilloAragon,
                         onTap: () =>
                             _navegar(context, const PanelAdminPage())),
-                    _buildItem(context,
+                    _buildDrawerItem(context,
                         icono: Icons.sports_basketball_outlined,
                         iconoActivo: Icons.sports_basketball,
                         titulo: 'Gestionar Equipos',
                         onTap: () =>
                             _navegar(context, const ListadoEquiposPage())),
                   ],
+                  const Divider(color: AppColors.blancoOpacidad70),
 
                   // ══ COMÚN ════════════════════════════════════════
                   _buildSeparador('AJUSTES'),
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.settings_outlined,
                       iconoActivo: Icons.settings,
                       titulo: 'Configuración',
                       onTap: () =>
                           _navegar(context, const ConfiguracionPage())),
-                  _buildItem(context,
+                  _buildDrawerItem(context,
                       icono: Icons.info_outline,
                       iconoActivo: Icons.info,
                       titulo: 'Acerca de',
                       onTap: () => _mostrarAcercaDe(context)),
 
                   const SizedBox(height: 8),
-                  const Divider(color: Colors.white12),
+                  const Divider(color: AppColors.blancoOpacidad70),
                   const SizedBox(height: 4),
-                  _buildItem(context,
-                      icono: Icons.logout,
-                      iconoActivo: Icons.logout,
-                      titulo: 'Cerrar Sesión',
-                      accentColor: Colors.red.shade400,
-                      onTap: () => _mostrarLogout(context)),
+                  _buildDrawerItem(
+                    context,
+                    icono: Icons.logout,
+                    iconoActivo: Icons.logout,
+                    titulo: 'Cerrar Sesión',
+                    accentColor: const Color.fromARGB(255, 231, 32, 28),
+                    onTap: () => mostrarDialogoCerrarSesion(context),
+                  ),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -252,12 +252,12 @@ class MenuLateral extends StatelessWidget {
 
   // ─── HEADER ──────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(
+  Widget _buildDrawerHeader(
       String inicial, String nombre, String email, Role? rol) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
       decoration: const BoxDecoration(
-        gradient: AppColors.gradienteRojoNaranja,
+        color: Colors.transparent,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +299,7 @@ class MenuLateral extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                _labelRol(rol),
+                _etiquetaRol(rol),
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -314,7 +314,7 @@ class MenuLateral extends StatelessWidget {
 
   // ─── ITEM DE MENÚ ────────────────────────────────────────────────────────
 
-  Widget _buildItem(
+  Widget _buildDrawerItem(
       BuildContext context, {
         required IconData icono,
         required IconData iconoActivo,
@@ -377,7 +377,7 @@ class MenuLateral extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 16, 16, 4),
       child: Text(titulo,
           style: TextStyle(
-              color: AppColors.naranja.withOpacity(0.7),
+              color: const Color.fromARGB(255, 0, 0, 0),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2)),
@@ -408,7 +408,7 @@ class MenuLateral extends StatelessWidget {
 
   // ─── HELPERS ─────────────────────────────────────────────────────────────
 
-  String _labelRol(Role rol) {
+  String _etiquetaRol(Role rol) {
     switch (rol) {
       case Role.ADMIN: return '🔧 Administrador';
       case Role.ENTRENADOR: return '📋 Entrenador';
@@ -468,41 +468,11 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  void _mostrarLogout(BuildContext context) {
-    Navigator.pop(context);
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cerrar Sesión',
-            style: TextStyle(color: AppColors.blanco)),
-        content: const Text(
-            '¿Estás seguro de que deseas cerrar tu sesión?',
-            style: TextStyle(color: AppColors.grisClaro)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar',
-                  style: TextStyle(color: AppColors.grisClaro))),
-          ElevatedButton(
-            onPressed: () async {
-              await AutenticacionService.cerrarSesion();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (_) => const InicioSesionPage()),
-                      (route) => false,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700),
-            child: const Text('Cerrar Sesión',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
+  void mostrarDialogoCerrarSesion(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) => const DialogoCerrarSesion(),
+  );
+}
+
 }

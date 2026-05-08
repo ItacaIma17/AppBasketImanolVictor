@@ -1,6 +1,7 @@
 // lib/screens/equipos/DetalleEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
+import 'package:tfg_appfede/data/gestorFavoritos.dart';
 import '../../models/equipo.dart';
 import '../../models/jugador.dart';
 import '../../models/partido.dart';
@@ -8,22 +9,29 @@ import '../../services/equipoService.dart';
 import '../../services/partidoService.dart';
 import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
-// ✅ FIX: abrir perfil jugador desde equipos/ligas/mi equipo
 import '../JugadorDetallePage.dart';
 
 class EquipoDetallePage extends StatefulWidget {
-  final Equipo equipo;
+final Equipo? equipo;
+  final int? equipoId;
 
-  const EquipoDetallePage({super.key, required this.equipo});
+ const EquipoDetallePage({
+    super.key,
+    this.equipo,
+    this.equipoId,
+  }) : assert(equipo != null || equipoId != null,
+            'Debes pasar equipo o equipoId');
 
   @override
   State<EquipoDetallePage> createState() => _EquipoDetallePageState();
 }
 
 class _EquipoDetallePageState extends State<EquipoDetallePage> {
+  Equipo? _equipo;
   List<Jugador> _jugadores = [];
   List<Partido> _partidos = [];
   bool _cargando = true;
+  int _selectedTab = 0;
   String? _error;
 
   // Función auxiliar para parsear fecha dd/MM/yyyy a DateTime
@@ -47,95 +55,193 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   @override
   void initState() {
     super.initState();
+    _equipo = widget.equipo;
     _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
     try {
-      final jugadores = await EquipoService.getJugadoresEquipo(widget.equipo.id ?? 0);
-      final partidos = await PartidoService.getPartidosByEquipo(widget.equipo.id ?? 0);
-
+      // Si no tenemos el equipo cargado, lo pedimos por id
+      if (_equipo == null) {
+        _equipo = await EquipoService.obtenerEquipo(widget.equipoId!);
+      }
+      final jugadores = await EquipoService.getJugadoresEquipo(_equipo!.id!);
+      final partidos = await PartidoService.getPartidosByEquipo(_equipo!.id!);
       setState(() {
         _jugadores = jugadores;
         _partidos = partidos;
         _cargando = false;
       });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _cargando = false;
-      });
+      print('Error cargando datos: $e');
+      setState(() => _cargando = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppColors.blanco),
+          ),
+        ),
+      );
+    }
+
+    if (_equipo == null) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          child: const Center(
+            child: Text(
+              'Equipo no encontrado',
+              style: TextStyle(color: AppColors.blanco, fontSize: 18),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final esFavorito = FavoritosManager().esEquipoFavorito(_equipo!.id!);
     return Scaffold(
       drawer: const MenuLateral(),
-      appBar: HeaderApp(titulo: widget.equipo.nombre),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: _cargando
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? Center(child: Text('Error: $_error', style: const TextStyle(color: Colors.red)))
-              : SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      appBar: HeaderApp(
+        titulo: _equipo!.nombre,
+        actions: [
+          IconButton(
+            icon: Icon(
+              esFavorito ? Icons.star : Icons.star_border,
+              color: esFavorito ? Colors.amber : Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                          FavoritosManager().toggleEquipoFavorito(_equipo!.id!);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              FavoritosManager().esEquipoFavorito(_equipo!.id!)
+                                  ? 'Equipo añadido a favoritos'
+                                  : 'Equipo eliminado de favoritos',
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                body: Container(
+                  decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _buildInfoEquipo(),
+                        _buildTabs(),
+                        Expanded(
+                          child: _selectedTab == 0
+                              ? _buildJugadoresList()
+                              : _buildSeccionPartidos(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+  Widget _buildInfoEquipo() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppColors.gradienteNaranjaAmarillo,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sports_basketball, size: 50, color: Colors.white),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoEquipo(),
-                const SizedBox(height: 20),
-                _buildSeccionJugadores(),
-                const SizedBox(height: 20),
-                _buildSeccionPartidos(),
+                Text(
+                  _equipo!.nombre,
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Liga: ${_equipo!.nombreLiga ?? "Sin liga"}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  'Estadio: ${_equipo!.nombreEstadio ?? "Sin estadio"}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  'Ciudad: ${_equipo!.ciudad ?? "Sin ciudad"}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+Widget _buildTabs() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _buildTab('Jugadores', 0, Icons.people),
+          const SizedBox(width: 8),
+          _buildTab('Partidos', 1, Icons.calendar_today),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String title, int index, IconData icon) {
+    final isSelected = _selectedTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.naranja : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: isSelected ? AppColors.naranja : Colors.white24),
+          ),
+          child: Column(
+            children: [
+              Icon(icon,
+                  color: isSelected ? Colors.white : Colors.white70, size: 20),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildInfoEquipo() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.gradienteNaranjaAmarillo,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.shield, size: 60, color: Colors.white),
-          const SizedBox(height: 12),
-          Text(
-            widget.equipo.nombre,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.emoji_events, 'Liga', widget.equipo.nombreLiga ?? 'Sin liga'),
-          const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_on, 'Estadio', widget.equipo.nombreEstadio.isNotEmpty ? widget.equipo.nombreEstadio : 'No especificado'),
-          const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_city, 'Ciudad', widget.equipo.ciudad.isNotEmpty ? widget.equipo.ciudad : 'No especificada'),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
@@ -215,86 +321,83 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
     );
   }
 
-  Widget _buildJugadorCard(Jugador jugador) {
-    // ✅ FIX: tap abre el perfil del jugador (JugadorDetallePage)
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => JugadorDetallePage(
-            jugador: jugador,
-            equipoNombre: widget.equipo.nombre,
+Widget _buildJugadoresList() {
+    if (_jugadores.isEmpty) {
+      return const Center(
+        child: Text('No hay jugadores en este equipo',
+            style: TextStyle(color: Colors.white54)),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _jugadores.length,
+      itemBuilder: (context, index) {
+        return _buildJugadorCard(_jugadores[index]);
+      },
+    );
+  }
+
+  
+   Widget _buildJugadorCard(Jugador jugador) {
+    final esJugadorFavorito = FavoritosManager().esJugadorFavorito(jugador.id!);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => JugadorDetallePage(
+              jugador: jugador,
+              equipoNombre: _equipo!.nombre,
+            ),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.naranja.withOpacity(0.2),
+                child: Text(
+                  jugador.dorsal.toString(),
+                  style: const TextStyle(
+                      color: AppColors.naranja, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jugador.nombreCompleto,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${jugador.posicion} | ${jugador.altura}m | ${jugador.peso}kg',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  esJugadorFavorito ? Icons.star : Icons.star_border,
+                  color: esJugadorFavorito ? Colors.amber : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    FavoritosManager().toggleJugadorFavorito(jugador.id!);
+                  });
+                },
+              ),
+            ],
           ),
         ),
       ),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: AppColors.gradienteRojoNaranja,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                jugador.dorsal.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  jugador.nombreCompleto,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  jugador.posicion,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.naranja.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            // ✅ FIX: mostrar estadísticas (pts/reb/ast) en la tarjeta del
-            // listado, además de en JugadorDetallePage.
-            child: Text(
-              '${jugador.promedioPuntos.toStringAsFixed(1)} pts · '
-              '${jugador.promedioRebotes.toStringAsFixed(1)} reb · '
-              '${jugador.promedioAsistencias.toStringAsFixed(1)} ast',
-              style: const TextStyle(color: AppColors.naranja, fontSize: 10),
-            ),
-          ),
-        ],
-      ),
-      ), // cierra InkWell del FIX abrir-perfil-jugador
     );
   }
 
@@ -408,7 +511,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   }
 
   Widget _buildPartidoCard(Partido partido, {required bool esProximo}) {
-    final esLocal = partido.equipoLocalId == widget.equipo.id;
+    final esLocal = partido.equipoLocalId == widget.equipoId;
     final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
     final resultado = esLocal
         ? '${partido.puntosLocal} - ${partido.puntosVisitante}'

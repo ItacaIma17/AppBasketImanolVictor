@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/partido.dart';
-// ✅ FIX nav: para abrir el perfil del equipo desde el marcador.
-import 'package:tfg_appfede/screens/Equipos.dart';
+import '../../screens/equipos/DetalleEquipoPage.dart';
 
 /// Widget que muestra el marcador principal del partido
 /// con equipos, resultado y ganador
@@ -39,13 +38,12 @@ class MarcadorPartido extends StatelessWidget {
                 nombre: partido.nombreLocal,
                 color: AppColors.naranja,
                 esGanador: localGano,
-                // ✅ FIX nav: abre el perfil del equipo local
                 onTap: partido.equipoLocalId == null
                     ? null
                     : () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => EquipoPage(
+                            builder: (_) => EquipoDetallePage(
                               equipoId: partido.equipoLocalId!,
                             ),
                           ),
@@ -59,13 +57,12 @@ class MarcadorPartido extends StatelessWidget {
                 nombre: partido.nombreVisitante,
                 color: AppColors.amarilloAragon,
                 esGanador: !localGano,
-                // ✅ FIX nav: abre el perfil del equipo visitante
                 onTap: partido.equipoVisitanteId == null
                     ? null
                     : () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => EquipoPage(
+                            builder: (_) => EquipoDetallePage(
                               equipoId: partido.equipoVisitanteId!,
                             ),
                           ),

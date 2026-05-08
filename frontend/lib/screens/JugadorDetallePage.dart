@@ -114,6 +114,7 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.gradienteAragon.colors.last,
       drawer: const MenuLateral(),
       appBar: HeaderApp(
         titulo: widget.jugador.nombreCompleto,
@@ -189,7 +190,7 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
               Chip(
                 label: Text(widget.jugador.posicion),
                 backgroundColor: Colors.white.withOpacity(0.3),
-                labelStyle: const TextStyle(color: Colors.white),
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
               ),
               const SizedBox(height: 16),
               Row(
