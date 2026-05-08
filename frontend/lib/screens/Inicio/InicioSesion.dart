@@ -5,7 +5,6 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/screens/Admin/PanelAdminPage.dart';
 import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 import 'package:tfg_appfede/screens/InicioApp.dart';
-import 'package:tfg_appfede/screens/Jugadores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'Registro.dart';
 

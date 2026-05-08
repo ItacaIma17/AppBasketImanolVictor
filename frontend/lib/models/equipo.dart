@@ -47,28 +47,35 @@ class Equipo {
   });
 
   factory Equipo.fromJson(Map<String, dynamic> json) {
+    int? _parseint(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Equipo(
-      id: json['id'],
+      id: _parseint(json['id']),
       nombre: json['nombre'] ?? '',
       ciudad: json['ciudad'] ?? '',
       nombreEstadio: json['nombreEstadio'] ?? '',
-      anoFundacion: json['anoFundacion'] ?? json['añoFundacion'],
+      anoFundacion: _parseint(json['anoFundacion'] ?? json['añoFundacion']),
       escudoUrl: json['escudoUrl'],
       nombreLiga: json['nombreLiga'],
-      ligaId: json['ligaId'],
+      ligaId: _parseint(json['ligaId']),
       nombreEntrenador: json['nombreEntrenador'],
-      entrenadorId: json['entrenadorId'],
+      entrenadorId: _parseint(json['entrenadorId']),
       tieneEntrenador: json['tieneEntrenador'] ?? false,
       codigoSolicitud: json['codigoSolicitud'],
       solicitudPendiente: json['solicitudPendiente'] ?? false,
-      numeroJugadores: json['numeroJugadores'],
+      numeroJugadores: _parseint(json['numeroJugadores']),
       jugadores: json['jugadores'] != null
           ? (json['jugadores'] as List).map((j) => Jugador.fromJson(j)).toList()
           : [],
-      puntos: json['puntos'],
-      partidosJugados: json['partidosJugados'],
-      partidosGanados: json['partidosGanados'],
-      partidosPerdidos: json['partidosPerdidos'],
+      puntos: _parseint(json['puntos']),
+      partidosJugados: _parseint(json['partidosJugados']),
+      partidosGanados: _parseint(json['partidosGanados']),
+      partidosPerdidos: _parseint(json['partidosPerdidos']),
     );
   }
 }

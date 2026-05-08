@@ -14,8 +14,15 @@ class PartidoAsignado {
   });
 
   factory PartidoAsignado.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
     return PartidoAsignado(
-      partidoId: json['partidoId'] ?? json['id'],
+      partidoId: _parseInt(json['partidoId'] ?? json['id']),
       equipoLocal: json['equipoLocal'] ?? '',
       equipoVisitante: json['equipoVisitante'] ?? '',
       fecha: json['fecha'] ?? '',

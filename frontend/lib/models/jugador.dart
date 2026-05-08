@@ -79,29 +79,51 @@ class Jugador {
   // ============================================================
 
   factory Jugador.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
+    double _parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+
     return Jugador(
-      id: json['id'],
+      id: _parseIntNullable(json['id']),
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       nombre: json['nombre'] ?? '',
       apellido: json['apellido'],
-      edad: json['edad'] ?? 0,
+      edad: _parseInt(json['edad']),
       posicion: json['posicion'] ?? '',
-      dorsal: json['dorsal'] ?? 0,
-      altura: (json['altura'] ?? 0.0).toDouble(),
-      peso: (json['peso'] ?? 0.0).toDouble(),
+      dorsal: _parseInt(json['dorsal']),
+      altura: _parseDouble(json['altura']),
+      peso: _parseDouble(json['peso']),
 
       // Nuevos campos
-      puntosTotales: json['puntosTotales'] ?? 0,
-      rebotesTotales: json['rebotesTotales'] ?? 0,
-      asistenciasTotales: json['asistenciasTotales'] ?? 0,
-      robosTotales: json['robosTotales'] ?? 0,
-      partidosJugados: json['partidosJugados'] ?? 0,
+      puntosTotales: _parseInt(json['puntosTotales']),
+      rebotesTotales: _parseInt(json['rebotesTotales']),
+      asistenciasTotales: _parseInt(json['asistenciasTotales']),
+      robosTotales: _parseInt(json['robosTotales']),
+      partidosJugados: _parseInt(json['partidosJugados']),
 
       codigoJugador: json['codigoJugador'],
       verificado: json['verificado'] ?? false,
       tieneEquipo: json['tieneEquipo'] ?? false,
-      equipoId: json['equipoId'],
+      equipoId: _parseIntNullable(json['equipoId']),
       nombreEquipo: json['nombreEquipo'],
     );
   }

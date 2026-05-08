@@ -31,18 +31,32 @@ class EquipoEntrenador {
   });
 
   factory EquipoEntrenador.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return EquipoEntrenador(
-      entrenadorId: json['entrenadorId'],
-      nombreEntrenador: json['nombreEntrenador'],
+      entrenadorId: _parseInt(json['entrenadorId']),
+      nombreEntrenador: json['nombreEntrenador'] ?? '',
       apellido: json['apellido'],
       email: json['email'] ?? '',
       username: json['username'] ?? '',
-      equipoId: json['equipoId'],
+      equipoId: _parseInt(json['equipoId']),
       nombreEquipo: json['nombreEquipo'] ?? '',
       nombreLiga: json['nombreLiga'],
       nombreEstadio: json['nombreEstadio'],
       tieneEquipo: json['tieneEquipo'] ?? false,
-      numeroJugadores: json['numeroJugadores'],
+      numeroJugadores: _parseIntNullable(json['numeroJugadores']),
       jugadores: json['jugadores'] != null
           ? (json['jugadores'] as List)
           .map((j) => Jugador.fromJson(j))

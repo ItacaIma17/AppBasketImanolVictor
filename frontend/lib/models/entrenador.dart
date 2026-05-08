@@ -32,19 +32,33 @@ class Entrenador {
   });
 
   factory Entrenador.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? _parseIntNullable(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
     return Entrenador(
-      id: json['id'],
+      id: _parseIntNullable(json['id']),
       nombre: json['nombre'] ?? '',
       apellido: json['apellido'],
       username: json['username'] ?? '',
       email: json['email'] ?? '',
-      edad: json['edad'] ?? 0,
+      edad: _parseInt(json['edad']),
       codigoEntrenador: json['codigoEntrenador'] ?? '',
       telefono: json['telefono'],
       experiencia: json['experiencia'],
       verificado: json['verificado'] ?? false,
       tieneEquipo: json['tieneEquipo'] ?? false,
-      equipoId: json['equipoId'],
+      equipoId: _parseIntNullable(json['equipoId']),
       nombreEquipo: json['nombreEquipo'],
     );
   }

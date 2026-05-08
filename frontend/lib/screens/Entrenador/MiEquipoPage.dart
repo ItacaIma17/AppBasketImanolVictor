@@ -46,7 +46,7 @@ class _MiEquipoPageState extends State<MiEquipoPage> {
       final equipo = EquipoEntrenador.fromJson(equipoData);
 
       if (equipo.tieneEquipo) {
-        // ✅ Usar el endpoint de equipos que sí funciona
+        //  Usar el endpoint de equipos que sí funciona
         final jugadores = await EquipoService.getJugadoresEquipo(equipo.equipoId);
         setState(() {
           _miEquipo = equipo;
@@ -71,6 +71,7 @@ class _MiEquipoPageState extends State<MiEquipoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.gradienteAragon.colors.last,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Mi Equipo"),
       body: Container(

@@ -3,13 +3,17 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
 import 'package:tfg_appfede/models/liga.dart';
 import 'package:tfg_appfede/models/equipo.dart';
+import 'package:tfg_appfede/models/jugador.dart';
 import 'package:tfg_appfede/screens/Clasificacion.dart';
-import 'package:tfg_appfede/screens/Equipos.dart';
+import 'package:tfg_appfede/screens/JugadorDetallePage.dart';
+import 'package:tfg_appfede/screens/equipos/DetalleEquipoPage.dart';
 import 'package:tfg_appfede/services/ligaService.dart';
 import 'package:tfg_appfede/services/equipoService.dart';
+import 'package:tfg_appfede/services/jugadorService.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaCategoriaFav.dart';
 import 'package:tfg_appfede/widgets/Favoritos/TarjetaEquipoFav.dart';
+import 'package:tfg_appfede/widgets/Favoritos/TarjetaJugadorFav.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 
@@ -27,23 +31,35 @@ class _FavoritosPageState extends State<FavoritosPage>
 
   List<Liga> _todasLasLigas = [];
   List<Equipo> _todosLosEquipos = [];
+  List<Jugador> _todosLosJugadores = [];
   bool _cargando = true;
 
+  final TextEditingController _buscadorJugadorController = TextEditingController();
+  String _textoBusquedaJugador = '';
+
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _cargarDatosIniciales();
+void initState() {
+  super.initState();
+  _tabController = TabController(length: 3, vsync: this);
+  _cargarTodo();
+}
+
+
+  Future<void> _cargarTodo() async {
+    await FavoritosManager().cargarFavoritos();
+    await _cargarDatosIniciales(); // primero favoritos, luego datos
   }
 
   Future<void> _cargarDatosIniciales() async {
     try {
       final ligas = await LigaService.listarLigas();
       final equipos = await EquipoService.listarEquipos();
+      final jugadores = await JugadorService.listarJugadores();
 
       setState(() {
         _todasLasLigas = ligas;
         _todosLosEquipos = equipos;
+        _todosLosJugadores = jugadores;
         _cargando = false;
       });
     } catch (e) {
@@ -55,6 +71,7 @@ class _FavoritosPageState extends State<FavoritosPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _buscadorJugadorController.dispose();
     super.dispose();
   }
 
@@ -149,8 +166,6 @@ Widget _buildLigasTab() {
 
       return TarjetaCategoria(
         nombre: nombre,
-        categoriaEdad: nombre,
-        categoriaNivel: '',
         onTap: () {
           Navigator.push(
             context,
@@ -170,41 +185,33 @@ Widget _buildLigasTab() {
 
   /// Equipos favoritos
 Widget _buildEquiposTab() {
-  final favoritos = FavoritosManager().equiposFavoritos.toList();
+  final idsFavoritos = FavoritosManager().equiposFavoritos;
 
-  if (favoritos.isEmpty) {
+  if (idsFavoritos.isEmpty) {
     return _buildEmptyState('No tienes equipos favoritos');
   }
 
   return ListView.builder(
     padding: const EdgeInsets.symmetric(horizontal: 16),
-    itemCount: favoritos.length,
+    itemCount: idsFavoritos.length,
     itemBuilder: (context, index) {
-      final nombre = favoritos[index];
+      final equipoId = idsFavoritos[index];
 
-      // Buscar equipo por nombre
       final coincidencias = _todosLosEquipos
-          .where((e) => e.nombre.toLowerCase() == nombre.toLowerCase())
+          .where((e) => e.id == equipoId)
           .toList();
 
-      Equipo? equipo;
-      if (coincidencias.isNotEmpty) {
-        equipo = coincidencias.first;
-      }
+      if (coincidencias.isEmpty) return const SizedBox();
 
-      final equipoId = equipo?.id ?? 0;
+      final equipo = coincidencias.first;
 
       return TarjetaEquipo(
-        nombre: nombre,
-        posicion: '-',
-        proximoPartido: '-',
-        rival: '-',
-        esLocal: false,
+        nombre: equipo.nombre,
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EquipoPage(equipoId: equipoId),
+              builder: (context) => EquipoDetallePage(equipoId: equipoId),
             ),
           );
         },
@@ -215,32 +222,90 @@ Widget _buildEquiposTab() {
 
 
   /// Jugadores favoritos
-  Widget _buildJugadoresTab() {
-    final jugadores = FavoritosManager().jugadoresFavoritos.toList();
+ Widget _buildJugadoresTab() {
+  final idsFavoritos = FavoritosManager().jugadoresFavoritos;
 
-    if (jugadores.isEmpty) {
-      return _buildEmptyState('No tienes jugadores favoritos');
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: jugadores.length,
-      itemBuilder: (context, index) {
-      final nombre = jugadores[index];
-
-        return ListTile(
-          title: Text(
-            nombre,
-            style: const TextStyle(color: Colors.white),
-          ),
-          trailing: const Icon(Icons.chevron_right, color: Colors.white),
-          onTap: () {
-            // Aquí puedes navegar a la página del jugador si la tienes
-          },
-        );
-      },
-    );
+  if (idsFavoritos.isEmpty) {
+    return _buildEmptyState('No tienes jugadores favoritos');
   }
+
+  // Obtener jugadores favoritos
+  final jugadoresFavoritos = _todosLosJugadores
+      .where((j) => idsFavoritos.contains(j.id))
+      .toList();
+
+  // Filtrar por búsqueda
+  final jugadoresFiltrados = _textoBusquedaJugador.isEmpty
+      ? jugadoresFavoritos
+      : jugadoresFavoritos
+          .where((j) => j.nombreCompleto
+              .toLowerCase()
+              .contains(_textoBusquedaJugador.toLowerCase()))
+          .toList();
+
+  return Column(
+    children: [
+      // Barra de búsqueda
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: TextField(
+          controller: _buscadorJugadorController,
+          onChanged: (value) => setState(() => _textoBusquedaJugador = value),
+          style: const TextStyle(color: AppColors.blanco),
+          decoration: InputDecoration(
+            hintText: 'Buscar jugador...',
+            hintStyle: const TextStyle(color: AppColors.blancoOpacidad70),
+            prefixIcon: const Icon(Icons.search, color: AppColors.blancoOpacidad70),
+            suffixIcon: _textoBusquedaJugador.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.blancoOpacidad70),
+                    onPressed: () => setState(() {
+                      _textoBusquedaJugador = '';
+                      _buscadorJugadorController.clear();
+                    }),
+                  )
+                : null,
+            filled: true,
+            fillColor: AppColors.negroOpacidad50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ),
+
+      // Lista de jugadores
+      Expanded(
+        child: jugadoresFiltrados.isEmpty
+            ? _buildEmptyState('No se encontraron jugadores')
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: jugadoresFiltrados.length,
+                itemBuilder: (context, index) {
+                  final jugador = jugadoresFiltrados[index];
+                  return TarjetaJugador(
+                    nombre: jugador.nombreCompleto,
+                    equipo: jugador.nombreEquipo ?? 'Sin equipo',
+                    edad: jugador.edad,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => JugadorDetallePage(
+                            jugador: jugador,
+                            equipoNombre: jugador.nombreEquipo,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      }
 
   Widget _buildEmptyState(String mensaje) {
     return Center(

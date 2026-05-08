@@ -371,18 +371,17 @@ class _ClasificacionPageState extends State<ClasificacionPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16), // ← separación arriba
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       itemCount: _equipos.length,
       itemBuilder: (context, index) {
         final equipo = _equipos[index];
-        final esFavorito = FavoritosManager().equiposFavoritos.contains(equipo.nombre);
-        return _buildEquipoRow(equipo, index + 1, esFavorito);
+        return _buildEquipoRow(equipo, index + 1); // ← sin esFavorito
       },
     );
   }
 
 
-  Widget _buildEquipoRow(Equipo equipo, int posicion, bool esFavorito) {
+  Widget _buildEquipoRow(Equipo equipo, int posicion) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -446,16 +445,16 @@ class _ClasificacionPageState extends State<ClasificacionPage>
               const SizedBox(width: 8),
               IconButton(
                 icon: Icon(
-                  esFavorito ? Icons.star : Icons.star_border,
-                  color: esFavorito ? Colors.amber : Colors.grey,
+                  FavoritosManager().esEquipoFavorito(equipo.id!)
+                      ? Icons.star
+                      : Icons.star_border,
+                  color: FavoritosManager().esEquipoFavorito(equipo.id!)
+                      ? Colors.amber
+                      : Colors.grey,
                 ),
                 onPressed: () {
                   setState(() {
-                    if (esFavorito) {
-                      FavoritosManager().eliminarEquipoFavorito(equipo.nombre);
-                    } else {
-                      FavoritosManager().agregarEquipoFavorito(equipo.nombre);
-                    }
+                    FavoritosManager().toggleEquipoFavorito(equipo.id!);
                   });
                 },
               ),

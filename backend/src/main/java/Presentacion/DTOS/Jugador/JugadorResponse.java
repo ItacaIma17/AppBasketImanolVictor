@@ -49,7 +49,7 @@ public class JugadorResponse {
         response.setDorsal(jugador.getDorsal());
         response.setRole(jugador.getRole() != null ? jugador.getRole().name() : "JUGADOR");
 
-        // 🔥 NUEVAS ESTADÍSTICAS TOTALES
+        //NUEVAS ESTADÍSTICAS TOTALES
         response.setPuntosTotales(jugador.getPuntosTotales());
         response.setRebotesTotales(jugador.getRebotesTotales());
         response.setAsistenciasTotales(jugador.getAsistenciasTotales());

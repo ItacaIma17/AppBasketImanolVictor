@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../models/role.dart';
+import '../../widgets/Header.dart';
+import '../../widgets/MenuLateral.dart';
 
 class ConfiguracionPage extends StatefulWidget {
   const ConfiguracionPage({super.key});
@@ -14,25 +15,16 @@ class ConfiguracionPage extends StatefulWidget {
 }
 
 class _ConfiguracionPageState extends State<ConfiguracionPage> {
-  // Configuración de notificaciones
   bool _notificacionesEmail = true;
   bool _notificacionesPush = true;
   bool _notificacionesPartidos = true;
-
-  // Configuración de privacidad
   bool _perfilPublico = true;
   bool _mostrarEmail = false;
-
-  // Configuración de la app
   String _idiomaSeleccionado = 'es';
   String _temaSeleccionado = 'claro';
   String _tamanoFuente = 'medio';
-
-  // Configuración de seguridad
   bool _autenticacionBiometrica = false;
   bool _recordarSesion = true;
-
-  // Estado de carga
   bool _isLoading = false;
 
   final List<Map<String, String>> _idiomas = [
@@ -128,7 +120,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                 );
                 return;
               }
-              // TODO: Llamar al servicio para cambiar contraseña
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Contraseña actualizada'), backgroundColor: Colors.green),
@@ -179,7 +170,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         await prefs.remove('cache_equipos');
         await prefs.remove('cache_partidos');
         await prefs.remove('cache_ligas');
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Caché limpiada correctamente'), backgroundColor: Colors.green),
@@ -227,238 +217,241 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      drawer: const MenuLateral(),
+      appBar: const HeaderApp(titulo: "Configuración"),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+        child: SafeArea(
+          child: Stack(
             children: [
-              const Text(
-                'Configuración',
-                style: TextStyle(color: AppColors.blanco, fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildPerfilUsuario(),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('NOTIFICACIONES', Icons.notifications_active, [
-                        SwitchListTile(
-                          title: const Text('Notificaciones por Email'),
-                          subtitle: const Text('Recibir alertas por correo electrónico'),
-                          value: _notificacionesEmail,
-                          onChanged: (v) {
-                            setState(() => _notificacionesEmail = v);
-                            _guardarConfiguracion('notificaciones_email', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                        SwitchListTile(
-                          title: const Text('Notificaciones Push'),
-                          subtitle: const Text('Recibir notificaciones en la app'),
-                          value: _notificacionesPush,
-                          onChanged: (v) {
-                            setState(() => _notificacionesPush = v);
-                            _guardarConfiguracion('notificaciones_push', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                        SwitchListTile(
-                          title: const Text('Recordatorios de Partidos'),
-                          subtitle: const Text('Recibir recordatorios antes de los partidos'),
-                          value: _notificacionesPartidos,
-                          onChanged: (v) {
-                            setState(() => _notificacionesPartidos = v);
-                            _guardarConfiguracion('notificaciones_partidos', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('PRIVACIDAD', Icons.privacy_tip, [
-                        SwitchListTile(
-                          title: const Text('Perfil Público'),
-                          subtitle: const Text('Permitir que otros usuarios vean tu perfil'),
-                          value: _perfilPublico,
-                          onChanged: (v) {
-                            setState(() => _perfilPublico = v);
-                            _guardarConfiguracion('perfil_publico', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                        SwitchListTile(
-                          title: const Text('Mostrar Email en Perfil'),
-                          subtitle: const Text('Permitir que otros usuarios vean tu email'),
-                          value: _mostrarEmail,
-                          onChanged: (v) {
-                            setState(() => _mostrarEmail = v);
-                            _guardarConfiguracion('mostrar_email', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('APARIENCIA', Icons.palette, [
-                        ListTile(
-                          title: const Text('Idioma'),
-                          subtitle: Text(_idiomas.firstWhere((i) => i['codigo'] == _idiomaSeleccionado)['nombre'] ?? 'Español'),
-                          trailing: DropdownButton<String>(
-                            value: _idiomaSeleccionado,
-                            items: _idiomas.map<DropdownMenuItem<String>>((lang) {
-                              return DropdownMenuItem<String>(
-                                value: lang['codigo'],
-                                child: Text(lang['nombre']!),
-                              );
-                            }).toList(),
-                            onChanged: (v) {
-                              setState(() => _idiomaSeleccionado = v!);
-                              _guardarConfiguracion('idioma', v);
-                            },
-                          ),
-                        ),
-                        ListTile(
-                          title: const Text('Tema'),
-                          subtitle: Text(_temas.firstWhere((t) => t['codigo'] == _temaSeleccionado)['nombre'] ?? 'Claro'),
-                          trailing: DropdownButton<String>(
-                            value: _temaSeleccionado,
-                            items: _temas.map<DropdownMenuItem<String>>((tema) {
-                              return DropdownMenuItem<String>(
-                                value: tema['codigo'],
-                                child: Text('${tema['icono']} ${tema['nombre']}'),
-                              );
-                            }).toList(),
-                            onChanged: (v) {
-                              setState(() => _temaSeleccionado = v!);
-                              _guardarConfiguracion('tema', v);
-                            },
-                          ),
-                        ),
-                        ListTile(
-                          title: const Text('Tamaño de Fuente'),
-                          subtitle: Text(_fuentes.firstWhere((f) => f['codigo'] == _tamanoFuente)['nombre'] ?? 'Mediano'),
-                          trailing: DropdownButton<String>(
-                            value: _tamanoFuente,
-                            items: _fuentes.map<DropdownMenuItem<String>>((fuente) {
-                              return DropdownMenuItem<String>(
-                                value: fuente['codigo'],
-                                child: Text('${fuente['nombre']} (${fuente['tamano']}px)'),
-                              );
-                            }).toList(),
-                            onChanged: (v) {
-                              setState(() => _tamanoFuente = v!);
-                              _guardarConfiguracion('tamano_fuente', v);
-                            },
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('SEGURIDAD', Icons.security, [
-                        SwitchListTile(
-                          title: const Text('Autenticación Biométrica'),
-                          subtitle: const Text('Usar huella digital o Face ID para iniciar sesión'),
-                          value: _autenticacionBiometrica,
-                          onChanged: (v) {
-                            setState(() => _autenticacionBiometrica = v);
-                            _guardarConfiguracion('auth_biometrica', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                        SwitchListTile(
-                          title: const Text('Recordar Sesión'),
-                          subtitle: const Text('Mantener sesión iniciada al cerrar la app'),
-                          value: _recordarSesion,
-                          onChanged: (v) {
-                            setState(() => _recordarSesion = v);
-                            _guardarConfiguracion('recordar_sesion', v);
-                          },
-                          activeColor: AppColors.naranja,
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.lock, color: AppColors.naranja),
-                          title: const Text('Cambiar Contraseña'),
-                          subtitle: const Text('Actualizar tu contraseña'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: _cambiarContrasena,
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('DATOS Y ALMACENAMIENTO', Icons.storage, [
-                        ListTile(
-                          leading: const Icon(Icons.backup, color: AppColors.naranja),
-                          title: const Text('Exportar Datos'),
-                          subtitle: const Text('Exportar tus datos personales'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: _exportarDatos,
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.cleaning_services, color: Colors.orange),
-                          title: const Text('Limpiar Caché'),
-                          subtitle: const Text('Eliminar datos temporales'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: _limpiarCache,
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      _buildConfigSection('INFORMACIÓN', Icons.info, [
-                        ListTile(
-                          leading: const Icon(Icons.info_outline, color: AppColors.naranja),
-                          title: const Text('Versión de la App'),
-                          subtitle: const Text('1.0.0'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () => _mostrarInformacion(),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.description, color: AppColors.naranja),
-                          title: const Text('Términos y Condiciones'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () => _mostrarTerminos(context),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.privacy_tip, color: AppColors.naranja),
-                          title: const Text('Política de Privacidad'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () => _mostrarPrivacidad(context),
-                        ),
-                      ]),
-                      const SizedBox(height: 16),
-                      Card(
-                        color: Colors.red.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: ListTile(
-                          leading: const Icon(Icons.logout, color: Colors.red),
-                          title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Salir de la aplicación', style: TextStyle(color: Colors.red)),
-                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red, size: 16),
-                          onTap: _cerrarSesion,
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            _buildPerfilUsuario(),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('NOTIFICACIONES', Icons.notifications_active, [
+                              SwitchListTile(
+                                title: const Text('Notificaciones por Email'),
+                                subtitle: const Text('Recibir alertas por correo electrónico'),
+                                value: _notificacionesEmail,
+                                onChanged: (v) {
+                                  setState(() => _notificacionesEmail = v);
+                                  _guardarConfiguracion('notificaciones_email', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                              SwitchListTile(
+                                title: const Text('Notificaciones Push'),
+                                subtitle: const Text('Recibir notificaciones en la app'),
+                                value: _notificacionesPush,
+                                onChanged: (v) {
+                                  setState(() => _notificacionesPush = v);
+                                  _guardarConfiguracion('notificaciones_push', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                              SwitchListTile(
+                                title: const Text('Recordatorios de Partidos'),
+                                subtitle: const Text('Recibir recordatorios antes de los partidos'),
+                                value: _notificacionesPartidos,
+                                onChanged: (v) {
+                                  setState(() => _notificacionesPartidos = v);
+                                  _guardarConfiguracion('notificaciones_partidos', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('PRIVACIDAD', Icons.privacy_tip, [
+                              SwitchListTile(
+                                title: const Text('Perfil Público'),
+                                subtitle: const Text('Permitir que otros usuarios vean tu perfil'),
+                                value: _perfilPublico,
+                                onChanged: (v) {
+                                  setState(() => _perfilPublico = v);
+                                  _guardarConfiguracion('perfil_publico', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                              SwitchListTile(
+                                title: const Text('Mostrar Email en Perfil'),
+                                subtitle: const Text('Permitir que otros usuarios vean tu email'),
+                                value: _mostrarEmail,
+                                onChanged: (v) {
+                                  setState(() => _mostrarEmail = v);
+                                  _guardarConfiguracion('mostrar_email', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('APARIENCIA', Icons.palette, [
+                              ListTile(
+                                title: const Text('Idioma'),
+                                subtitle: Text(_idiomas.firstWhere((i) => i['codigo'] == _idiomaSeleccionado)['nombre'] ?? 'Español'),
+                                trailing: DropdownButton<String>(
+                                  value: _idiomaSeleccionado,
+                                  items: _idiomas.map<DropdownMenuItem<String>>((lang) {
+                                    return DropdownMenuItem<String>(
+                                      value: lang['codigo'],
+                                      child: Text(lang['nombre']!),
+                                    );
+                                  }).toList(),
+                                  onChanged: (v) {
+                                    setState(() => _idiomaSeleccionado = v!);
+                                    _guardarConfiguracion('idioma', v);
+                                  },
+                                ),
+                              ),
+                              ListTile(
+                                title: const Text('Tema'),
+                                subtitle: Text(_temas.firstWhere((t) => t['codigo'] == _temaSeleccionado)['nombre'] ?? 'Claro'),
+                                trailing: DropdownButton<String>(
+                                  value: _temaSeleccionado,
+                                  items: _temas.map<DropdownMenuItem<String>>((tema) {
+                                    return DropdownMenuItem<String>(
+                                      value: tema['codigo'],
+                                      child: Text('${tema['icono']} ${tema['nombre']}'),
+                                    );
+                                  }).toList(),
+                                  onChanged: (v) {
+                                    setState(() => _temaSeleccionado = v!);
+                                    _guardarConfiguracion('tema', v);
+                                  },
+                                ),
+                              ),
+                              ListTile(
+                                title: const Text('Tamaño de Fuente'),
+                                subtitle: Text(_fuentes.firstWhere((f) => f['codigo'] == _tamanoFuente)['nombre'] ?? 'Mediano'),
+                                trailing: DropdownButton<String>(
+                                  value: _tamanoFuente,
+                                  items: _fuentes.map<DropdownMenuItem<String>>((fuente) {
+                                    return DropdownMenuItem<String>(
+                                      value: fuente['codigo'],
+                                      child: Text('${fuente['nombre']} (${fuente['tamano']}px)'),
+                                    );
+                                  }).toList(),
+                                  onChanged: (v) {
+                                    setState(() => _tamanoFuente = v!);
+                                    _guardarConfiguracion('tamano_fuente', v);
+                                  },
+                                ),
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('SEGURIDAD', Icons.security, [
+                              SwitchListTile(
+                                title: const Text('Autenticación Biométrica'),
+                                subtitle: const Text('Usar huella digital o Face ID para iniciar sesión'),
+                                value: _autenticacionBiometrica,
+                                onChanged: (v) {
+                                  setState(() => _autenticacionBiometrica = v);
+                                  _guardarConfiguracion('auth_biometrica', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                              SwitchListTile(
+                                title: const Text('Recordar Sesión'),
+                                subtitle: const Text('Mantener sesión iniciada al cerrar la app'),
+                                value: _recordarSesion,
+                                onChanged: (v) {
+                                  setState(() => _recordarSesion = v);
+                                  _guardarConfiguracion('recordar_sesion', v);
+                                },
+                                activeColor: AppColors.naranja,
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.lock, color: AppColors.naranja),
+                                title: const Text('Cambiar Contraseña'),
+                                subtitle: const Text('Actualizar tu contraseña'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: _cambiarContrasena,
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('DATOS Y ALMACENAMIENTO', Icons.storage, [
+                              ListTile(
+                                leading: const Icon(Icons.backup, color: AppColors.naranja),
+                                title: const Text('Exportar Datos'),
+                                subtitle: const Text('Exportar tus datos personales'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: _exportarDatos,
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.cleaning_services, color: Colors.orange),
+                                title: const Text('Limpiar Caché'),
+                                subtitle: const Text('Eliminar datos temporales'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: _limpiarCache,
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            _buildConfigSection('INFORMACIÓN', Icons.info, [
+                              ListTile(
+                                leading: const Icon(Icons.info_outline, color: AppColors.naranja),
+                                title: const Text('Versión de la App'),
+                                subtitle: const Text('1.0.0'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: () => _mostrarInformacion(),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.description, color: AppColors.naranja),
+                                title: const Text('Términos y Condiciones'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: () => _mostrarTerminos(context),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.privacy_tip, color: AppColors.naranja),
+                                title: const Text('Política de Privacidad'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: () => _mostrarPrivacidad(context),
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            Card(
+                              color: Colors.red.withOpacity(0.1),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: ListTile(
+                                leading: const Icon(Icons.logout, color: Colors.red),
+                                title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                subtitle: const Text('Salir de la aplicación', style: TextStyle(color: Colors.red)),
+                                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red, size: 16),
+                                onTap: _cerrarSesion,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+              if (_isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.naranja),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        if (_isLoading)
-          Container(
-            color: Colors.black.withOpacity(0.5),
-            child: const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.naranja),
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 
   Widget _buildPerfilUsuario() {
     final usuario = AutenticacionService.usuarioActual;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.blanco,
@@ -507,9 +500,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
             ),
             IconButton(
               icon: const Icon(Icons.edit, color: AppColors.naranja),
-              onPressed: () {
-                // TODO: Navegar a editar perfil
-              },
+              onPressed: () {},
             ),
           ],
         ),
@@ -581,17 +572,17 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         content: const SingleChildScrollView(
           child: Text(
             'TÉRMINOS Y CONDICIONES DE USO\n\n'
-                '1. Aceptación de los términos\n'
-                'Al utilizar esta aplicación, usted acepta cumplir con estos términos y condiciones.\n\n'
-                '2. Uso de la aplicación\n'
-                'La aplicación está destinada exclusivamente para uso personal y no comercial.\n\n'
-                '3. Privacidad de datos\n'
-                'Sus datos personales serán tratados de acuerdo con nuestra política de privacidad.\n\n'
-                '4. Responsabilidad\n'
-                'No nos hacemos responsables por el mal uso de la aplicación.\n\n'
-                '5. Modificaciones\n'
-                'Nos reservamos el derecho de modificar estos términos en cualquier momento.\n\n'
-                'Fecha de última actualización: 01/01/2024',
+            '1. Aceptación de los términos\n'
+            'Al utilizar esta aplicación, usted acepta cumplir con estos términos y condiciones.\n\n'
+            '2. Uso de la aplicación\n'
+            'La aplicación está destinada exclusivamente para uso personal y no comercial.\n\n'
+            '3. Privacidad de datos\n'
+            'Sus datos personales serán tratados de acuerdo con nuestra política de privacidad.\n\n'
+            '4. Responsabilidad\n'
+            'No nos hacemos responsables por el mal uso de la aplicación.\n\n'
+            '5. Modificaciones\n'
+            'Nos reservamos el derecho de modificar estos términos en cualquier momento.\n\n'
+            'Fecha de última actualización: 01/01/2024',
             style: TextStyle(fontSize: 12),
           ),
         ),
@@ -610,17 +601,17 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         content: const SingleChildScrollView(
           child: Text(
             'POLÍTICA DE PRIVACIDAD\n\n'
-                '1. Recopilación de datos\n'
-                'Recopilamos información personal como nombre, email y datos de perfil.\n\n'
-                '2. Uso de datos\n'
-                'Utilizamos sus datos para proporcionar los servicios de la aplicación.\n\n'
-                '3. Protección de datos\n'
-                'Implementamos medidas de seguridad para proteger su información.\n\n'
-                '4. Compartir datos\n'
-                'No compartimos sus datos personales con terceros sin su consentimiento.\n\n'
-                '5. Sus derechos\n'
-                'Usted tiene derecho a acceder, corregir o eliminar sus datos personales.\n\n'
-                'Contacto: privacidad@federacion.com',
+            '1. Recopilación de datos\n'
+            'Recopilamos información personal como nombre, email y datos de perfil.\n\n'
+            '2. Uso de datos\n'
+            'Utilizamos sus datos para proporcionar los servicios de la aplicación.\n\n'
+            '3. Protección de datos\n'
+            'Implementamos medidas de seguridad para proteger su información.\n\n'
+            '4. Compartir datos\n'
+            'No compartimos sus datos personales con terceros sin su consentimiento.\n\n'
+            '5. Sus derechos\n'
+            'Usted tiene derecho a acceder, corregir o eliminar sus datos personales.\n\n'
+            'Contacto: privacidad@federacion.com',
             style: TextStyle(fontSize: 12),
           ),
         ),
