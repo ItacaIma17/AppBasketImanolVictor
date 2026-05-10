@@ -1,4 +1,3 @@
-// lib/screens/Admin/ConfiguracionPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
@@ -35,9 +34,9 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   ];
 
   final List<Map<String, String>> _temas = [
-    {'codigo': 'claro', 'nombre': 'Claro', 'icono': '☀️'},
-    {'codigo': 'oscuro', 'nombre': 'Oscuro', 'icono': '🌙'},
-    {'codigo': 'sistema', 'nombre': 'Sistema', 'icono': '📱'},
+    {'codigo': 'claro', 'nombre': 'Claro', 'icono': ''},
+    {'codigo': 'oscuro', 'nombre': 'Oscuro', 'icono': ''},
+    {'codigo': 'sistema', 'nombre': 'Sistema', 'icono': ''},
   ];
 
   final List<Map<String, String>> _fuentes = [
@@ -509,8 +508,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   }
 
   Widget _buildConfigSection(String titulo, IconData icono, List<Widget> children) {
-    // ✅ FIX "No Material widget" (mismo cambio que la versión Admin):
-    // ListTile/DropdownButton ahora siempre encuentran un Material padre.
+
     return Material(
       color: AppColors.blanco,
       borderRadius: BorderRadius.circular(12),

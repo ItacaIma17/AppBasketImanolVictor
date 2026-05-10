@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/SeleccionarPartidoEntrenadorPage.dart
 import 'package:flutter/material.dart';
 import '../../config/common/resources/colores.dart';
 import '../../models/EquipoEntrenador.dart';
@@ -22,7 +21,7 @@ class _SeleccionarPartidoEntrenadorPageState
   List<Partido> _partidos = [];
   bool _isLoading = true;
   String? _error;
-  int? _equipoId;  // ← AÑADIR: ID del equipo del entrenador
+  int? _equipoId;
 
   @override
   void initState() {
@@ -37,7 +36,7 @@ class _SeleccionarPartidoEntrenadorPageState
     });
 
     try {
-      // Cargar el equipo del entrenador
+
       final equipoData = await EntrenadorService.obtenerMiEquipo();
       final equipo = EquipoEntrenador.fromJson(equipoData);
 
@@ -126,7 +125,7 @@ class _SeleccionarPartidoEntrenadorPageState
         itemCount: _partidos.length,
         itemBuilder: (context, index) {
           final partido = _partidos[index];
-          // ✅ CORREGIDO: Calcular esLocal comparando IDs
+
           final esLocal = partido.equipoLocalId == _equipoId;
           return _buildPartidoCard(partido, esLocal);
         },

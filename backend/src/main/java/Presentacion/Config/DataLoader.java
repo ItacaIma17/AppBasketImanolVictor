@@ -1,4 +1,3 @@
-// Aplicacion/Config/DataLoader.java
 package Presentacion.Config;
 
 import Dominio.Entity.*;
@@ -36,38 +35,29 @@ public class DataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("========================================");
-        log.info("🚀 Inicializando datos de prueba...");
+        log.info(" Inicializando datos de prueba...");
 
-        // 1. ADMINISTRADOR
         crearAdministrador();
 
-        // 2. LIGAS (3 ligas diferentes)
         crearLigas();
 
-        // 3. EQUIPOS (múltiples equipos por liga)
         crearEquipos();
 
-        // 4. ENTRENADORES
         crearEntrenadores();
 
-        // 5. JUGADORES (con estadísticas)
         crearJugadores();
 
-        // 6. ÁRBITROS
         crearArbitros();
 
-        // 7. ASIGNAR ENTRENADORES A EQUIPOS
         asignarEntrenadoresAEquipos();
 
-        // 8. PARTIDOS
         crearPartidos();
 
-        // 9. ACTAS Y ESTADÍSTICAS
         crearActasYEstadisticas();
 
-        log.info("✅ Inicialización completada");
+        log.info(" Inicialización completada");
         log.info("========================================");
-        log.info("🔐 CREDENCIALES DE PRUEBA:");
+        log.info(" CREDENCIALES DE PRUEBA:");
         log.info("   Admin:     admin / Admin123456");
         log.info("   Entrenador: entrenador / Entrenador123");
         log.info("   Árbitro:   arbitro / Arbitro123");
@@ -76,9 +66,6 @@ public class DataLoader implements CommandLineRunner {
         log.info("========================================");
     }
 
-    // ============================================================
-    // ADMINISTRADOR
-    // ============================================================
     private void crearAdministrador() {
         if (userRepository.existsByUsername("admin")) return;
 
@@ -93,12 +80,9 @@ public class DataLoader implements CommandLineRunner {
         admin.setVerificado(true);
         admin.setBloqueado(false);
         userRepository.save(admin);
-        log.info("✅ Administrador creado");
+        log.info(" Administrador creado");
     }
 
-    // ============================================================
-    // LIGAS (3 ligas)
-    // ============================================================
     private void crearLigas() {
         crearLiga("Liga ACB", "España", 18, "2024-2025");
         crearLiga("Liga EBA", "España", 16, "2024-2025");
@@ -113,19 +97,15 @@ public class DataLoader implements CommandLineRunner {
             liga.setNumeroEquipos(numEquipos);
             liga.setTemporada(temporada);
             ligaRepository.save(liga);
-            log.info("✅ Liga creada: {}", nombre);
+            log.info(" Liga creada: {}", nombre);
         }
     }
 
-    // ============================================================
-    // EQUIPOS POR LIGA
-    // ============================================================
     private void crearEquipos() {
         Liga acb = ligaRepository.findByNombreLiga("Liga ACB").orElse(null);
         Liga eba = ligaRepository.findByNombreLiga("Liga EBA").orElse(null);
         Liga euroliga = ligaRepository.findByNombreLiga("Euroliga").orElse(null);
 
-        // Equipos ACB
         crearEquipo("Real Madrid", "Madrid", "WiZink Center", 1931, acb);
         crearEquipo("FC Barcelona", "Barcelona", "Palau Blaugrana", 1926, acb);
         crearEquipo("Unicaja", "Málaga", "Martín Carpena", 1992, acb);
@@ -133,13 +113,11 @@ public class DataLoader implements CommandLineRunner {
         crearEquipo("Valencia Basket", "Valencia", "Fuente de San Luis", 1986, acb);
         crearEquipo("Joventut", "Badalona", "Palau Olímpic", 1930, acb);
 
-        // Equipos EBA
         crearEquipo("Tarazona Basket", "Tarazona", "Pabellón Municipal", 2000, eba);
         crearEquipo("Zaragoza Basket", "Zaragoza", "Príncipe Felipe", 2002, eba);
         crearEquipo("Huesca Basket", "Huesca", "Palacio de Deportes", 1977, eba);
         crearEquipo("Teruel Basket", "Teruel", "Pabellón de Deportes", 1995, eba);
 
-        // Equipos Euroliga
         crearEquipo("Panathinaikos", "Atenas", "OAKA", 1922, euroliga);
         crearEquipo("Olympiacos", "El Pireo", "Peace and Friendship", 1925, euroliga);
         crearEquipo("Fenerbahçe", "Estambul", "Ülker Arena", 1913, euroliga);
@@ -157,13 +135,10 @@ public class DataLoader implements CommandLineRunner {
             equipo.setCodigoSolicitud(generarCodigoEquipo());
             equipo.setSolicitudPendiente(false);
             equipoRepository.save(equipo);
-            log.info("✅ Equipo creado: {}", nombre);
+            log.info(" Equipo creado: {}", nombre);
         }
     }
 
-    // ============================================================
-    // ENTRENADORES
-    // ============================================================
     private void crearEntrenadores() {
         crearEntrenador("entrenador", "entrenador@test.com", "Carlos", "López", 45, "ENT-100001");
         crearEntrenador("entrenador2", "entrenador2@test.com", "Juan", "Martínez", 50, "ENT-100002");
@@ -198,12 +173,9 @@ public class DataLoader implements CommandLineRunner {
         entrenador.setVerificado(true);
         entrenador.setUsuario(usuario);
         entrenadorRepository.save(entrenador);
-        log.info("✅ Entrenador creado: {}", username);
+        log.info(" Entrenador creado: {}", username);
     }
 
-    // ============================================================
-    // JUGADORES CON ESTADÍSTICAS
-    // ============================================================
     private void crearJugadores() {
         Equipo realMadrid = equipoRepository.findByNombre("Real Madrid").orElse(null);
         Equipo barcelona = equipoRepository.findByNombre("FC Barcelona").orElse(null);
@@ -212,7 +184,6 @@ public class DataLoader implements CommandLineRunner {
         Equipo valencia = equipoRepository.findByNombre("Valencia Basket").orElse(null);
         Equipo joventut = equipoRepository.findByNombre("Joventut").orElse(null);
 
-        // Real Madrid - Jugadores con altas estadísticas
         crearJugadorConEstadisticas("luka.doncic", "luka.doncic@test.com", "Luka", "Doncic", 25,
                 "Base", 7, 2.01, 104, realMadrid, "JUG-001", 28.5, 8.2, 7.5, 1.2);
         crearJugadorConEstadisticas("rudy.fernandez", "rudy.fernandez@test.com", "Rudy", "Fernández", 38,
@@ -224,7 +195,6 @@ public class DataLoader implements CommandLineRunner {
         crearJugadorConEstadisticas("alberto.abalde", "alberto.abalde@test.com", "Alberto", "Abalde", 28,
                 "Alero", 6, 2.02, 95, realMadrid, "JUG-005", 11.2, 4.8, 3.1, 0.7);
 
-        // FC Barcelona
         crearJugadorConEstadisticas("ricky.rubio", "ricky.rubio@test.com", "Ricky", "Rubio", 33,
                 "Base", 3, 1.88, 82, barcelona, "JUG-006", 9.8, 3.2, 6.8, 1.5);
         crearJugadorConEstadisticas("niko.mirotic", "niko.mirotic@test.com", "Niko", "Mirotic", 33,
@@ -232,21 +202,17 @@ public class DataLoader implements CommandLineRunner {
         crearJugadorConEstadisticas("alex.abrines", "alex.abrines@test.com", "Alex", "Abrines", 30,
                 "Escolta", 8, 1.98, 90, barcelona, "JUG-008", 15.2, 3.5, 1.2, 0.9);
 
-        // Unicaja
         crearJugadorConEstadisticas("dario.brizuela", "dario.brizuela@test.com", "Dario", "Brizuela", 28,
                 "Escolta", 8, 1.88, 80, unicaja, "JUG-009", 16.5, 3.2, 2.5, 1.1);
         crearJugadorConEstadisticas("kendrick.perry", "kendrick.perry@test.com", "Kendrick", "Perry", 32,
                 "Base", 1, 1.83, 78, unicaja, "JUG-010", 14.8, 2.5, 5.5, 1.3);
 
-        // Baskonia
         crearJugadorConEstadisticas("markus.howard", "markus.howard@test.com", "Markus", "Howard", 25,
                 "Base", 11, 1.78, 75, baskonia, "JUG-011", 22.5, 2.8, 4.2, 1.1);
 
-        // Valencia
         crearJugadorConEstadisticas("damien.inglis", "damien.inglis@test.com", "Damien", "Inglis", 29,
                 "Ala-Pívot", 5, 2.03, 98, valencia, "JUG-012", 12.5, 6.5, 2.2, 0.6);
 
-        // Joventut
         crearJugadorConEstadisticas("antonia.dawson", "antonia.dawson@test.com", "Antonia", "Dawson", 31,
                 "Alero", 20, 1.98, 95, joventut, "JUG-013", 15.8, 5.5, 1.8, 1.2);
     }
@@ -287,13 +253,10 @@ public class DataLoader implements CommandLineRunner {
         jugador.setEquipo(equipo);
         jugadorRepository.save(jugador);
 
-        log.info("✅ Jugador creado: {} {} - Pts: {}, Reb: {}, Ast: {}",
+        log.info(" Jugador creado: {} {} - Pts: {}, Reb: {}, Ast: {}",
                 nombre, apellido, puntos, rebotes, asistencias);
     }
 
-    // ============================================================
-    // ÁRBITROS
-    // ============================================================
     private void crearArbitros() {
         crearArbitro("arbitro", "arbitro@test.com", "Juan", "García", 45, "ARB-100001");
         crearArbitro("arbitro2", "arbitro2@test.com", "Pedro", "Martínez", 50, "ARB-100002");
@@ -327,12 +290,9 @@ public class DataLoader implements CommandLineRunner {
         arbitro.setVerificado(true);
         arbitro.setUsuario(usuario);
         arbitroRepository.save(arbitro);
-        log.info("✅ Árbitro creado: {}", username);
+        log.info(" Árbitro creado: {}", username);
     }
 
-    // ============================================================
-    // ASIGNAR ENTRENADORES A EQUIPOS
-    // ============================================================
     private void asignarEntrenadoresAEquipos() {
         Equipo real = equipoRepository.findByNombre("Real Madrid").orElse(null);
         Equipo barca = equipoRepository.findByNombre("FC Barcelona").orElse(null);
@@ -358,13 +318,10 @@ public class DataLoader implements CommandLineRunner {
             equipo.setEntrenador(entrenador);
             entrenadorRepository.save(entrenador);
             equipoRepository.save(equipo);
-            log.info("✅ Entrenador {} asignado a {}", entrenador.getUsername(), equipo.getNombre());
+            log.info(" Entrenador {} asignado a {}", entrenador.getUsername(), equipo.getNombre());
         }
     }
 
-    // ============================================================
-    // PARTIDOS
-    // ============================================================
     private void crearPartidos() {
         Equipo real = equipoRepository.findByNombre("Real Madrid").orElse(null);
         Equipo barca = equipoRepository.findByNombre("FC Barcelona").orElse(null);
@@ -379,7 +336,6 @@ public class DataLoader implements CommandLineRunner {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Partidos ACB
         crearPartido(real, barca, now.minusDays(14), "WiZink Center", arbitro1);
         crearPartido(barca, real, now.minusDays(7), "Palau Blaugrana", arbitro2);
         crearPartido(real, unicaja, now.plusDays(7), "WiZink Center", arbitro1);
@@ -400,25 +356,18 @@ public class DataLoader implements CommandLineRunner {
         partido.setArbitro(arbitro);
         partido.setLiga(local.getLiga());
         partidoRepository.save(partido);
-        log.info("✅ Partido creado: {} vs {} - {}", local.getNombre(), visitante.getNombre(), fecha);
+        log.info(" Partido creado: {} vs {} - {}", local.getNombre(), visitante.getNombre(), fecha);
     }
-
-    // ============================================================
-    // ACTAS Y ESTADÍSTICAS
-    // ============================================================
-    // En DataLoader.java - método crearActasYEstadisticas()
 
     private void crearActasYEstadisticas() {
         List<Partido> partidosReal = partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(1L);
 
-        // Buscar el partido contra Barcelona (ID 2)
         Partido partidoRealBarça = partidosReal.stream()
                 .filter(p -> p.getEquipoLocal().getId() == 2L || p.getEquipoVisitante().getId() == 2L)
                 .findFirst()
                 .orElse(null);
 
         if (partidoRealBarça != null && partidoRealBarça.getActaPartido() == null) {
-
 
                 Arbitro arbitro = partidoRealBarça.getArbitro();
 
@@ -437,16 +386,13 @@ public class DataLoader implements CommandLineRunner {
                 actaRepository.save(acta);
                 partidoRepository.save(partidoRealBarça);
 
-                log.info("✅ Acta creada para Real Madrid vs FC Barcelona: 95-88");
+                log.info(" Acta creada para Real Madrid vs FC Barcelona: 95-88");
 
         } else {
-            log.warn("⚠️ No se encontró el partido Real Madrid vs FC Barcelona");
+            log.warn(" No se encontró el partido Real Madrid vs FC Barcelona");
         }
     }
 
-    // ============================================================
-    // UTILIDADES
-    // ============================================================
     private String generarCodigoEquipo() {
         return "EQ-" + (100000 + random.nextInt(900000));
     }

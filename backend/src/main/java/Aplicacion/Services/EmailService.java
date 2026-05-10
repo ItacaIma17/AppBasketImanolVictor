@@ -26,7 +26,6 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    // Enum para tipos de email
     public enum TipoEmail {
         CODIGO_VERIFICACION,
         CUENTA_BLOQUEADA,
@@ -39,13 +38,6 @@ public class EmailService {
         COMUNICADO_GENERAL
     }
 
-    // ============================================================
-    // MÉTODOS PÚBLICOS PRINCIPALES
-    // ============================================================
-
-    /**
-     * Envía un email en formato HTML
-     */
     public void sendHtmlMail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -56,12 +48,9 @@ public class EmailService {
         helper.setText(htmlContent, true);
 
         mailSender.send(message);
-        log.info("📧 Email HTML enviado a: {} - Asunto: {}", to, subject);
+        log.info(" Email HTML enviado a: {} - Asunto: {}", to, subject);
     }
 
-    /**
-     * Envía un email en texto plano
-     */
     public void sendTextMail(String to, String subject, String textContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
@@ -72,12 +61,8 @@ public class EmailService {
         helper.setText(textContent, false);
 
         mailSender.send(message);
-        log.info("📧 Email texto enviado a: {} - Asunto: {}", to, subject);
+        log.info(" Email texto enviado a: {} - Asunto: {}", to, subject);
     }
-
-    // ============================================================
-    // MÉTODOS ESPECÍFICOS PARA CADA CASO
-    // ============================================================
 
     public void enviarCodigoVerificacion(String to, String codigo) throws MessagingException {
         String subject = "Código de verificación - Federación Aragonesa de Baloncesto";
@@ -96,7 +81,7 @@ public class EmailService {
         String subject = "Cuenta suspendida - Federación Aragonesa de Baloncesto";
         String content = String.format("""
             <h2>Hola, %s</h2>
-            <p>Tu cuenta ha sido <strong style="color: red;">suspendida temporalmente</strong> 
+            <p>Tu cuenta ha sido <strong style="color: red;">suspendida temporalmente</strong>
                por la Federación Aragonesa de Baloncesto.</p>
             <p>Si crees que es un error, responde a este email o contacta con nosotros.</p>
             <br>
@@ -121,7 +106,7 @@ public class EmailService {
         String subject = "Asignación de equipo - Federación Aragonesa de Baloncesto";
         String content = String.format("""
             <h2>Hola, %s</h2>
-            <p>Has sido asignado/a como entrenador/a del equipo 
+            <p>Has sido asignado/a como entrenador/a del equipo
                <strong style="color: orange;">%s</strong>.</p>
             <p>Ya puedes acceder a los datos del equipo, subir alineaciones y ver el calendario desde la app.</p>
             <br>
@@ -157,7 +142,7 @@ public class EmailService {
         String subject = "Notificación de sanción - Federación Aragonesa de Baloncesto";
         String content = String.format("""
             <h2>Hola, %s</h2>
-            <p>La Federación Aragonesa de Baloncesto te comunica que has recibido una 
+            <p>La Federación Aragonesa de Baloncesto te comunica que has recibido una
                <strong style="color: red;">sanción de %d partido(s)</strong>.</p>
             <p><strong>Motivo:</strong> %s</p>
             <p>Si deseas presentar alegaciones, responde a este email en un plazo de 48 horas.</p>
@@ -173,7 +158,7 @@ public class EmailService {
         String subject = "Sanción a jugador de tu equipo - Federación Aragonesa de Baloncesto";
         String content = String.format("""
             <h2>Hola, %s</h2>
-            <p>Te informamos de que el jugador <strong>%s</strong> de tu equipo ha recibido una sanción de 
+            <p>Te informamos de que el jugador <strong>%s</strong> de tu equipo ha recibido una sanción de
                <strong>%d partido(s)</strong>.</p>
             <p><strong>Motivo:</strong> %s</p>
             <p>Tenlo en cuenta para la próxima convocatoria.</p>
@@ -190,7 +175,7 @@ public class EmailService {
             <h2>¡Bienvenido a tu nuevo equipo, %s!</h2>
             <p>Has sido inscrito oficialmente en el equipo <strong>%s</strong>.</p>
             <p><strong>Liga:</strong> %s</p>
-            <p>Ya puedes acceder a la aplicación para ver la información de tu equipo, 
+            <p>Ya puedes acceder a la aplicación para ver la información de tu equipo,
                calendario de partidos y estadísticas.</p>
             <p>Si tienes alguna duda, contacta con tu entrenador o con la Federación.</p>
             <br>
@@ -235,20 +220,12 @@ public class EmailService {
         sendHtmlMail(to, subject, content);
     }
 
-    // ============================================================
-    // MÉTODO GENÉRICO PARA ENVÍO DE EMAILS
-    // ============================================================
-
     public void enviarEmail(TipoEmail tipo, Map<String, Object> parametros) throws MessagingException {
         String to = (String) parametros.get("to");
         String subject = obtenerAsunto(tipo);
         String contenido = construirContenido(tipo, parametros);
         sendHtmlMail(to, subject, contenido);
     }
-
-    // ============================================================
-    // MÉTODOS PRIVADOS
-    // ============================================================
 
     private String obtenerAsunto(TipoEmail tipo) {
         return switch (tipo) {

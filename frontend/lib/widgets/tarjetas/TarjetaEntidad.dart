@@ -1,34 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Tipos de entidad soportados por la tarjeta unificada.
 enum TipoEntidad { equipo, jugador, liga }
 
-/// Chip pequeño de información (ej. "18.6 Pts", "12 equipos").
 class TarjetaChip {
   final String texto;
   final IconData? icono;
   const TarjetaChip(this.texto, {this.icono});
 }
 
-/// Línea de información secundaria con icono (ej. ubicación, temporada).
 class TarjetaInfo {
   final IconData icono;
   final String texto;
   const TarjetaInfo({required this.icono, required this.texto});
 }
 
-/// Tarjeta unificada para Equipos / Jugadores / Ligas.
-/// Mantiene la misma estructura visual; cambia solo el color de acento
-/// según el [tipo], lo que ayuda al usuario a identificar la entidad.
 class TarjetaEntidad extends StatelessWidget {
   final TipoEntidad tipo;
   final String titulo;
   final String? subtitulo;
-  final String? badge;            // texto pequeño arriba a la derecha
-  final List<TarjetaChip> chips;  // estadísticas / cifras destacadas
-  final List<TarjetaInfo> infos;  // info con icono (max 3 recomendable)
-  final IconData? iconoOverride;  // por si quieres un icono distinto
+  final String? badge;
+  final List<TarjetaChip> chips;
+  final List<TarjetaInfo> infos;
+  final IconData? iconoOverride;
   final VoidCallback onTap;
 
   const TarjetaEntidad({
@@ -43,7 +37,6 @@ class TarjetaEntidad extends StatelessWidget {
     this.iconoOverride,
   });
 
-  // ── Estilo derivado del tipo ─────────────────────────────────────
   Color get _acento {
     switch (tipo) {
       case TipoEntidad.equipo:  return AppColors.rojoAragon;
@@ -108,7 +101,7 @@ class TarjetaEntidad extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Barra lateral de acento
+
                     Container(width: 6, color: _acento),
                     Expanded(
                       child: Padding(
@@ -135,7 +128,6 @@ class TarjetaEntidad extends StatelessWidget {
     );
   }
 
-  // ── Avatar 60x60 con gradiente del tipo ──────────────────────────
   Widget _buildAvatar() {
     return Container(
       width: 60,
@@ -155,7 +147,6 @@ class TarjetaEntidad extends StatelessWidget {
     );
   }
 
-  // ── Contenido (titulo + subtitulo + chips + infos) ───────────────
   Widget _buildContenido() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -272,3 +263,4 @@ class TarjetaEntidad extends StatelessWidget {
     );
   }
 }
+

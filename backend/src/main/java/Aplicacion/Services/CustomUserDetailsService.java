@@ -17,16 +17,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private UserRepository usuarioRepository;
 
-    // En CustomUserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("🔐 loadUserByUsername llamado con: {}", username);
+        log.info(" loadUserByUsername llamado con: {}", username);
 
         Usuario usuario = usuarioRepository.findByUsername(username);
 
-        log.error("❌ Usuario no encontrado: {}", username);
+        log.error(" Usuario no encontrado: {}", username);
 
-        log.info("🔐 Usuario cargado: {}, contraseña hash: {}",
+        log.info(" Usuario cargado: {}, contraseña hash: {}",
                 usuario.getUsername(),
                 usuario.getPassword().substring(0, Math.min(10, usuario.getPassword().length())));
 

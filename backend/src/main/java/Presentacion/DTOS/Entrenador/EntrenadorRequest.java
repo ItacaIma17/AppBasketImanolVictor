@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Entrenador/EntrenadorRequest.java
 package Presentacion.DTOS.Entrenador;
 
 import Dominio.Entity.Entrenador;

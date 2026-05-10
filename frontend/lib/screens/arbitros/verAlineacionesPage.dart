@@ -1,4 +1,3 @@
-// lib/screens/Arbitro/VerAlineacionesPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../config/api_config.dart';
@@ -29,9 +28,6 @@ class _VerAlineacionesPageState extends State<VerAlineacionesPage> {
     _cargarAlineaciones();
   }
 
-  // lib/screens/Arbitro/VerAlineacionesPage.dart
-// CORREGIR _cargarAlineaciones
-
   Future<void> _cargarAlineaciones() async {
     setState(() {
       _isLoading = true;
@@ -41,14 +37,13 @@ class _VerAlineacionesPageState extends State<VerAlineacionesPage> {
     try {
       final data = await AlineacionService.getAlineacionesPartido(widget.partidoId);
 
-      // Verificar si data es un Map o ya es AlineacionesPartido
       if (data is AlineacionesPartido) {
         setState(() {
           _alineaciones = data as AlineacionesPartido?;
           _isLoading = false;
         });
       } else if (data is Map<String, dynamic>) {
-        // Convertir el Map a AlineacionesPartido
+
         final alineacionesPartido = AlineacionesPartido.fromJson(data);
         setState(() {
           _alineaciones = alineacionesPartido;
@@ -253,7 +248,6 @@ class _VerAlineacionesPageState extends State<VerAlineacionesPage> {
     );
   }
 
-  // Presentar alineación
   static Future<Map<String, dynamic>> presentarAlineacion(Map<String, dynamic> data) async {
     try {
       final response = await AppConfig.post('/alineaciones/presentar', data: data);
@@ -263,7 +257,6 @@ class _VerAlineacionesPageState extends State<VerAlineacionesPage> {
     }
   }
 
-  // Obtener alineación de un equipo en un partido
   static Future<Map<String, dynamic>?> getAlineacionEquipo(int partidoId, int equipoId) async {
     try {
       final response = await AppConfig.get('/alineaciones/partido/$partidoId/equipo/$equipoId');

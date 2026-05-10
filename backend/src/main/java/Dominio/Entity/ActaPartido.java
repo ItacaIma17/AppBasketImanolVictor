@@ -35,3 +35,4 @@ public class ActaPartido {
     @OneToMany(mappedBy = "acta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventoPartido> eventos = new ArrayList<>();
 }
+

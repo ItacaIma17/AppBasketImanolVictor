@@ -1,4 +1,3 @@
-// lib/screens/Admin/GestionLigasPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/liga.dart';
@@ -14,7 +13,7 @@ class GestionLigasPage extends StatefulWidget {
 }
 
 class _GestionLigasPageState extends State<GestionLigasPage> {
-  List<Liga> _ligas = [];  // ✅ Cambiado a List<Liga>
+  List<Liga> _ligas = [];
   bool _isLoading = true;
   String? _error;
 
@@ -22,7 +21,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _temporadaController = TextEditingController();
-  final _paisController = TextEditingController();  // ✅ Añadido
+  final _paisController = TextEditingController();
 
   @override
   void initState() {
@@ -79,7 +78,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Liga creada exitosamente'), backgroundColor: Colors.green),
+          const SnackBar(content: Text(' Liga creada exitosamente'), backgroundColor: Colors.green),
         );
         Navigator.pop(context);
       }
@@ -90,7 +89,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     }
   }
 
-  Future<void> _eliminarLiga(Liga liga) async {  // ✅ Cambiado a tipo Liga
+  Future<void> _eliminarLiga(Liga liga) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -109,7 +108,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
         await _cargarLigas();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Liga eliminada'), backgroundColor: Colors.green),
+            const SnackBar(content: Text(' Liga eliminada'), backgroundColor: Colors.green),
           );
         }
       } catch (e) {
@@ -136,7 +135,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: _paisController,  // ✅ Campo para país
+                controller: _paisController,
                 decoration: const InputDecoration(labelText: 'País'),
                 validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
               ),
@@ -176,8 +175,6 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     );
   }
 
-  /// Navega a la página de Clasificación / detalle de la liga.
-  /// Antes la card era inerte porque no tenía `onTap`.
   void _abrirLiga(Liga liga) {
     if (liga.id == null) return;
     Navigator.push(
@@ -193,10 +190,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: usar Scaffold con AppBar y fondo en gradiente.
-    // Antes era un Container sin Scaffold, así que el título blanco
-    // quedaba sobre fondo blanco (invisible) y no había botón de
-    // volver — el usuario solo veía el botón "Nueva Liga".
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -243,8 +237,7 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ListTile(
-                                  // ✅ Hacer la liga clicable para acceder
-                                  // a su clasificación / detalle.
+
                                   onTap: () => _abrirLiga(liga),
                                   leading: CircleAvatar(
                                     backgroundColor:
@@ -272,11 +265,11 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
                                       if (liga.pais != null)
                                         Text('País: ${liga.pais}'),
                                       Text(
-                                        '📅 ${liga.temporada ?? 'Temporada no especificada'}',
+                                        ' ${liga.temporada ?? 'Temporada no especificada'}',
                                         style: const TextStyle(fontSize: 12),
                                       ),
                                       Text(
-                                        '🏆 Equipos: ${liga.numeroEquiposRegistrados}',
+                                        ' Equipos: ${liga.numeroEquiposRegistrados}',
                                         style: const TextStyle(fontSize: 12),
                                       ),
                                     ],

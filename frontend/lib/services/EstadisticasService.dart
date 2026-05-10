@@ -1,4 +1,3 @@
-// lib/services/estadisticas_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -16,10 +15,6 @@ class EstadisticasService {
     }
     return headers;
   }
-
-  // ============================================================
-  // ESTADÍSTICAS GENERALES
-  // ============================================================
 
   static Future<Map<String, dynamic>> getEstadisticasGenerales() async {
     try {
@@ -59,10 +54,6 @@ class EstadisticasService {
     };
   }
 
-  // ============================================================
-  // ESTADÍSTICAS DE JUGADOR
-  // ============================================================
-
   static Future<Map<String, dynamic>> getEstadisticasJugador(int jugadorId) async {
     try {
       final response = await http.get(
@@ -80,10 +71,6 @@ class EstadisticasService {
       return {};
     }
   }
-
-  // ============================================================
-  // TOP JUGADORES
-  // ============================================================
 
   static Future<List<Map<String, dynamic>>> getTopJugadores({
     String ordenar = 'puntos',
@@ -107,10 +94,6 @@ class EstadisticasService {
     }
   }
 
-  // ============================================================
-  // CLASIFICACIÓN POR LIGA
-  // ============================================================
-
   static Future<List<Map<String, dynamic>>> getClasificacion(int ligaId) async {
     try {
       final response = await http.get(
@@ -130,10 +113,6 @@ class EstadisticasService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS DE EQUIPO
-  // ============================================================
-
   static Future<Map<String, dynamic>> getEstadisticasEquipo(int equipoId) async {
     try {
       final response = await http.get(
@@ -151,10 +130,6 @@ class EstadisticasService {
       return {};
     }
   }
-
-  // ============================================================
-  // ESTADÍSTICAS DE PARTIDO
-  // ============================================================
 
   static Future<Map<String, dynamic>> getEstadisticasPartido(int partidoId) async {
     try {
@@ -174,13 +149,9 @@ class EstadisticasService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS RÁPIDAS PARA DASHBOARD
-  // ============================================================
-
   static Future<Map<String, dynamic>> getEstadisticasRapidas() async {
     try {
-      // Obtener datos generales y procesar solo lo necesario
+
       final generales = await getEstadisticasGenerales();
 
       return {

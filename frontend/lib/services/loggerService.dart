@@ -1,4 +1,3 @@
-// lib/services/logger_service.dart
 import 'package:flutter/foundation.dart';
 
 enum LogLevel {
@@ -11,9 +10,8 @@ enum LogLevel {
 class LoggerService {
   static const String _defaultTag = 'APP_BASKET';
   static bool _enableDebugLogs = true;
-  static bool _enableFileLogging = false; // Opcional: para guardar logs en archivo
+  static bool _enableFileLogging = false;
 
-  // Configuración
   static void setDebugMode(bool enabled) {
     _enableDebugLogs = enabled;
   }
@@ -22,7 +20,6 @@ class LoggerService {
     _enableFileLogging = enabled;
   }
 
-  // Métodos principales
   static void debug(String message, {String? tag, Map<String, dynamic>? data}) {
     if (!_enableDebugLogs) return;
     _log(LogLevel.DEBUG, message, tag: tag, data: data);
@@ -40,13 +37,9 @@ class LoggerService {
     _log(LogLevel.ERROR, message, tag: tag, error: error, stackTrace: stackTrace, data: data);
   }
 
-  // Logs específicos para API
-  // lib/services/logger_service.dart - Actualizar el método apiCall
-
-// Logs específicos para API
   static void apiCall(String method, String url, {
     int? statusCode,
-    dynamic requestBody,  // Cambiar de 'request' a 'requestBody'
+    dynamic requestBody,
     dynamic response,
     dynamic error,
     Duration? duration
@@ -58,67 +51,60 @@ class LoggerService {
       'duration': duration?.inMilliseconds,
     };
 
-    if (requestBody != null) data['request'] = _truncate(requestBody.toString());  // Usar requestBody
+    if (requestBody != null) data['request'] = _truncate(requestBody.toString());
     if (response != null) data['response'] = _truncate(response.toString());
     if (error != null) data['error'] = error.toString();
 
     if (error != null || (statusCode != null && statusCode >= 400)) {
-      error('🌐 API CALL FAILED', tag: 'API', data: data, error: error);
+      error(' API CALL FAILED', tag: 'API', data: data, error: error);
     } else {
-      info('🌐 API CALL', tag: 'API', data: data);
+      info(' API CALL', tag: 'API', data: data);
     }
   }
 
-  // Logs para navegación
   static void navigation(String from, String to, {Map<String, dynamic>? params}) {
-    info('🧭 NAVEGACIÓN: $from -> $to', tag: 'NAV', data: params);
+    info(' NAVEGACIÓN: $from -> $to', tag: 'NAV', data: params);
   }
 
-  // Logs para autenticación
   static void auth(String action, {String? username, String? email, Map<String, dynamic>? data}) {
     final authData = <String, dynamic>{'action': action};
     if (username != null) authData['username'] = username;
     if (email != null) authData['email'] = email;
     if (data != null) authData.addAll(data);
 
-    info('🔐 AUTENTICACIÓN: $action', tag: 'AUTH', data: authData);
+    info(' AUTENTICACIÓN: $action', tag: 'AUTH', data: authData);
   }
 
-  // Logs para base de datos local
   static void db(String operation, String table, {Map<String, dynamic>? data, dynamic error}) {
     final dbData = <String, dynamic>{'operation': operation, 'table': table};
     if (data != null) dbData['data'] = _truncate(data.toString());
     if (error != null) {
-      error('💾 DB ERROR', tag: 'DB', data: dbData, error: error);
+      error(' DB ERROR', tag: 'DB', data: dbData, error: error);
     } else {
-      debug('💾 DB OPERATION', tag: 'DB', data: dbData);
+      debug(' DB OPERATION', tag: 'DB', data: dbData);
     }
   }
 
-  // Logs para almacenamiento local (SharedPreferences)
   static void storage(String action, String key, {dynamic value, dynamic error}) {
     final storageData = <String, dynamic>{'action': action, 'key': key};
     if (value != null) storageData['value'] = _truncate(value.toString());
     if (error != null) {
-      error('💾 STORAGE ERROR', tag: 'STORAGE', data: storageData, error: error);
+      error(' STORAGE ERROR', tag: 'STORAGE', data: storageData, error: error);
     } else {
-      debug('💾 STORAGE', tag: 'STORAGE', data: storageData);
+      debug(' STORAGE', tag: 'STORAGE', data: storageData);
     }
   }
 
-  // Logs para eventos del usuario
   static void userAction(String action, {Map<String, dynamic>? details}) {
-    info('👆 USUARIO: $action', tag: 'UI', data: details);
+    info(' USUARIO: $action', tag: 'UI', data: details);
   }
 
-  // Logs para errores de red
   static void networkError(String message, {String? url, dynamic error, StackTrace? stackTrace}) {
-    error('📡 NETWORK ERROR: $message', tag: 'NETWORK',
+    error(' NETWORK ERROR: $message', tag: 'NETWORK',
         error: error, stackTrace: stackTrace,
         data: url != null ? {'url': url} : null);
   }
 
-  // Método interno de logging
   static void _log(LogLevel level, String message, {
     String? tag,
     dynamic error,
@@ -134,36 +120,32 @@ class LoggerService {
 
     final String logMessage = '$timestamp $levelStr $finalTag $message';
 
-    // Colores para consola (opcional)
     switch (level) {
       case LogLevel.DEBUG:
-        debugPrint('\x1B[36m🔍 $logMessage\x1B[0m'); // Cyan
+        debugPrint('\x1B[36m $logMessage\x1B[0m');
         break;
       case LogLevel.INFO:
-        debugPrint('\x1B[32mℹ️ $logMessage\x1B[0m'); // Verde
+        debugPrint('\x1B[32mℹ $logMessage\x1B[0m');
         break;
       case LogLevel.WARNING:
-        debugPrint('\x1B[33m⚠️ $logMessage\x1B[0m'); // Amarillo
+        debugPrint('\x1B[33m $logMessage\x1B[0m');
         break;
       case LogLevel.ERROR:
-        debugPrint('\x1B[31m❌ $logMessage\x1B[0m'); // Rojo
+        debugPrint('\x1B[31m $logMessage\x1B[0m');
         break;
     }
 
-    // Imprimir datos adicionales
     if (data != null && data.isNotEmpty) {
-      debugPrint('   📊 Data: ${_formatData(data)}');
+      debugPrint('    Data: ${_formatData(data)}');
     }
 
-    // Imprimir error si existe
     if (error != null) {
-      debugPrint('   🐛 Error: $error');
+      debugPrint('    Error: $error');
       if (stackTrace != null) {
-        debugPrint('   📚 StackTrace: $stackTrace');
+        debugPrint('    StackTrace: $stackTrace');
       }
     }
 
-    // Opcional: Guardar en archivo
     if (_enableFileLogging) {
       _saveToFile(logMessage, data, error, stackTrace);
     }
@@ -200,39 +182,34 @@ class LoggerService {
   }
 
   static Future<void> _saveToFile(String message, Map<String, dynamic>? data, dynamic error, StackTrace? stackTrace) async {
-    // Implementación opcional para guardar logs en archivo
-    // Puedes usar package:path_provider para obtener el directorio de documentos
-    // y escribir los logs en un archivo .log
+
   }
 
-  // Método para medir tiempo de ejecución
   static Future<T> measureTime<T>(String operation, Future<T> Function() callback) async {
     final startTime = DateTime.now();
-    info('⏱️ INICIO: $operation', tag: 'PERF');
+    info('⏱ INICIO: $operation', tag: 'PERF');
 
     try {
       final result = await callback();
       final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
-      info('✅ FIN: $operation - Duración: ${duration.inMilliseconds}ms', tag: 'PERF');
+      info(' FIN: $operation - Duración: ${duration.inMilliseconds}ms', tag: 'PERF');
       return result;
     } catch (e, stackTrace) {
       final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
-      error('❌ ERROR en $operation - Duración: ${duration.inMilliseconds}ms',
+      error(' ERROR en $operation - Duración: ${duration.inMilliseconds}ms',
           tag: 'PERF', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
 
-  // Limpiar logs antiguos (opcional)
   static Future<void> cleanOldLogs() async {
-    // Implementación para limpiar logs de más de X días
+
     debug('Limpiando logs antiguos', tag: 'LOGGER');
   }
 }
 
-// Extensión para facilitar el uso
 extension LoggerExtension on Object {
   void logDebug(String message, {String? tag, Map<String, dynamic>? data}) {
     LoggerService.debug(message, tag: tag ?? runtimeType.toString(), data: data);

@@ -1,13 +1,11 @@
-// lib/models/liga.dart - CORREGIDO (parámetros opcionales)
-
 class Liga {
   final int? id;
   final String nombreLiga;
   final String? pais;
-  final int? numeroEquipos;  // ← Hacer opcional
+  final int? numeroEquipos;
   final String? temporada;
-  final int? numeroEquiposRegistrados;  // ← Hacer opcional
-  final String? descripcion;  // ← Hacer opcional
+  final int? numeroEquiposRegistrados;
+  final String? descripcion;
 
   Liga({
     this.id,

@@ -1,4 +1,3 @@
-// lib/screens/Admin/EstadisticasPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
@@ -26,7 +25,6 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
           ),
           const SizedBox(height: 16),
 
-          // Selector de período
           Row(
             children: [
               const Text('Período:', style: TextStyle(color: AppColors.blanco)),
@@ -49,7 +47,6 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
 
           const SizedBox(height: 24),
 
-          // Tarjetas de estadísticas
           Expanded(
             child: ListView(
               children: [

@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/PanelEntrenadorPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/EquipoEntrenador.dart';
@@ -33,11 +32,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
   List<Partido> _proximosPartidos = [];
   String? _error;
 
-  // ============================================================
-  // FUNCIONES AUXILIARES PARA FECHAS
-  // ============================================================
-
-  /// Convierte fecha dd/MM/yyyy a DateTime de forma segura
   DateTime? _parseFecha(String fechaStr) {
     if (fechaStr.isEmpty) return null;
     try {
@@ -55,7 +49,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     }
   }
 
-  /// Compara dos fechas para ordenar
   int _compareFechas(String fechaA, String fechaB) {
     final dateA = _parseFecha(fechaA);
     final dateB = _parseFecha(fechaB);
@@ -85,7 +78,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
         final jugadores = await EquipoService.getJugadoresEquipo(equipo.equipoId);
         final partidos = await PartidoService.getProximosPartidosEquipo(equipo.equipoId);
 
-        // Ordenar partidos por fecha
         partidos.sort((a, b) => _compareFechas(a.fecha, b.fecha));
 
         setState(() {
@@ -246,8 +238,6 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     );
   }
 
-  // En PanelEntrenadorPage.dart - Reducir tamaño de botones
-
   Widget _buildMenuPrincipal() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,12 +345,10 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     final esLocal = partido.nombreLocal == _miEquipo!.nombreEquipo;
     final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
 
-    // Usar la fecha directamente (ya viene formateada como dd/MM/yyyy)
     final fechaFormateada = partido.fecha;
     final ubicacion = partido.pabellon.isNotEmpty ? partido.pabellon :
     (partido.direccionPabellon.isNotEmpty ? partido.direccionPabellon : "Sin ubicación");
 
-    // Determinar si es hoy (sin usar DateTime.parse)
     final hoy = DateTime.now();
     final fechaParts = partido.fecha.split('/');
     bool esHoy = false;
@@ -386,8 +374,8 @@ class _PanelEntrenadorPageState extends State<PanelEntrenadorPage> {
     subtitle: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-    Text('📅 $fechaFormateada - ${partido.hora}'),
-    Text('📍 $ubicacion'),
+    Text(' $fechaFormateada - ${partido.hora}'),
+    Text(' $ubicacion'),
     ],
     ),
     trailing: ElevatedButton(

@@ -43,10 +43,6 @@ public class ArbitroService {
     private static final String CODIGO_PREFIX = "ARB-";
     private static final SecureRandom random = new SecureRandom();
 
-    // ============================================================
-    // MÉTODOS DE GENERACIÓN
-    // ============================================================
-
     public String generarCodigoArbitro() {
         String codigo;
         do {
@@ -56,10 +52,6 @@ public class ArbitroService {
         log.info("Código de árbitro generado: {}", codigo);
         return codigo;
     }
-
-    // ============================================================
-    // MÉTODOS PARA UserService (REGISTRO)
-    // ============================================================
 
     @Transactional
     public Arbitro crearDesdeRegistro(RegistroArbitroDTO dto, Usuario usuario) {
@@ -98,7 +90,7 @@ public class ArbitroService {
         arbitro.setUsuario(usuario);
 
         Arbitro saved = arbitroRepository.save(arbitro);
-        log.info("✅ Árbitro creado desde registro con ID: {}", saved.getId());
+        log.info(" Árbitro creado desde registro con ID: {}", saved.getId());
         return saved;
     }
 
@@ -122,15 +114,8 @@ public class ArbitroService {
         return arbitroRepository.findByEmail(email).map(Arbitro::getId).orElse(null);
     }
 
-    // ============================================================
-    // MÉTODOS PARA EL CONTROLLER (PARTIDOS Y ALINEACIONES)
-    // ============================================================
-
-    // En ArbitroService.java - verificar este método
-
     public List<PartidoResponse> getPartidosAsignados(String username) {
         log.info("Obteniendo partidos asignados al árbitro: {}", username);
-
 
         if (username == null || username.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username no proporcionado");
@@ -153,7 +138,7 @@ public class ArbitroService {
 
     public AlineacionesPartidoDTO getAlineacionesPartido(Long partidoId) {
         log.info("Obteniendo alineaciones para acta del partido: {}", partidoId);
-        return alineacionService.getAlineacionesParaActa(partidoId); // Esto devuelve AlineacionesPartidoDTO
+        return alineacionService.getAlineacionesParaActa(partidoId);
     }
 
     public List<PartidoResponse> getPartidosFinalizados(Long arbitroId) {
@@ -165,10 +150,6 @@ public class ArbitroService {
                 .map(PartidoResponse::fromEntity)
                 .collect(Collectors.toList());
     }
-
-    // ============================================================
-    // MÉTODOS PARA ARBITROS (CRUD COMPLETO)
-    // ============================================================
 
     public List<ArbitroResponse> listarTodosArbitros() {
         return arbitroRepository.findAll().stream()
@@ -326,34 +307,30 @@ public class ArbitroService {
         log.info("Árbitro eliminado con ID: {}", id);
     }
 
-
     @Transactional
     public boolean confirmarAlineaciones(Long partidoId, String username) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        // Verificar que el árbitro autenticado ES el árbitro del partido
         if (partido.getArbitro() == null || !partido.getArbitro().getUsername().equals(username)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No eres el árbitro asignado a este partido");
         }
 
-        // Verificar que ambos entrenadores han subido su alineación
         Optional<Alineacion> local = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoLocal().getId());
         Optional<Alineacion> visitante = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoVisitante().getId());
 
         if (local.isEmpty() || visitante.isEmpty()) {
-            return false; // Faltan alineaciones
+            return false;
         }
 
-        // Marcar ambas como confirmadas
         local.get().setConfirmada(true);
         visitante.get().setConfirmada(true);
         alineacionRepository.save(local.get());
         alineacionRepository.save(visitante.get());
 
-        log.info("✅ Alineaciones confirmadas para partido {}", partidoId);
+        log.info(" Alineaciones confirmadas para partido {}", partidoId);
         return true;
     }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Widget que muestra las estadísticas comparativas del partido
 class EstadisticasPartido extends StatelessWidget {
   final Map<String, dynamic> estadisticas;
 
@@ -56,7 +55,6 @@ class EstadisticasPartido extends StatelessWidget {
   }
 }
 
-/// Item individual de estadística con barra de progreso
 class _EstadisticaItem extends StatelessWidget {
   final String nombre;
   final int valorLocal;

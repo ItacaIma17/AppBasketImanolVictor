@@ -6,3 +6,4 @@ public class SolicitudEquipoDTO {
     private String username;
 
 }
+

@@ -1,5 +1,3 @@
-// lib/models/estadisticas_jugador.dart
-
 class EstadisticasJugador {
   final int jugadorId;
   final String nombreJugador;

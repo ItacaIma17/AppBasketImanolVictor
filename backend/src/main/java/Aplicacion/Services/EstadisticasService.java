@@ -30,7 +30,7 @@ public class EstadisticasService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getEstadisticasCompletas() {
-        log.info("📊 Obteniendo estadísticas completas del dashboard");
+        log.info(" Obteniendo estadísticas completas del dashboard");
 
         Map<String, Object> stats = new LinkedHashMap<>();
 
@@ -42,16 +42,13 @@ public class EstadisticasService {
         stats.put("totalLigas", ligaRepository.count());
         stats.put("totalPartidos", partidoRepository.count());
 
-        // Partidos por estado
         stats.put("partidosProgramados", partidoRepository.countByEstado("PROGRAMADO"));
         stats.put("partidosFinalizados", partidoRepository.countByEstado("FINALIZADO"));
         stats.put("partidosEnCurso", partidoRepository.countByEstado("EN_CURSO"));
 
-        // Últimos partidos
         stats.put("ultimosPartidos", partidoRepository.findTop5ByOrderByFechaDesc()
                 .stream().map(PartidoResponse::fromEntity).collect(Collectors.toList()));
 
-        // Equipos por liga
         Map<String, Long> equiposPorLiga = new HashMap<>();
         ligaRepository.findAll().forEach(liga -> {
             long count = equipoRepository.countByLigaId(liga.getId());

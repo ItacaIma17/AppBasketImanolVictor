@@ -53,70 +53,58 @@ public class UserService {
     @Value("${admin.secret.key:ADMIN_SECRET_KEY_2024}")
     private String adminSecretKey;
 
-    // ──────────────────────────────────────────────
-    // REGISTRO
-    // ──────────────────────────────────────────────
-
-    // Aplicacion/Services/UserService.java
-
     @Transactional
     public void registrarInicial(RegistroBaseDTO dto) {
         log.info("========================================");
-        log.info("📝 Iniciando registro para usuario: {}", dto.getUsername());
-        log.info("🎭 Rol solicitado: {}", dto.getRol());
+        log.info(" Iniciando registro para usuario: {}", dto.getUsername());
+        log.info(" Rol solicitado: {}", dto.getRol());
 
-        // ✅ VALIDACIÓN SOLO PARA ADMIN
         boolean isAdmin = dto.getRol() == Roles.ADMIN;
         if (isAdmin) {
-            log.info("👑 Procesando registro de ADMINISTRADOR");
+            log.info(" Procesando registro de ADMINISTRADOR");
             String adminKey = null;
             if (dto instanceof RegistroAdminDTO) {
                 adminKey = ((RegistroAdminDTO) dto).getAdminKey();
             }
-            log.info("🔑 Clave de admin recibida: {}", adminKey);
+            log.info(" Clave de admin recibida: {}", adminKey);
 
             if (adminKey == null || adminKey.isEmpty()) {
-                log.error("❌ Clave de administrador no proporcionada");
+                log.error(" Clave de administrador no proporcionada");
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "La clave de administrador es obligatoria");
             }
 
             if (!adminSecretKey.equals(adminKey)) {
-                log.error("❌ Clave de administrador INCORRECTA");
+                log.error(" Clave de administrador INCORRECTA");
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "Clave de administrador incorrecta");
             }
-            log.info("✅ Clave de administrador CORRECTA");
+            log.info(" Clave de administrador CORRECTA");
         }
-
-        // ✅ Para ARBITRO, ENTRENADOR, JUGADOR no se necesita clave
-        // Solo se valida que tengan el código correspondiente
 
         validarRegistro(dto);
 
-        // Crear usuario base
         Usuario usuario = crearUsuarioBase(dto);
 
         if (isAdmin) {
             usuario.setVerificado(true);
-            log.info("👑 Administrador creado como VERIFICADO automáticamente");
+            log.info(" Administrador creado como VERIFICADO automáticamente");
         }
 
         usuarioRepository.save(usuario);
-        log.info("✅ Usuario base creado con ID: {}", usuario.getId());
+        log.info(" Usuario base creado con ID: {}", usuario.getId());
 
-        // Crear entidad específica según el rol
         crearEntidadEspecifica(dto, usuario);
 
         if (!isAdmin) {
             String codigo = generarCodigoVerificacion(dto.getEmail());
             enviarCodigoVerificacion(dto.getEmail(), codigo);
-            log.info("📧 Código de verificación enviado a: {}", dto.getEmail());
+            log.info(" Código de verificación enviado a: {}", dto.getEmail());
         } else {
-            log.info("👑 Administrador registrado sin necesidad de verificación por email");
+            log.info(" Administrador registrado sin necesidad de verificación por email");
         }
 
-        log.info("✅ Registro COMPLETADO para: {}", dto.getEmail());
+        log.info(" Registro COMPLETADO para: {}", dto.getEmail());
         log.info("========================================");
     }
 
@@ -131,7 +119,6 @@ public class UserService {
         usuario.setVerificado(false);
         usuario.setBloqueado(false);
 
-        // Establecer apellido según el tipo de DTO
         if (dto instanceof RegisterEntrenadorDTO) {
             usuario.setApellido(((RegisterEntrenadorDTO) dto).getApellido());
         } else if (dto instanceof RegistroArbitroDTO) {
@@ -166,7 +153,7 @@ public class UserService {
     }
 
     private void validarRegistro(RegistroBaseDTO dto) {
-        // Validaciones comunes
+
         if (dto.getEmail() == null || dto.getEmail().isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email es obligatorio");
         if (dto.getUsername() == null || dto.getUsername().isBlank())
@@ -176,13 +163,11 @@ public class UserService {
         if (dto.getRol() == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El rol es obligatorio");
 
-        // Validar unicidad
         if (usuarioRepository.existsByEmail(dto.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya está registrado");
         if (usuarioRepository.existsByUsername(dto.getUsername()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya está en uso");
 
-        // Validaciones específicas por rol
         if (dto instanceof RegisterEntrenadorDTO) {
             RegisterEntrenadorDTO entDTO = (RegisterEntrenadorDTO) dto;
             if (entDTO.getCodigoEntrenador() == null || entDTO.getCodigoEntrenador().isBlank())
@@ -199,10 +184,6 @@ public class UserService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La posición es obligatoria");
         }
     }
-
-    // ──────────────────────────────────────────────
-    // ACTUALIZAR PERFIL
-    // ──────────────────────────────────────────────
 
     @Transactional
     public UsuarioPerfilDTO actualizarPerfil(UserDetails userDetails, ActualizarUsuarioDTO dto) {
@@ -284,17 +265,15 @@ public class UserService {
         return UsuarioPerfilDTO.fromEntity(usuario);
     }
 
-    // Aplicacion/Services/UserService.java
-
     public void verificarAdministrador() {
-        // CORREGIDO: findByRole devuelve List, no Optional
+
         List<Usuario> admins = usuarioRepository.findByRole(Roles.ADMIN);
 
         if (admins != null && !admins.isEmpty()) {
-            // Tomar el primer administrador (si hay varios)
+
             Usuario admin = admins.get(0);
             log.info("========================================");
-            log.info("👑 ADMINISTRADOR ENCONTRADO:");
+            log.info(" ADMINISTRADOR ENCONTRADO:");
             log.info("   ID: {}", admin.getId());
             log.info("   Username: {}", admin.getUsername());
             log.info("   Email: {}", admin.getEmail());
@@ -303,91 +282,77 @@ public class UserService {
             log.info("   Verificado: {}", admin.isVerificado());
             log.info("   Bloqueado: {}", admin.isBloqueado());
 
-            // Si hay más de un administrador, mostrar advertencia
             if (admins.size() > 1) {
-                log.warn("⚠️ Hay {} administradores en el sistema", admins.size());
+                log.warn(" Hay {} administradores en el sistema", admins.size());
             }
             log.info("========================================");
         } else {
             log.warn("========================================");
-            log.warn("⚠️ No se encontró ningún administrador en el sistema");
-            log.warn("⚠️ Se creará automáticamente en el próximo inicio");
+            log.warn(" No se encontró ningún administrador en el sistema");
+            log.warn(" Se creará automáticamente en el próximo inicio");
             log.warn("========================================");
         }
     }
 
-    // ──────────────────────────────────────────────
-    // VERIFICACIÓN DE EMAIL
-    // ──────────────────────────────────────────────
-
-    // Aplicacion/Services/UserService.java
-
     @Transactional
     public boolean verificarCodigo(String email, String codigo) {
-        log.info("🔍 Verificando código para email: {}", email);
+        log.info(" Verificando código para email: {}", email);
         log.info("   Código proporcionado: {}", codigo);
 
-        // Buscar la verificación por email
         EmailVerification verification = emailVerificationRepository
                 .findByEmail(email)
                 .orElse(null);
 
         if (verification == null) {
-            log.error("❌ No se encontró verificación pendiente para: {}", email);
+            log.error(" No se encontró verificación pendiente para: {}", email);
             return false;
         }
 
-        log.info("📋 Verificación encontrada:");
+        log.info(" Verificación encontrada:");
         log.info("   Código almacenado: {}", verification.getCodigo());
         log.info("   Fecha expiración: {}", verification.getExpirationTime());
         log.info("   Ya verificado: {}", verification.isVerified());
 
-        // Verificar si ya está verificado
         if (verification.isVerified()) {
-            log.warn("⚠️ El usuario ya estaba verificado: {}", email);
+            log.warn(" El usuario ya estaba verificado: {}", email);
             return true;
         }
 
-        // Verificar si el código ha expirado
         if (verification.getExpirationTime().isBefore(LocalDateTime.now())) {
-            log.warn("⚠️ El código ha expirado para: {}", email);
+            log.warn(" El código ha expirado para: {}", email);
             log.warn("   Expiró en: {}", verification.getExpirationTime());
             return false;
         }
 
-        // Verificar el código
         if (!verification.getCodigo().equals(codigo)) {
-            log.warn("⚠️ Código incorrecto para: {}", email);
+            log.warn(" Código incorrecto para: {}", email);
             log.warn("   Esperado: {}", verification.getCodigo());
             log.warn("   Recibido: {}", codigo);
             return false;
         }
 
-        log.info("✅ Código correcto, marcando como verificado...");
+        log.info(" Código correcto, marcando como verificado...");
 
-        // Marcar como verificado
         verification.setVerified(true);
         emailVerificationRepository.save(verification);
 
-        // Actualizar el usuario
         Usuario usuario = usuarioRepository.findByEmail(email);
         if (usuario != null) {
             usuario.setVerificado(true);
             usuarioRepository.save(usuario);
-            log.info("✅ Usuario marcado como verificado: {}", usuario.getUsername());
+            log.info(" Usuario marcado como verificado: {}", usuario.getUsername());
 
-            // Si es entrenador, también marcarlo como verificado
             if (usuario.getRole() == Roles.ENTRENADOR) {
                 entrenadorRepository.findById(usuario.getId())
                         .ifPresent(entrenador -> {
                             entrenador.setVerificado(true);
                             entrenadorRepository.save(entrenador);
-                            log.info("✅ Entrenador marcado como verificado: {}", entrenador.getNombre());
+                            log.info(" Entrenador marcado como verificado: {}", entrenador.getNombre());
                         });
             }
         }
 
-        log.info("🎉 Verificación completada exitosamente para: {}", email);
+        log.info(" Verificación completada exitosamente para: {}", email);
         return true;
     }
 
@@ -436,10 +401,6 @@ public class UserService {
         emailVerificationRepository.save(verification);
         return codigo;
     }
-
-    // ──────────────────────────────────────────────
-    // AUTENTICACIÓN
-    // ──────────────────────────────────────────────
 
     @Transactional
     public void login(LoginRequest dto) {
@@ -504,10 +465,6 @@ public class UserService {
         }
     }
 
-    // ──────────────────────────────────────────────
-    // PERFIL
-    // ──────────────────────────────────────────────
-
     public UsuarioPerfilDTO obtenerPerfil(String username) {
         Usuario usuario = usuarioRepository.findByUsername(username);
 
@@ -555,30 +512,28 @@ public class UserService {
         }
     }
 
-    // En Aplicacion.Services.UserService
-
     public Usuario findByUsername(String username) {
-        log.info("🔍 Buscando usuario por username: {}", username);
+        log.info(" Buscando usuario por username: {}", username);
         return usuarioRepository.findByUsername(username);
     }
 
     public Usuario findByEmail(String email) {
-        log.info("🔍 Buscando usuario por email: {}", email);
+        log.info(" Buscando usuario por email: {}", email);
         return usuarioRepository.findByEmail(email);
     }
 
     public void actualizarRefreshToken(String username, String refreshToken) {
-        log.info("🔄 Actualizando refresh token para: {}", username);
+        log.info(" Actualizando refresh token para: {}", username);
         Usuario usuario = findByUsername(username);
         if (usuario != null) {
             usuario.setRefreshToken(refreshToken);
             usuarioRepository.save(usuario);
-            log.info("✅ Refresh token actualizado");
+            log.info(" Refresh token actualizado");
         }
     }
 
     public UsuarioPerfilDTO obtenerPerfilPorUsername(String username) {
-        log.info("📋 Obteniendo perfil para: {}", username);
+        log.info(" Obteniendo perfil para: {}", username);
         Usuario usuario = findByUsername(username);
         if (usuario == null) {
             throw new RuntimeException("Usuario no encontrado");
@@ -594,10 +549,6 @@ public class UserService {
                 .verificado(usuario.isVerificado())
                 .build();
     }
-
-    // ──────────────────────────────────────────────
-    // MÉTODOS PRIVADOS
-    // ──────────────────────────────────────────────
 
     private String generarCodigo() {
         return String.valueOf(100000 + new SecureRandom().nextInt(900000));
@@ -636,10 +587,6 @@ public class UserService {
                 return null;
         }
     }
-
-    // ──────────────────────────────────────────────
-    // SEGUIR JUGADOR/EQUIPO
-    // ──────────────────────────────────────────────
 
     public SeguirReponseDTO seguirJugador(Long idJugador, Usuario usuario) {
         Jugador jugador = jugadorRepository.findById(idJugador)

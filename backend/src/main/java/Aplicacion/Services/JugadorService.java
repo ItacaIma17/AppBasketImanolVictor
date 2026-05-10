@@ -34,8 +34,6 @@ public class JugadorService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    // ── Llamado desde UserService al registrarse ──────────
-
     @Transactional
     public void crearDesdeRegistro(RegistroJugadorDTO dto,
                                    Dominio.Entity.Usuario usuario) {
@@ -71,7 +69,6 @@ public class JugadorService {
         jugador.setEquipo(equipo);
         jugador.setVerificado(false);
 
-        // Inicializar estadísticas (int, no Integer)
         jugador.setPuntosTotales(0);
         jugador.setRebotesTotales(0);
         jugador.setAsistenciasTotales(0);
@@ -103,8 +100,6 @@ public class JugadorService {
                 .map(Jugador::getId)
                 .orElse(null);
     }
-
-    // ── CRUD ──────────────────────────────────────────────
 
     public List<JugadorResponse> listar() {
         return jugadorRepository.findAll()
@@ -171,10 +166,6 @@ public class JugadorService {
         jugadorRepository.deleteById(id);
     }
 
-    // ============================================================
-    // NUEVOS MÉTODOS (CRUD COMPLETO)
-    // ============================================================
-
     @Transactional
     public JugadorResponse crearJugador(JugadorRequest dto) {
         log.info("Creando jugador: {}", dto.getUsername());
@@ -212,7 +203,6 @@ public class JugadorService {
         jugador.setEquipo(equipo);
         jugador.setVerificado(false);
 
-        // Inicializar estadísticas (int, no Integer)
         jugador.setPuntosTotales(0);
         jugador.setRebotesTotales(0);
         jugador.setAsistenciasTotales(0);
@@ -334,7 +324,6 @@ public class JugadorService {
         double promedioAsistencias = partidosJugados > 0 ? asistenciasTotales / (double) partidosJugados : 0;
         double promedioRobos = partidosJugados > 0 ? robosTotales / (double) partidosJugados : 0;
 
-        // ✅ USAR Map.ofEntries() en lugar de Map.of()
         return Map.ofEntries(
                 Map.entry("jugadorId", jugador.getId()),
                 Map.entry("nombreCompleto", jugador.getNombre() + " " + jugador.getApellido()),
@@ -357,8 +346,6 @@ public class JugadorService {
                 Map.entry("promedioRobos", Math.round(promedioRobos * 10) / 10.0)
         );
     }
-
-    // ── PRIVADOS ──────────────────────────────────────────
 
     private void validarCodigoJugador(String codigo) {
         if (codigo == null || !codigo.matches("^JUG-\\d{4}-\\d{3}$"))
@@ -397,7 +384,6 @@ public class JugadorService {
         r.setLigaNombre(j.getEquipo() != null && j.getEquipo().getLiga() != null ?
                 j.getEquipo().getLiga().getNombreLiga() : null);
 
-        // Estadísticas (int, no Integer)
         r.setPuntosTotales(j.getPuntosTotales());
         r.setRebotesTotales(j.getRebotesTotales());
         r.setAsistenciasTotales(j.getAsistenciasTotales());

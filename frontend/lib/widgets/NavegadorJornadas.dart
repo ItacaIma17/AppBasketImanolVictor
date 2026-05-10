@@ -1,14 +1,11 @@
-// lib/widgets/NavegadorJornadas.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Widget reutilizable para la navegación de jornadas
-/// Muestra controles para cambiar entre jornadas con indicador visual
 class NavegadorJornadas extends StatelessWidget {
   final int jornadaActual;
   final int totalJornadas;
   final Function(int) onJornadaChanged;
-  final Map<int, int>? partidosPorJornada; // Mapa de jornada -> cantidad de partidos
+  final Map<int, int>? partidosPorJornada;
 
   const NavegadorJornadas({
     super.key,
@@ -28,11 +25,11 @@ class NavegadorJornadas extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Navegación principal de jornadas
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Botón anterior
+
               GestureDetector(
                 onTap: jornadaActual > 1
                     ? () => onJornadaChanged(jornadaActual - 1)
@@ -49,7 +46,6 @@ class NavegadorJornadas extends StatelessWidget {
 
               const SizedBox(width: 24),
 
-              // Indicador de jornada actual
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 decoration: BoxDecoration(
@@ -97,7 +93,6 @@ class NavegadorJornadas extends StatelessWidget {
 
               const SizedBox(width: 24),
 
-              // Botón siguiente
               GestureDetector(
                 onTap: jornadaActual < totalJornadas
                     ? () => onJornadaChanged(jornadaActual + 1)
@@ -116,7 +111,6 @@ class NavegadorJornadas extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Selector rápido de jornadas (horizontal)
           SizedBox(
             height: 50,
             child: ListView.builder(

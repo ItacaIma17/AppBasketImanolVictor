@@ -37,7 +37,6 @@ public class ActaResponseDTO {
         private Integer puntos;
     }
 
-    // ✅ CORREGIDO: Añadir el parámetro usuarioActual
     public static ActaResponseDTO fromEntity(ActaPartido acta, String usuarioActual) {
         if (acta == null) return null;
 

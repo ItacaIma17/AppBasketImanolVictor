@@ -1,5 +1,5 @@
 class Jugador {
-  // Campos principales
+
   final int? id;
   final String username;
   final String email;
@@ -33,7 +33,6 @@ class Jugador {
     required this.altura,
     required this.peso,
 
-    // Nuevos campos
     required this.puntosTotales,
     required this.rebotesTotales,
     required this.asistenciasTotales,
@@ -46,10 +45,6 @@ class Jugador {
     this.equipoId,
     this.nombreEquipo,
   });
-
-  // ============================================================
-  // GETTERS
-  // ============================================================
 
   String get nombreCompleto => '$nombre ${apellido ?? ''}'.trim();
 
@@ -73,10 +68,6 @@ class Jugador {
 
   double get promedioRobos =>
       partidosJugados == 0 ? 0 : robosTotales / partidosJugados;
-
-  // ============================================================
-  // FROM JSON
-  // ============================================================
 
   factory Jugador.fromJson(Map<String, dynamic> json) {
     int _parseInt(dynamic value) {
@@ -113,7 +104,6 @@ class Jugador {
       altura: _parseDouble(json['altura']),
       peso: _parseDouble(json['peso']),
 
-      // Nuevos campos
       puntosTotales: _parseInt(json['puntosTotales']),
       rebotesTotales: _parseInt(json['rebotesTotales']),
       asistenciasTotales: _parseInt(json['asistenciasTotales']),
@@ -127,10 +117,6 @@ class Jugador {
       nombreEquipo: json['nombreEquipo'],
     );
   }
-
-  // ============================================================
-  // TO JSON
-  // ============================================================
 
   Map<String, dynamic> toJson() {
     return {
@@ -157,3 +143,4 @@ class Jugador {
     };
   }
 }
+

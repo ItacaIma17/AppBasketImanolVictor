@@ -1,6 +1,3 @@
-// lib/config/app_theme.dart
-// Tema global mejorado para la app FAB - Federación Aragonesa de Baloncesto
-
 import 'package:flutter/material.dart';
 import 'common/resources/colores.dart';
 
@@ -159,11 +156,6 @@ class AppTheme {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// WIDGETS REUTILIZABLES GLOBALES
-// ─────────────────────────────────────────────────────────────
-
-/// Tarjeta con fondo semitransparente estilo FAB
 class FabCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -198,7 +190,6 @@ class FabCard extends StatelessWidget {
   }
 }
 
-/// Badge de estado con color según valor
 class EstadoBadge extends StatelessWidget {
   final String texto;
   final Color? color;
@@ -245,7 +236,6 @@ class EstadoBadge extends StatelessWidget {
   }
 }
 
-/// Stat box para mostrar estadísticas numéricas
 class StatBox extends StatelessWidget {
   final String valor;
   final String etiqueta;
@@ -284,7 +274,6 @@ class StatBox extends StatelessWidget {
   }
 }
 
-/// Botón primario con gradiente FAB
 class FabPrimaryButton extends StatelessWidget {
   final String texto;
   final VoidCallback? onPressed;
@@ -351,7 +340,6 @@ class FabPrimaryButton extends StatelessWidget {
   }
 }
 
-/// Header de sección con línea decorativa
 class SectionHeader extends StatelessWidget {
   final String titulo;
   final Widget? trailing;
@@ -386,3 +374,4 @@ class SectionHeader extends StatelessWidget {
     );
   }
 }
+

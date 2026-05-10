@@ -1,4 +1,3 @@
-// lib/services/alineacion_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -19,7 +18,6 @@ class AlineacionService {
     return headers;
   }
 
-  // Obtener headers de forma asíncrona
   static Future<Map<String, String>> _getHeadersAsync() async {
     final token = await AutenticacionService.getToken();
     return {
@@ -28,21 +26,6 @@ class AlineacionService {
     };
   }
 
-  // ============================================================
-  // PRESENTAR ALINEACIÓN
-  // ============================================================
-
-  /// Presenta una nueva alineación para un partido
-  ///
-  /// Formato de data esperado:
-  /// {
-  ///   "partidoId": int,
-  ///   "equipoId": int,
-  ///   "confirmada": bool,
-  ///   "jugadores": [
-  ///     {"jugadorId": int, "dorsal": int, "posicion": String, "esTitular": bool}
-  ///   ]
-  /// }
   static Future<Alineacion> presentarAlineacion(Map<String, dynamic> data) async {
     try {
       LoggerService.info('Presentando alineación', tag: 'ALINEACION',
@@ -83,10 +66,6 @@ class AlineacionService {
     }
   }
 
-  // ============================================================
-  // OBTENER ALINEACIÓN POR PARTIDO Y EQUIPO
-  // ============================================================
-
   static Future<Alineacion?> getAlineacion(int partidoId, int equipoId) async {
     try {
       final response = await http.get(
@@ -98,7 +77,7 @@ class AlineacionService {
         if (response.body.isEmpty) return null;
         return Alineacion.fromJson(json.decode(response.body));
       } else if (response.statusCode == 404) {
-        return null; // No existe alineación aún
+        return null;
       } else {
         throw Exception('Error ${response.statusCode}: ${response.body}');
       }
@@ -107,10 +86,6 @@ class AlineacionService {
       return null;
     }
   }
-
-  // ============================================================
-  // OBTENER AMBAS ALINEACIONES DEL PARTIDO
-  // ============================================================
 
   static Future<Map<String, dynamic>> getAlineacionesPartido(int partidoId) async {
     try {
@@ -128,7 +103,6 @@ class AlineacionService {
         }
         final data = json.decode(response.body);
 
-        // Transformar a un formato consistente para el árbitro
         return {
           'local': data['alineacionLocal'] != null ? {
             'id': data['alineacionLocal']['id'],
@@ -155,10 +129,6 @@ class AlineacionService {
     }
   }
 
-  // ============================================================
-  // OBTENER ALINEACIÓN POR PARTIDO Y EQUIPO (devuelve Map)
-  // ============================================================
-
   static Future<Map<String, dynamic>?> getAlineacionEquipo(int partidoId, int equipoId) async {
     try {
       final response = await http.get(
@@ -183,7 +153,6 @@ class AlineacionService {
   static List<Map<String, dynamic>> _procesarJugadoresAlineacion(Map<String, dynamic> alineacion) {
     final List<Map<String, dynamic>> jugadores = [];
 
-    // Procesar titulares
     if (alineacion['titulares'] != null) {
       for (var j in alineacion['titulares']) {
         jugadores.add({
@@ -196,7 +165,6 @@ class AlineacionService {
       }
     }
 
-    // Procesar suplentes
     if (alineacion['suplentes'] != null) {
       for (var j in alineacion['suplentes']) {
         jugadores.add({
@@ -211,10 +179,6 @@ class AlineacionService {
 
     return jugadores;
   }
-
-  // ============================================================
-  // CONFIRMAR ALINEACIÓN
-  // ============================================================
 
   static Future<Alineacion> confirmarAlineacion(int id) async {
     try {
@@ -246,10 +210,6 @@ class AlineacionService {
     }
   }
 
-  // ============================================================
-  // ACTUALIZAR ALINEACIÓN
-  // ============================================================
-
   static Future<Alineacion> actualizarAlineacion(int id, Map<String, dynamic> data) async {
     try {
       final response = await http.put(
@@ -270,10 +230,6 @@ class AlineacionService {
     }
   }
 
-  // ============================================================
-  // ELIMINAR ALINEACIÓN
-  // ============================================================
-
   static Future<void> eliminarAlineacion(int id) async {
     try {
       final response = await http.delete(
@@ -290,10 +246,6 @@ class AlineacionService {
       rethrow;
     }
   }
-
-  // ============================================================
-  // VERIFICAR SI EXISTE ALINEACIÓN
-  // ============================================================
 
   static Future<bool> existeAlineacion(int partidoId, int equipoId) async {
     try {

@@ -1,4 +1,3 @@
-// lib/screens/Liga/LigaService.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';

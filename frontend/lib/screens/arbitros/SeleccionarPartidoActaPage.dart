@@ -1,4 +1,3 @@
-// lib/screens/arbitros/SeleccionarPartidoActaPage.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/common/resources/colores.dart';
@@ -42,7 +41,7 @@ class _SeleccionarPartidoActaPageState
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Error cargando partidos: $e');
+      print(' Error cargando partidos: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -130,9 +129,9 @@ class _SeleccionarPartidoActaPageState
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,  // ✅ CRUCIAL: evitar overflow
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Cabecera
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -157,7 +156,6 @@ class _SeleccionarPartidoActaPageState
             ),
             const SizedBox(height: 12),
 
-            // Fecha y hora
             Row(
               children: [
                 const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
@@ -171,7 +169,6 @@ class _SeleccionarPartidoActaPageState
             ),
             const SizedBox(height: 8),
 
-            // Ubicación
             Row(
               children: [
                 const Icon(Icons.location_on, size: 16, color: Colors.grey),
@@ -186,7 +183,6 @@ class _SeleccionarPartidoActaPageState
             ),
             const SizedBox(height: 12),
 
-            // ✅ Botones con ancho completo
             if (partido.estado == 'FINALIZADO' && tieneActa)
               SizedBox(
                 width: double.infinity,
@@ -249,7 +245,7 @@ class _SeleccionarPartidoActaPageState
           title: Text('Alineaciones - ${partido.nombreLocal} vs ${partido.nombreVisitante}'),
           content: SizedBox(
             width: double.maxFinite,
-            child: SingleChildScrollView(  // ✅ Scroll para evitar overflow
+            child: SingleChildScrollView(
               child: _buildAlineacionesDialog(alineaciones),
             ),
           ),

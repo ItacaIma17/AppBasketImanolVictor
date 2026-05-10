@@ -1,5 +1,3 @@
-// Presentacion/Controllers/AlineacionController.java - VERSIÓN CORREGIDA
-
 package Presentacion.Controllers;
 
 import Aplicacion.Services.AlineacionService;
@@ -25,7 +23,6 @@ public class AlineacionController {
     @Autowired
     private AlineacionRepository alineacionRepository;
 
-    // Obtener el username del usuario autenticado
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -33,8 +30,6 @@ public class AlineacionController {
         }
         return principal.toString();
     }
-
-    // ─── Presentar alineación (ENTRENADOR) ─────────────────────────────────
 
     @PostMapping("/presentar")
     public ResponseEntity<?> presentarAlineacion(@RequestBody AlineacionRequestDTO dto) {
@@ -52,8 +47,6 @@ public class AlineacionController {
         }
     }
 
-    // ─── Actualizar alineación (ENTRENADOR, antes de confirmar) ───────────
-
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarAlineacion(
             @PathVariable Long id,
@@ -67,8 +60,6 @@ public class AlineacionController {
         }
     }
 
-// ─── Eliminar / rechazar alineación (ARBITRO o ADMIN) ─────────────────
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarAlineacion(@PathVariable Long id) {
         try {
@@ -79,8 +70,6 @@ public class AlineacionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ─── Confirmar alineación (ARBITRO) ────────────────────────────────────
 
     @PutMapping("/{id}/confirmar")
     public ResponseEntity<?> confirmarAlineacion(@PathVariable Long id) {
@@ -93,8 +82,6 @@ public class AlineacionController {
         }
     }
 
-    // ─── Ver alineaciones de un partido (todos los roles) ──────────────────
-
     @GetMapping("/partido/{partidoId}")
     public ResponseEntity<?> getAlineacionesPartido(@PathVariable Long partidoId) {
         try {
@@ -104,8 +91,6 @@ public class AlineacionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ─── Ver alineación de un equipo en un partido ─────────────────────────
 
     @GetMapping("/partido/{partidoId}/equipo/{equipoId}")
     public ResponseEntity<?> getAlineacionEquipo(
@@ -122,8 +107,6 @@ public class AlineacionController {
         }
     }
 
-    // ─── Desbloquear alineación (solo ADMIN) ──────────────────────────────
-
     @PutMapping("/{id}/desbloquear")
     public ResponseEntity<?> desbloquearAlineacion(@PathVariable Long id) {
         try {
@@ -136,10 +119,6 @@ public class AlineacionController {
                 ));
             }
 
-            // Usar setBloqueada después de añadir el campo a la entidad
-            // alineacion.setBloqueada(false);
-            // alineacionRepository.save(alineacion);
-
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Alineación desbloqueada correctamente",
                     "id", id
@@ -148,8 +127,6 @@ public class AlineacionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ─── Listar todas las alineaciones (ADMIN) ─────────────────────────────
 
     @GetMapping
     public ResponseEntity<?> listarAlineaciones() {

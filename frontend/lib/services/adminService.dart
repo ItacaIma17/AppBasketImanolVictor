@@ -1,4 +1,3 @@
-// lib/services/adminService.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:tfg_appfede/config/api_config.dart';
@@ -17,10 +16,6 @@ class AdminService {
     }
     return headers;
   }
-
-  // ============================================================
-  // ESTADÍSTICAS
-  // ============================================================
 
   static Future<Map<String, dynamic>> getEstadisticasGenerales() async {
     try {
@@ -54,11 +49,6 @@ class AdminService {
     'usuariosBloqueados': 0,
   };
 
-  // ============================================================
-  // USUARIOS
-  // ============================================================
-
-  /// Listar todos los usuarios
   static Future<List<Usuario>> listarTodosUsuarios() async {
     try {
       final response = await http.get(
@@ -81,7 +71,6 @@ class AdminService {
     }
   }
 
-  /// Listar usuarios por rol
   static Future<List<Usuario>> listarUsuariosPorRol(String rol) async {
     try {
       final response = await http.get(
@@ -101,7 +90,6 @@ class AdminService {
     }
   }
 
-  /// Listar usuarios pendientes de verificación
   static Future<List<Usuario>> listarUsuariosPendientes() async {
     try {
       final response = await http.get(
@@ -121,7 +109,6 @@ class AdminService {
     }
   }
 
-  /// Listar usuarios bloqueados
   static Future<List<Usuario>> listarUsuariosBloqueados() async {
     try {
       final response = await http.get(
@@ -141,7 +128,6 @@ class AdminService {
     }
   }
 
-  /// Bloquear un usuario
   static Future<bool> bloquearUsuario(int userId) async {
     try {
       final response = await http.put(
@@ -161,7 +147,6 @@ class AdminService {
     }
   }
 
-  /// Desbloquear un usuario
   static Future<bool> desbloquearUsuario(int userId) async {
     try {
       final response = await http.put(
@@ -181,7 +166,6 @@ class AdminService {
     }
   }
 
-  /// Eliminar un usuario
   static Future<bool> eliminarUsuario(int userId) async {
     try {
       final response = await http.delete(
@@ -201,11 +185,6 @@ class AdminService {
     }
   }
 
-  // ============================================================
-  // ACTIVIDAD RECIENTE
-  // ============================================================
-
-  /// Obtener actividad reciente del sistema
   static Future<List<Map<String, dynamic>>> getActividadReciente() async {
     try {
       final response = await http.get(
@@ -224,11 +203,6 @@ class AdminService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS AVANZADAS
-  // ============================================================
-
-  /// Obtener estadísticas de usuarios (gráficos)
   static Future<Map<String, dynamic>> getEstadisticasUsuarios() async {
     try {
       final response = await http.get(

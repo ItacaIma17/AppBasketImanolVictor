@@ -42,23 +42,17 @@ public class AlineacionService {
     private static final int MAX_TITULARES = 5;
     private static final int MAX_SUPLENTES = 7;
 
-    // ============================================================
-    // PRESENTAR ALINEACIÓN (ENTRENADOR)
-    // ============================================================
-
     @Transactional
     public AlineacionResponseDTO presentarAlineacion(AlineacionRequestDTO dto, String username) {
-        // Validar que el partido existe
+
         Partido partido = partidoRepository.findById(dto.getPartidoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Partido no encontrado con ID: " + dto.getPartidoId()));
 
-        // Validar que el partido no esté finalizado
         if ("FINALIZADO".equals(partido.getEstado())) {
             throw new IllegalStateException("No se puede presentar alineación para un partido finalizado");
         }
 
-        // Validar que el usuario es el entrenador del equipo
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Entrenador no encontrado con username: " + username));
@@ -69,7 +63,6 @@ public class AlineacionService {
 
         Long equipoId = entrenador.getEquipo().getId();
 
-        // Verificar que el equipo participa en este partido
         boolean participa = partido.getEquipoLocal().getId().equals(equipoId) ||
                 partido.getEquipoVisitante().getId().equals(equipoId);
 
@@ -77,7 +70,6 @@ public class AlineacionService {
             throw new IllegalStateException("Tu equipo no participa en este partido");
         }
 
-        // Verificar si ya existe alineación para este equipo en este partido
         Optional<Alineacion> existente = alineacionRepository.findByPartidoIdAndEquipoId(dto.getPartidoId(), equipoId);
 
         if (existente.isPresent()) {
@@ -91,12 +83,10 @@ public class AlineacionService {
             return actualizarAlineacion(alineacionExistente.getId(), dto, username);
         }
 
-        // Validar que se hayan seleccionado exactamente 5 titulares
         if (dto.getTitulares() == null || dto.getTitulares().size() != MAX_TITULARES) {
             throw new IllegalStateException("Debes seleccionar exactamente " + MAX_TITULARES + " titulares");
         }
 
-        // Validar que no haya duplicados entre titulares y suplentes
         Set<Long> titularesIds = dto.getTitulares().stream()
                 .map(JugadorAlineacionRequestDTO::getJugadorId)
                 .collect(Collectors.toSet());
@@ -110,7 +100,6 @@ public class AlineacionService {
             throw new IllegalStateException("Un jugador no puede estar en titulares y suplentes a la vez");
         }
 
-        // Crear nueva alineación
         Alineacion alineacion = new Alineacion();
         alineacion.setPartido(partido);
         alineacion.setEquipo(entrenador.getEquipo());
@@ -119,7 +108,6 @@ public class AlineacionService {
         alineacion.setConfirmada(false);
         alineacion.setBloqueada(false);
 
-        // Añadir titulares
         for (JugadorAlineacionRequestDTO jugadorDTO : dto.getTitulares()) {
             Jugador jugador = jugadorRepository.findById(jugadorDTO.getJugadorId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -137,7 +125,6 @@ public class AlineacionService {
             alineacion.getJugadores().add(ja);
         }
 
-        // Añadir suplentes
         for (JugadorAlineacionRequestDTO jugadorDTO : dto.getSuplentes()) {
             Jugador jugador = jugadorRepository.findById(jugadorDTO.getJugadorId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -159,25 +146,18 @@ public class AlineacionService {
         return AlineacionResponseDTO.fromEntity(saved);
     }
 
-    // Verificar que AMBAS alineaciones están confirmadas por el árbitro
     public boolean ambasAlineacionesConfirmadas(Long partidoId) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        // Buscar alineación local y visitante
         Optional<Alineacion> alineacionLocal = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoLocal().getId());
         Optional<Alineacion> alineacionVisitante = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoVisitante().getId());
 
-        // Ambas deben existir Y estar confirmadas por el árbitro
         return alineacionLocal.isPresent() && alineacionLocal.get().isConfirmada()
                 && alineacionVisitante.isPresent() && alineacionVisitante.get().isConfirmada();
     }
-
-    // ============================================================
-    // ACTUALIZAR ALINEACIÓN (ENTRENADOR)
-    // ============================================================
 
     @Transactional
     public AlineacionResponseDTO actualizarAlineacion(Long id, AlineacionRequestDTO dto, String username) {
@@ -198,10 +178,8 @@ public class AlineacionService {
             throw new IllegalStateException("La alineación está bloqueada y no puede modificarse");
         }
 
-        // Limpiar jugadores existentes
         alineacion.getJugadores().clear();
 
-        // Añadir nuevos titulares
         for (JugadorAlineacionRequestDTO jugadorDTO : dto.getTitulares()) {
             Jugador jugador = jugadorRepository.findById(jugadorDTO.getJugadorId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -219,7 +197,6 @@ public class AlineacionService {
             alineacion.getJugadores().add(ja);
         }
 
-        // Añadir nuevos suplentes
         for (JugadorAlineacionRequestDTO jugadorDTO : dto.getSuplentes()) {
             Jugador jugador = jugadorRepository.findById(jugadorDTO.getJugadorId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -241,10 +218,6 @@ public class AlineacionService {
         Alineacion saved = alineacionRepository.save(alineacion);
         return AlineacionResponseDTO.fromEntity(saved);
     }
-
-    // ============================================================
-    // ELIMINAR ALINEACIÓN (ARBITRO o ADMIN)
-    // ============================================================
 
     @Transactional
     public void eliminarAlineacion(Long id, String username) {
@@ -266,10 +239,6 @@ public class AlineacionService {
         alineacionRepository.delete(alineacion);
     }
 
-    // ============================================================
-    // CONFIRMAR ALINEACIÓN (ARBITRO)
-    // ============================================================
-
     @Transactional
     public AlineacionResponseDTO confirmarAlineacion(Long id, String username) {
         Alineacion alineacion = alineacionRepository.findById(id)
@@ -290,10 +259,6 @@ public class AlineacionService {
         Alineacion saved = alineacionRepository.save(alineacion);
         return AlineacionResponseDTO.fromEntity(saved);
     }
-
-    // ============================================================
-    // VER ALINEACIONES DE UN PARTIDO
-    // ============================================================
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAlineacionesPartido(Long partidoId) {
@@ -320,10 +285,6 @@ public class AlineacionService {
 
         return response;
     }
-
-    // ============================================================
-    // VER ALINEACIÓN DE UN EQUIPO EN UN PARTIDO
-    // ============================================================
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAlineacionEquipoEnPartido(Long partidoId, Long equipoId) {
@@ -367,20 +328,12 @@ public class AlineacionService {
         return response;
     }
 
-    // ============================================================
-    // LISTAR TODAS LAS ALINEACIONES (ADMIN)
-    // ============================================================
-
     @Transactional(readOnly = true)
     public List<AlineacionResponseDTO> listarTodas() {
         return alineacionRepository.findAll().stream()
                 .map(AlineacionResponseDTO::fromEntity)
                 .collect(Collectors.toList());
     }
-
-    // ============================================================
-    // MÉTODOS AUXILIARES
-    // ============================================================
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAlineacionMap(Long partidoId, Long equipoId) {
@@ -424,15 +377,6 @@ public class AlineacionService {
         return response;
     }
 
-
-    /**
-     * Obtiene las alineaciones de ambos equipos para el acta del árbitro
-     */
-    // En AlineacionService.java - CORREGIDO
-
-    /**
-     * Obtiene las alineaciones de ambos equipos formateadas para el acta del árbitro
-     */
     @Transactional(readOnly = true)
     public AlineacionesPartidoDTO getAlineacionesParaActa(Long partidoId) {
         log.info("Obteniendo alineaciones para acta del partido: {}", partidoId);
@@ -441,19 +385,16 @@ public class AlineacionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Partido no encontrado: " + partidoId));
 
-        // Buscar alineación del equipo local (convierte de Entity a ResponseDTO)
         AlineacionResponseDTO alineacionLocal = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoLocal().getId())
-                .map(AlineacionResponseDTO::fromEntity)  // ✅ Usa fromEntity
+                .map(AlineacionResponseDTO::fromEntity)
                 .orElse(null);
 
-        // Buscar alineación del equipo visitante
         AlineacionResponseDTO alineacionVisitante = alineacionRepository
                 .findByPartidoIdAndEquipoId(partidoId, partido.getEquipoVisitante().getId())
-                .map(AlineacionResponseDTO::fromEntity)  // ✅ Usa fromEntity
+                .map(AlineacionResponseDTO::fromEntity)
                 .orElse(null);
 
-        // ✅ Usar el DTO AlineacionesPartidoDTO (no AlineacionResponseDTO)
         return AlineacionesPartidoDTO.fromEntities(
                 alineacionLocal,
                 alineacionVisitante,

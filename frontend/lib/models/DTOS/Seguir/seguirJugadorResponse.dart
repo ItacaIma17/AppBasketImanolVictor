@@ -1,4 +1,3 @@
-// lib/models/dtos/seguir_response.dart
 class SeguirJugadorResponseDTO {
   final String nombreJugador;
   final String posicion;

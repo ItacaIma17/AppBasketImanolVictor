@@ -16,3 +16,4 @@ public class ProductoRequest {
         this.precio = precio;
     }
 }
+

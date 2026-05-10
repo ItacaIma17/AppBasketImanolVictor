@@ -1,11 +1,10 @@
-// lib/screens/Entrenador/JugadoresEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/jugador.dart';
 import '../../services/equipoService.dart';
 import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
-import '../JugadorDetallePage.dart';  // ✅ Corregido: Ruta correcta y nombre correcto
+import '../JugadorDetallePage.dart';
 
 class JugadoresEquipoPage extends StatefulWidget {
   final int equipoId;
@@ -196,9 +195,7 @@ class _JugadoresEquipoPageState extends State<JugadoresEquipoPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Ordenar por:', style: TextStyle(color: Colors.white70)),
-              // ✅ FIX: Material wrapper para DropdownButton (evita
-              // "No Material widget found" cuando este page se monta dentro
-              // de un Container/SafeArea sin Scaffold propio).
+
               Material(
                 color: Colors.transparent,
                 child: DropdownButton<String>(

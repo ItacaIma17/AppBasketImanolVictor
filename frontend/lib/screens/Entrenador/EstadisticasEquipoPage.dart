@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/EstadisticasEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/EquipoEntrenador.dart';
@@ -23,7 +22,7 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
   List<Jugador> _jugadores = [];
   List<Partido> _partidos = [];
   bool _isLoading = true;
-  int _selectedTab = 0; // 0: General, 1: Jugadores, 2: Partidos
+  int _selectedTab = 0;
 
   @override
   void initState() {
@@ -57,7 +56,6 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
     }
   }
 
-  // Calcular estadísticas del equipo
   int get partidosJugados => _partidos.where((p) => p.estado == 'FINALIZADO').length;
 
   int get partidosGanados {
@@ -78,7 +76,6 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
       ? (partidosGanados / partidosJugados) * 100
       : 0;
 
-  // Top jugadores por puntos
   List<Jugador> get topAnotadores {
     final copia = List<Jugador>.from(_jugadores);
     copia.sort((a, b) => b.promedioPuntos.compareTo(a.promedioPuntos));
@@ -447,8 +444,7 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  // ✅ Usar el parser tolerante (acepta dd/MM/yyyy e ISO).
-                  // DateTime.parse lanzaba FormatException con "23/04/2026".
+
                   _formatearFechaSegura(partido.fecha),
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
@@ -460,13 +456,9 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
     );
   }
 
-  /// Formatea una fecha en string a dd/MM/yyyy aceptando varios formatos
-  /// (dd/MM/yyyy, ISO 8601, etc.). Si no se puede parsear devuelve el
-  /// string original para no mostrar nada raro al usuario.
   String _formatearFechaSegura(String fechaStr) {
     if (fechaStr.isEmpty) return '';
-    // El modelo Partido ya guarda la fecha en dd/MM/yyyy. Si el formato no
-    // es ISO, basta con devolverla tal cual.
+
     final dt = Partido.parseFecha(fechaStr);
     if (dt == null) return fechaStr;
     final dd = dt.day.toString().padLeft(2, '0');

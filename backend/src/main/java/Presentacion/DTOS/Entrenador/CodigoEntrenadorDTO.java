@@ -8,3 +8,4 @@ public class CodigoEntrenadorDTO {
     private String email;
     private String username;
 }
+

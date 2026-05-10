@@ -3,8 +3,6 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/partido.dart';
 import '../../screens/equipos/DetalleEquipoPage.dart';
 
-/// Widget que muestra el marcador principal del partido
-/// con equipos, resultado y ganador
 class MarcadorPartido extends StatelessWidget {
   final Partido partido;
 
@@ -81,13 +79,11 @@ class MarcadorPartido extends StatelessWidget {
   }
 }
 
-
-/// Widget de equipo (escudo, nombre, badge ganador)
 class _EquipoWidget extends StatelessWidget {
   final String nombre;
   final Color color;
   final bool esGanador;
-  // ✅ FIX nav: callback opcional para abrir el perfil del equipo.
+
   final VoidCallback? onTap;
 
   const _EquipoWidget({
@@ -141,7 +137,6 @@ class _EquipoWidget extends StatelessWidget {
   }
 }
 
-/// Widget del resultado central
 class _ResultadoWidget extends StatelessWidget {
   final int local;
   final int visitante;
@@ -184,7 +179,6 @@ class _ResultadoWidget extends StatelessWidget {
   }
 }
 
-/// Widget de información del partido (pabellón y hora)
 class _InfoPartidoWidget extends StatelessWidget {
   final String pabellon;
   final String hora;

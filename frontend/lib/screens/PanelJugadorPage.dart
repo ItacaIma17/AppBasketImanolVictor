@@ -1,4 +1,3 @@
-// lib/screens/Jugador/PanelJugadorPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/jugador.dart';
@@ -210,7 +209,6 @@ class _PanelJugadorPageState extends State<PanelJugadorPage> {
     );
   }
 
-  // En PanelJugadorPage.dart, actualizar el método _buildMenuAcciones
   Widget _buildMenuAcciones() {
     return Card(
       child: Padding(

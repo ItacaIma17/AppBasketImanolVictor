@@ -69,3 +69,4 @@ class TarjetaCategoria extends StatelessWidget {
     );
   }
 }
+

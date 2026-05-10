@@ -32,15 +32,11 @@ public class ActaService {
     private final ActaPartidoRepository actaPartidoRepository;
     private final PartidoRepository partidoRepository;
     private final ArbitroRepository arbitroRepository;
-    private final EquipoRepository equipoRepository; // Añadir si no existe
-
-    // ============================================================
-    // CRUD EXISTENTE (ya lo tienes, lo mantengo)
-    // ============================================================
+    private final EquipoRepository equipoRepository;
 
     @Transactional
     public ActaResponseDTO guardarActa(ActaRequestDTO request, String username) {
-        log.info("📝 Guardando acta para partido ID: {}", request.getPartidoId());
+        log.info(" Guardando acta para partido ID: {}", request.getPartidoId());
 
         if (actaPartidoRepository.existsByPartidoId(request.getPartidoId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un acta para este partido");
@@ -97,14 +93,14 @@ public class ActaService {
         partidoRepository.save(partido);
 
         ActaPartido saved = actaPartidoRepository.save(acta);
-        log.info("✅ Acta guardada con ID: {}", saved.getId());
+        log.info(" Acta guardada con ID: {}", saved.getId());
 
         return ActaResponseDTO.fromEntity(saved, username);
     }
 
     @Transactional(readOnly = true)
     public ActaResponseDTO obtenerActaPorPartido(Long partidoId, String username) {
-        log.info("📋 Obteniendo acta del partido {} (solicitante: {})", partidoId, username);
+        log.info(" Obteniendo acta del partido {} (solicitante: {})", partidoId, username);
         return actaPartidoRepository.findByPartidoId(partidoId)
                 .map(acta -> ActaResponseDTO.fromEntity(acta, username))
                 .orElse(null);
@@ -165,10 +161,6 @@ public class ActaService {
                 .orElse(false);
     }
 
-    // ============================================================
-    // NUEVOS MÉTODOS (LO QUE TE FALTABA)
-    // ============================================================
-
     @Transactional(readOnly = true)
     public List<ActaResponseDTO> listarPorArbitro(Long arbitroId, String username) {
         log.info("Listando actas del árbitro ID: {}", arbitroId);
@@ -197,11 +189,9 @@ public class ActaService {
         ActaPartido acta = actaPartidoRepository.findById(actaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada"));
 
-        // Estadísticas de puntos por equipo
         int puntosLocal = Integer.parseInt(acta.getResultadoLocal());
         int puntosVisitante = Integer.parseInt(acta.getResultadoVisitante());
 
-        // Estadísticas de jugadores
         Map<String, Integer> puntosPorJugador = acta.getEventos().stream()
                 .filter(e -> e.getPuntos() != null)
                 .collect(Collectors.groupingBy(
@@ -209,7 +199,6 @@ public class ActaService {
                         Collectors.summingInt(EventoPartido::getPuntos)
                 ));
 
-        // Máximo anotador
         String maxAnotador = puntosPorJugador.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
@@ -220,7 +209,6 @@ public class ActaService {
                 .max()
                 .orElse(0);
 
-        // Total de eventos por tipo
         Map<String, Long> eventosPorTipo = acta.getEventos().stream()
                 .collect(Collectors.groupingBy(EventoPartido::getTipo, Collectors.counting()));
 
@@ -246,11 +234,8 @@ public class ActaService {
         ActaPartido acta = actaPartidoRepository.findById(actaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada"));
 
-        // Generar contenido HTML para el PDF
         String htmlContent = generarHtmlActa(acta);
 
-        // Aquí usarías una librería como iText o Flying Saucer para convertir HTML a PDF
-        // Por ahora devolvemos un mensaje de que no está implementado
         byte[] pdfBytes = ("PDF no implementado aún. Acta ID: " + actaId).getBytes();
 
         HttpHeaders headers = new HttpHeaders();
@@ -308,14 +293,8 @@ public class ActaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para compartir esta acta");
         }
 
-        // Aquí implementarías el envío de email con el PDF adjunto
-        // Por ahora solo logueamos
-        log.info("📧 Email enviado a: {} con el acta ID: {}", emailDestino, actaId);
+        log.info(" Email enviado a: {} con el acta ID: {}", emailDestino, actaId);
     }
-
-    // ============================================================
-    // MÉTODOS PRIVADOS
-    // ============================================================
 
     private boolean puedeEditarInterno(ActaPartido acta, String username) {
         boolean esArbitroQueLaCreo = acta.getArbitro() != null &&

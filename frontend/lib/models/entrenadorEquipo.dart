@@ -1,4 +1,3 @@
-// lib/models/entrenador/entrenador_equipo.dart
 class EntrenadorEquipo {
   final int? entrenadorId;
   final String nombreEntrenador;

@@ -1,4 +1,3 @@
-// lib/screens/LigasPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
@@ -43,7 +42,7 @@ class _LigasPageState extends State<LigasPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener categorías únicas de las ligas
+
     final categoriasLimpias = _ligasBD
         .map((l) => l.nombreLiga)
         .where((nombre) => nombre.isNotEmpty)
@@ -51,17 +50,14 @@ class _LigasPageState extends State<LigasPage> {
         .toList()
       ..sort();
 
-    // Resetear selección si la categoría ya no existe
     if (!categoriasLimpias.contains(_categoriaSeleccionada) &&
         _categoriaSeleccionada != 'Seleccionar categoría...') {
       _categoriaSeleccionada = 'Seleccionar categoría...';
     }
 
-    // Obtener ligas favoritas desde GestorFavoritos
     final favoritosManager = FavoritosManager();
     final ligasFavoritas = favoritosManager.categoriasFavoritas;
 
-    // Filtrar ligas según categoría seleccionada
     final ligasFiltradas = _categoriaSeleccionada == 'Seleccionar categoría...'
         ? _ligasBD
         : _ligasBD.where((liga) => liga.nombreLiga == _categoriaSeleccionada).toList();
@@ -93,7 +89,6 @@ class _LigasPageState extends State<LigasPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Dropdown de categorías
                       if (_cargando)
                         const Center(
                           child: CircularProgressIndicator(color: AppColors.blanco),
@@ -115,7 +110,6 @@ class _LigasPageState extends State<LigasPage> {
 
                       const SizedBox(height: 30),
 
-                      // Sección de ligas favoritas
                       if (ligasFavoritas.isNotEmpty) ...[
                         Row(
                           children: const [
@@ -136,7 +130,6 @@ class _LigasPageState extends State<LigasPage> {
                         const SizedBox(height: 30),
                       ],
 
-                      // Sección de todas las ligas
                       if (ligasFiltradas.isNotEmpty) ...[
                         Row(
                           children: const [
@@ -176,7 +169,6 @@ class _LigasPageState extends State<LigasPage> {
     );
   }
 
-  // ✅ CORREGIDO: Dropdown envuelto en Material para evitar error
   Widget _buildDropdown({
     required String label,
     required String value,
@@ -207,7 +199,7 @@ class _LigasPageState extends State<LigasPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          // ✅ FIX: Envolver DropdownButton en Material
+
           Material(
             color: Colors.transparent,
             child: DropdownButtonHideUnderline(
@@ -279,7 +271,7 @@ class _LigasPageState extends State<LigasPage> {
     return TarjetaEntidad(
       tipo: TipoEntidad.liga,
       titulo: nombreLiga,
-      badge: '★',
+      badge: '',
       iconoOverride: Icons.star,
       onTap: () {
         Navigator.push(

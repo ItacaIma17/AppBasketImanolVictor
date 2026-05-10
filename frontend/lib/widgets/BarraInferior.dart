@@ -1,6 +1,3 @@
-// lib/widgets/BarraInferior.dart — VERSIÓN MEJORADA
-// Navegación suave, sin perder el historial innecesariamente
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/screens/Favoritos.dart';

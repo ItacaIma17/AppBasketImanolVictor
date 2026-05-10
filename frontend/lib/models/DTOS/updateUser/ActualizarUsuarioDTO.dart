@@ -1,4 +1,3 @@
-// lib/models/dtos/actualizar_usuario_dto.dart
 class ActualizarUsuarioDTO {
   final String? username;
   final String? oldPassword;

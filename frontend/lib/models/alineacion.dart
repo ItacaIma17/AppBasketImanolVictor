@@ -1,4 +1,3 @@
-
 import 'JugadorAlineacion.dart';
 
 class Alineacion {
@@ -29,11 +28,6 @@ class Alineacion {
     required this.titulares,
     required this.suplentes,
   });
-
-  // ✅ FIX: parseo defensivo. El backend puede devolver algunos campos
-  // como null (entrenadorId, fechaPresentacion antes de guardar, etc.)
-  // y la versión anterior reventaba con
-  // "type 'Null' is not a subtype of type 'int' / 'String' / 'bool'".
 
   static int _toInt(dynamic v, {int defaultValue = 0}) {
     if (v == null) return defaultValue;

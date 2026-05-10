@@ -1,4 +1,3 @@
-// lib/screens/JugadorDetallePage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../models/jugador.dart';
@@ -64,7 +63,7 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('❌ Eliminado de favoritos'),
+              content: Text(' Eliminado de favoritos'),
               backgroundColor: Colors.grey,
               duration: Duration(seconds: 1),
             ),

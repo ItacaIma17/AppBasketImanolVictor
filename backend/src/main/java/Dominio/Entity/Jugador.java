@@ -62,3 +62,4 @@ public class Jugador {
     @Column(nullable = false)
     private int partidosJugados = 0;
 }
+

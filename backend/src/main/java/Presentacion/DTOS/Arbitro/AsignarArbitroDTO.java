@@ -13,5 +13,5 @@ public class AsignarArbitroDTO {
     private Long arbitroId;
     private String arbitroCodigo;
     private Long partidoId;
-    private String partidoDescripcion; 
+    private String partidoDescripcion;
 }

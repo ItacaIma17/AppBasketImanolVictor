@@ -12,13 +12,9 @@ import java.util.Optional;
 @Repository
 public interface EmailVerificationRepository extends JpaRepository<EmailVerification, Long> {
 
-
-
     Optional<EmailVerification> findByEmail(String email);
 
-
     Optional<EmailVerification> findByCodigo(String codigo);
-
 
     @Modifying
     @Query("DELETE FROM EmailVerification e WHERE e.expirationTime < :now")

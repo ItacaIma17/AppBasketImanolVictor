@@ -28,3 +28,4 @@ public class RecordatorioPartidoDTO {
         this.pabellon = pabellon;
     }
 }
+

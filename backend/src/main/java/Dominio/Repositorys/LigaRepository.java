@@ -1,5 +1,3 @@
-// Dominio/Repositorys/LigaRepository.java - VERSIÓN MÍNIMA
-
 package Dominio.Repositorys;
 
 import Dominio.Entity.Liga;
@@ -13,7 +11,6 @@ import java.util.Optional;
 @Repository
 public interface LigaRepository extends JpaRepository<Liga, Long> {
 
-    // Métodos básicos
     Optional<Liga> findByNombreLiga(String nombreLiga);
 
     boolean existsByNombreLiga(String nombreLiga);
@@ -22,15 +19,12 @@ public interface LigaRepository extends JpaRepository<Liga, Long> {
 
     List<Liga> findByPais(String pais);
 
-    // Para estadísticas (lo que necesitas para el panel de admin)
     @Query("SELECT l.nombreLiga, SIZE(l.equipos) FROM Liga l WHERE SIZE(l.equipos) > 0")
     List<Object[]> findLigasWithEquipoCount();
 
-    // Fetch eager
     @Query("SELECT l FROM Liga l LEFT JOIN FETCH l.equipos WHERE l.id = :id")
     Optional<Liga> findByIdWithEquipos(@Param("id") Long id);
 
-    // Añadir este método
     @Query("SELECT COUNT(DISTINCT l) FROM Liga l WHERE l.equipos IS NOT EMPTY")
     long countLigasConEquipos();
 }

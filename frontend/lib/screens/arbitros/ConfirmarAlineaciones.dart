@@ -1,6 +1,3 @@
-// lib/screens/arbitros/ConfirmarAlineacionesDetallePage.dart
-// Árbitro verifica las alineaciones de ambos equipos antes del partido
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/partido.dart';
@@ -50,14 +47,13 @@ class _ConfirmarAlineacionesDetallePageState
     super.dispose();
   }
 
-
   Future<void> _cargarAlineaciones() async {
     setState(() { _cargando = true; _error = null; });
     try {
       final data = await AlineacionService.getAlineacionesPartido(widget.partido.id);
       if (mounted) {
         setState(() {
-          // Usar las claves correctas según lo que devuelve el servicio
+
           _alineacionLocal = data['local'];
           _alineacionVisitante = data['visitante'];
           _cargando = false;
@@ -79,7 +75,7 @@ class _ConfirmarAlineacionesDetallePageState
       await _cargarAlineaciones();
       if (mounted) {
         _showSnack(
-          '✅ Alineación de ${esLocal ? widget.partido.nombreLocal : widget.partido.nombreVisitante} confirmada',
+          ' Alineación de ${esLocal ? widget.partido.nombreLocal : widget.partido.nombreVisitante} confirmada',
           isError: false,
         );
       }
@@ -102,7 +98,7 @@ class _ConfirmarAlineacionesDetallePageState
             _alineacionVisitante!['id'] as int);
       }
       await _cargarAlineaciones();
-      _showSnack('✅ Ambas alineaciones confirmadas. ¡El partido puede comenzar!',
+      _showSnack(' Ambas alineaciones confirmadas. ¡El partido puede comenzar!',
           isError: false);
     } catch (e) {
       _showSnack('Error: $e', isError: true);
@@ -341,7 +337,7 @@ class _ConfirmarAlineacionesDetallePageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Estado
+
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -413,11 +409,9 @@ class _ConfirmarAlineacionesDetallePageState
 
           const SizedBox(height: 16),
 
-          // Titulares
           _buildSubseccion('Titulares', titulares, isTitular: true),
           const SizedBox(height: 12),
 
-          // Suplentes
           _buildSubseccion('Suplentes', suplentes, isTitular: false),
         ],
       ),
@@ -475,7 +469,7 @@ class _ConfirmarAlineacionesDetallePageState
       ),
       child: Row(
         children: [
-          // Dorsal
+
           Container(
             width: 32,
             height: 32,
@@ -497,7 +491,7 @@ class _ConfirmarAlineacionesDetallePageState
             ),
           ),
           const SizedBox(width: 10),
-          // Nombre
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,7 +512,7 @@ class _ConfirmarAlineacionesDetallePageState
               ],
             ),
           ),
-          // Titular badge
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -610,3 +604,4 @@ class _ConfirmarAlineacionesDetallePageState
     ));
   }
 }
+

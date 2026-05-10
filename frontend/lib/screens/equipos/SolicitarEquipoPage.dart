@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/SolicitarEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../services/equipoService.dart';
@@ -40,7 +39,7 @@ class _SolicitarEquipoPageState extends State<SolicitarEquipoPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Solicitud enviada correctamente. Espera la aprobación del administrador.'),
+            content: Text(' Solicitud enviada correctamente. Espera la aprobación del administrador.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 4),
           ),
@@ -50,7 +49,7 @@ class _SolicitarEquipoPageState extends State<SolicitarEquipoPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(' Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

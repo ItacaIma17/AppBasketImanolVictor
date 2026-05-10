@@ -19,7 +19,7 @@ class DialogoCerrarSesion extends StatelessWidget {
           onPressed: () async {
             await AutenticacionService.cerrarSesion();
             if (context.mounted) {
-              Navigator.pop(context); // cerrar diálogo
+              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const InicioSesionPage()),
@@ -35,3 +35,4 @@ class DialogoCerrarSesion extends StatelessWidget {
     );
   }
 }
+

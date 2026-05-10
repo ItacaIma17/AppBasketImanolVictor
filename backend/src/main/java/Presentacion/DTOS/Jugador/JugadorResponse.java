@@ -28,9 +28,6 @@ public class JugadorResponse {
     private int robosTotales;
     private int partidosJugados;
 
-    /**
-     * Convierte una entidad Jugador a JugadorResponse DTO
-     */
     public static JugadorResponse fromEntity(Jugador jugador) {
         if (jugador == null) {
             return null;
@@ -49,14 +46,12 @@ public class JugadorResponse {
         response.setDorsal(jugador.getDorsal());
         response.setRole(jugador.getRole() != null ? jugador.getRole().name() : "JUGADOR");
 
-        //NUEVAS ESTADÍSTICAS TOTALES
         response.setPuntosTotales(jugador.getPuntosTotales());
         response.setRebotesTotales(jugador.getRebotesTotales());
         response.setAsistenciasTotales(jugador.getAsistenciasTotales());
         response.setRobosTotales(jugador.getRobosTotales());
         response.setPartidosJugados(jugador.getPartidosJugados());
 
-        // Información del equipo
         if (jugador.getEquipo() != null) {
             response.setEquipoId(jugador.getEquipo().getId());
             response.setEquipoNombre(jugador.getEquipo().getNombre());
@@ -69,9 +64,6 @@ public class JugadorResponse {
         return response;
     }
 
-    /**
-     * Convierte una lista de entidades Jugador a lista de JugadorResponse DTOs
-     */
     public static List<JugadorResponse> fromEntityList(List<Jugador> jugadores) {
         if (jugadores == null) {
             return List.of();
@@ -81,3 +73,4 @@ public class JugadorResponse {
                 .collect(Collectors.toList());
     }
 }
+

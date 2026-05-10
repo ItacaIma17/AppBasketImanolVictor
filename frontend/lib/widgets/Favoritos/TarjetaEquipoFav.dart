@@ -63,3 +63,4 @@ class TarjetaEquipo extends StatelessWidget {
     );
   }
 }
+

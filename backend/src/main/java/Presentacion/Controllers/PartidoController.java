@@ -1,4 +1,3 @@
-
 package Presentacion.Controllers;
 
 import Aplicacion.Services.PartidoService;
@@ -64,18 +63,14 @@ public class PartidoController {
     @GetMapping("/listar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ENTRENADOR', 'ARBITRO', 'JUGADOR')")
     public ResponseEntity<List<PartidoResponse>> listarPartidos() {
-        log.info("📋 Listando todos los partidos");
+        log.info(" Listando todos los partidos");
         return ResponseEntity.ok(partidoService.listarTodosPartidos());
     }
-
-
-
-    // Presentacion/Controllers/PartidoController.java - Añadir
 
     @PostMapping("/crear-completo")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PartidoResponse>> crearPartidosCompleto(@RequestBody CrearPartidoCompletoDTO dto) {
-        log.info("🎮 Creando partidos con jornadas");
+        log.info(" Creando partidos con jornadas");
         return ResponseEntity.ok(partidoService.crearPartidosConJornadas(dto));
     }
 
@@ -95,7 +90,6 @@ public class PartidoController {
         return ResponseEntity.ok(partidos);
     }
 
-    // ✅ ENDPOINT PARA JUGADOR - UN SOLO MÉTODO
     @GetMapping("/jugador/mis-partidos")
     @PreAuthorize("hasRole('JUGADOR')")
     public ResponseEntity<List<PartidoResponse>> getPartidosJugador() {
@@ -131,14 +125,14 @@ public class PartidoController {
     @GetMapping("/equipo/{equipoId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PartidoResponse>> getPartidosByEquipo(@PathVariable Long equipoId) {
-        log.info("📋 Listando partidos del equipo: {}", equipoId);
+        log.info(" Listando partidos del equipo: {}", equipoId);
         return ResponseEntity.ok(partidoService.getPartidosByEquipo(equipoId));
     }
 
     @GetMapping("/{partidoId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PartidoResponse> getPartidoById(@PathVariable Long partidoId) {
-        log.info("📋 Obteniendo partido: {}", partidoId);
+        log.info(" Obteniendo partido: {}", partidoId);
         PartidoResponse partido = partidoService.getPartidoById(partidoId);
         return ResponseEntity.ok(partido);
     }
@@ -148,25 +142,18 @@ public class PartidoController {
     public ResponseEntity<PartidoResponse> actualizarResultado(
             @PathVariable Long partidoId,
             @RequestBody Map<String, Integer> resultado) {
-        log.info("✏️ Actualizando resultado del partido {}: {} - {}",
+        log.info(" Actualizando resultado del partido {}: {} - {}",
                 partidoId, resultado.get("resultadoLocal"), resultado.get("resultadoVisitante"));
         return ResponseEntity.ok(partidoService.actualizarResultado(partidoId, resultado));
     }
 
-    /**
-     * ✏️ Actualizar un partido (admin) — fecha, ubicación, pabellón,
-     * jornada, equipos, liga y árbitro asignado.
-     *
-     * Endpoint usado por <code>PartidoService.actualizarPartido()</code>
-     * en el frontend (Flutter): {@code PUT /api/partidos/{partidoId}}.
-     */
     @PutMapping("/{partidoId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> actualizarPartido(
             @PathVariable Long partidoId,
             @RequestBody PartidoRequestDTO dto) {
         try {
-            log.info("✏️ PUT /partidos/{}  body={}", partidoId, dto);
+            log.info(" PUT /partidos/{}  body={}", partidoId, dto);
             PartidoResponse actualizado = partidoService.actualizarPartido(partidoId, dto);
             return ResponseEntity.ok(actualizado);
         } catch (ResponseStatusException e) {
@@ -184,7 +171,7 @@ public class PartidoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> eliminarPartido(@PathVariable Long partidoId) {
         try {
-            log.info("🗑️ Eliminando partido: {}", partidoId);
+            log.info(" Eliminando partido: {}", partidoId);
             partidoService.eliminarPartido(partidoId);
             return ResponseEntity.ok(Map.of("message", "Partido eliminado correctamente"));
 
@@ -195,8 +182,6 @@ public class PartidoController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ==================== ENDPOINTS PARA ÁRBITROS ====================
 
     @PutMapping("/{partidoId}/arbitro/{arbitroId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -214,7 +199,7 @@ public class PartidoController {
             partido.setArbitro(arbitro);
             partidoRepository.save(partido);
 
-            log.info("✅ Árbitro {} asignado al partido {}", arbitroId, partidoId);
+            log.info(" Árbitro {} asignado al partido {}", arbitroId, partidoId);
             return ResponseEntity.ok(Map.of("message", "Árbitro asignado correctamente"));
 
         } catch (Exception e) {
@@ -250,25 +235,19 @@ public class PartidoController {
         return ResponseEntity.ok(partidos);
     }
 
-    // ============================================================
-// AÑADIR A PartidoController.java
-// ============================================================
-
-    // 1. Detalle completo del partido (con estadísticas)
     @GetMapping("/{partidoId}/detalle-completo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getDetalleCompletoPartido(@PathVariable Long partidoId) {
-        log.info("📋 Obteniendo detalle completo del partido: {}", partidoId);
+        log.info(" Obteniendo detalle completo del partido: {}", partidoId);
         return ResponseEntity.ok(partidoService.getDetalleCompletoPartido(partidoId));
     }
 
-    // 2. Finalizar partido (actualizar resultado)
     @PostMapping("/{partidoId}/finalizar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ARBITRO')")
     public ResponseEntity<PartidoResponse> finalizarPartido(
             @PathVariable Long partidoId,
             @RequestBody Map<String, Integer> resultado) {
-        log.info("🏁 Finalizando partido {}: {} - {}", partidoId,
+        log.info(" Finalizando partido {}: {} - {}", partidoId,
                 resultado.get("resultadoLocal"), resultado.get("resultadoVisitante"));
         return ResponseEntity.ok(partidoService.finalizarPartido(
                 partidoId,
@@ -276,19 +255,17 @@ public class PartidoController {
                 resultado.get("resultadoVisitante")));
     }
 
-    // 3. Historial de partidos de un equipo
     @GetMapping("/equipo/{equipoId}/historial")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getHistorialEquipo(@PathVariable Long equipoId) {
-        log.info("📋 Obteniendo historial del equipo: {}", equipoId);
+        log.info(" Obteniendo historial del equipo: {}", equipoId);
         return ResponseEntity.ok(partidoService.getHistorialEquipo(equipoId));
     }
 
-    // 4. Próximos partidos de un equipo (ya lo tienes? getProximosPartidosByEquipo)
     @GetMapping("/equipo/{equipoId}/proximos")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PartidoResponse>> getProximosPartidosByEquipo(@PathVariable Long equipoId) {
-        log.info("📋 Obteniendo próximos partidos del equipo: {}", equipoId);
+        log.info(" Obteniendo próximos partidos del equipo: {}", equipoId);
         return ResponseEntity.ok(partidoService.getProximosPartidosByEquipo(equipoId));
     }
 }

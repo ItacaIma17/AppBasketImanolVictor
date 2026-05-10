@@ -1,5 +1,3 @@
-// lib/models/arbitro.dart - VERSIÓN CORREGIDA
-
 import 'package:tfg_appfede/models/partidoAsignado.dart';
 
 class Arbitro {
@@ -7,14 +5,13 @@ class Arbitro {
   final String username;
   final String email;
   final String? nombre;
-  final String? apellido;  // ← Cambiar de 'apellidos' a 'apellido' (singular)
+  final String? apellido;
   final int? edad;
   final String? codigoArbitro;
   final bool verificado;
   final String? telefono;
   final bool activo;
 
-  // Campos adicionales para el frontend
   final bool tienePartidos;
   final int? partidosAsignados;
   final List<PartidoAsignado>? proximosPartidos;
@@ -24,7 +21,7 @@ class Arbitro {
     required this.username,
     required this.email,
     this.nombre,
-    this.apellido,  // ← Cambiado
+    this.apellido,
     this.edad,
     this.codigoArbitro,
     this.verificado = false,
@@ -34,10 +31,6 @@ class Arbitro {
     this.partidosAsignados,
     this.proximosPartidos,
   });
-
-  // ============================================================
-  // GETTERS
-  // ============================================================
 
   String get nombreCompleto {
     if (nombre != null && apellido != null) {
@@ -63,17 +56,13 @@ class Arbitro {
   bool get isActivo => activo;
   bool get isInactivo => !activo;
 
-  // ============================================================
-  // FROM JSON
-  // ============================================================
-
   factory Arbitro.fromJson(Map<String, dynamic> json) {
     return Arbitro(
       id: json['id'],
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       nombre: json['nombre'],
-      apellido: json['apellido'] ?? json['apellidos'],  // Soporta ambos nombres
+      apellido: json['apellido'] ?? json['apellidos'],
       edad: json['edad'],
       codigoArbitro: json['codigoArbitro'] ?? json['codigo_arbitro'],
       verificado: json['verificado'] ?? false,
@@ -89,17 +78,13 @@ class Arbitro {
     );
   }
 
-  // ============================================================
-  // TO JSON
-  // ============================================================
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'username': username,
       'email': email,
       'nombre': nombre,
-      'apellido': apellido,  // ← Usar 'apellido' no 'apellidos'
+      'apellido': apellido,
       'edad': edad,
       'codigoArbitro': codigoArbitro,
       'verificado': verificado,
@@ -108,10 +93,6 @@ class Arbitro {
       'partidosAsignados': partidosAsignados,
     };
   }
-
-  // ============================================================
-  // COPY WITH
-  // ============================================================
 
   Arbitro copyWith({
     int? id,

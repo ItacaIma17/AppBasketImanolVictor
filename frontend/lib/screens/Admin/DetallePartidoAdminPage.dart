@@ -1,5 +1,3 @@
-// lib/screens/Admin/DetallePartidoAdminPage.dart
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/screens/equipos/DetalleEquipoPage.dart';
@@ -104,9 +102,6 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
   int resultadoLocal = 0;
   int resultadoVisitante = 0;
 
-  /// ✅ FIX: abre CrearPartidoCompletoDialog en modo edición, reutilizando
-  /// la misma ruta/dialog que ya usa GestionPartidos. Recarga el acta al
-  /// cerrar para reflejar los cambios.
   Future<void> _editarPartido() async {
     setState(() => _cargando = true);
     try {
@@ -121,7 +116,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
           partidoToEdit: widget.partido,
           ligaIdInicial: widget.partido.ligaId,
           onPartidoCreado: () {
-            if (mounted) Navigator.pop(context, true); // refresca lista al volver
+            if (mounted) Navigator.pop(context, true);
           },
         ),
       );
@@ -154,9 +149,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue),
               tooltip: 'Editar partido',
-              // ✅ FIX: el botón estaba vacío (TODO). Reusamos el dialog
-              // CrearPartidoCompletoDialog en modo edición, igual que
-              // GestionPartidos._editarPartido.
+
               onPressed: _editarPartido,
             ),
           if (esProgramado)
@@ -198,7 +191,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // ✅ FIX nav: equipo local clicable -> EquipoPage(equipoId)
+
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: widget.partido.equipoLocalId == null
@@ -245,7 +238,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.naranja),
                 ),
               ),
-              // ✅ FIX nav: equipo visitante clicable -> EquipoPage(equipoId)
+
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: widget.partido.equipoVisitanteId == null
@@ -324,7 +317,7 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Navegar a ver acta completa
+
                 },
                 icon: const Icon(Icons.visibility),
                 label: const Text('Ver acta completa'),

@@ -30,7 +30,6 @@ public class Liga {
     @OneToMany(mappedBy = "liga", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Equipo> equipos = new ArrayList<>();
 
-    // Método helper para obtener número de equipos registrados
     public int getNumeroEquiposRegistrados() {
         return equipos != null ? equipos.size() : 0;
     }

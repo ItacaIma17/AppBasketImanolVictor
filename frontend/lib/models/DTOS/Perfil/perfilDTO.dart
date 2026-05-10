@@ -1,4 +1,3 @@
-
 import '../../role.dart';
 
 class UsuarioPerfilDTO {

@@ -119,7 +119,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -163,7 +162,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
 
               const SizedBox(height: 20),
 
-              /// CONTENIDO
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -192,8 +190,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
     );
   }
 
-  // lib/screens/Admin/GestionPartidosPage.dart - _buildFiltros corregido
-
   Widget _buildFiltros() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -206,7 +202,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
           const Text('Filtrar:', style: TextStyle(color: Colors.white)),
           const SizedBox(width: 12),
 
-          /// Jornada - ✅ Envuelto en Material
           Expanded(
             child: Material(
               color: Colors.transparent,
@@ -233,7 +228,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
 
           const SizedBox(width: 12),
 
-          /// Estado - ✅ Envuelto en Material
           Expanded(
             child: Material(
               color: Colors.transparent,

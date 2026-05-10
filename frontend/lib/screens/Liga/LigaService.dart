@@ -1,5 +1,3 @@
-// lib/screens/Liga/LigaService.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
@@ -19,7 +17,6 @@ class LigaService {
     return headers;
   }
 
-  // ✅ CORREGIDO: Devuelve Future<List<Liga>> en lugar de List<Map<String, dynamic>>
   static Future<List<Liga>> listarLigas() async {
     try {
       final response = await http.get(
@@ -38,7 +35,6 @@ class LigaService {
     }
   }
 
-  // ✅ Método auxiliar que devuelve Map (si es necesario)
   static Future<Map<String, dynamic>> crearLiga(Map<String, dynamic> ligaData) async {
     try {
       final requestData = {

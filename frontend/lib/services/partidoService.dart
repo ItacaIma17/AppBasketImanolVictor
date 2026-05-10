@@ -26,9 +26,6 @@ class PartidoService {
     };
   }
 
-  // =========================
-  // 🔥 NUEVO: BUSCAR ÁRBITROS
-  // =========================
   static Future<List<dynamic>> buscarArbitros(String query) async {
     try {
       final response = await AppConfig.get('/usuarios/arbitros?search=$query');
@@ -53,7 +50,6 @@ class PartidoService {
         try {
           if (fecha.isEmpty) return null;
 
-          // Soporta formato dd/MM/yyyy
           if (fecha.contains('/')) {
             final parts = fecha.split('/');
             return DateTime(
@@ -63,7 +59,6 @@ class PartidoService {
             );
           }
 
-          // Soporta ISO
           return DateTime.parse(fecha);
         } catch (_) {
           return null;
@@ -94,9 +89,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // 🔥 NUEVO: ESTADÍSTICAS
-  // =========================
   static Future<Map<String, dynamic>?> getEstadisticasPartido(int partidoId) async {
     try {
       final response = await AppConfig.get('/partidos/$partidoId/estadisticas');
@@ -110,9 +102,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // 🔥 NUEVO: DETALLE COMPLETO
-  // =========================
   static Future<Map<String, dynamic>?> getDetallePartido(int partidoId) async {
     try {
       final response = await AppConfig.get('/partidos/$partidoId/detalle');
@@ -126,9 +115,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // PARTIDOS DEL JUGADOR
-  // =========================
   static Future<List<Partido>> getPartidosByJugador() async {
     try {
       final response = await AppConfig.get('/partidos/jugador/mis-partidos');
@@ -140,9 +126,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // PARTIDOS DEL ÁRBITRO
-  // =========================
   static Future<List<Partido>> getPartidosByArbitro() async {
     try {
       LoggerService.info('Obteniendo partidos del árbitro', tag: 'ARBITRO');
@@ -159,9 +142,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // POR EQUIPO
-  // =========================
   static Future<List<Partido>> getPartidosByEquipo(int equipoId) async {
     try {
       final response = await AppConfig.get('/partidos/equipo/$equipoId');
@@ -191,9 +171,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // ENTRENADOR
-  // =========================
   static Future<List<Partido>> getPartidosEntrenador() async {
     try {
       final response = await AppConfig.get('/partidos/entrenador/mis-partidos');
@@ -204,9 +181,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // PARTIDO POR ID
-  // =========================
   static Future<Partido?> getPartidoById(int partidoId) async {
     try {
       final response = await AppConfig.get('/partidos/$partidoId');
@@ -216,9 +190,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // LISTAR TODOS
-  // =========================
   static Future<List<Partido>> listarPartidos() async {
     try {
       final response = await AppConfig.get('/partidos/listar');
@@ -236,22 +207,14 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // ACTUALIZAR RESULTADO
-  // =========================
-  // lib/services/partidoService.dart - CORREGIR actualizarResultado
-
-  // lib/services/partidoService.dart - CORREGIR
-
   static Future<void> actualizarResultado(int partidoId, Map<String, dynamic> resultado) async {
     try {
-      // Primero, verificar que el usuario es ADMIN
+
       final usuario = AutenticacionService.usuarioActual;
       if (usuario?.role != Role.ADMIN) {
         throw Exception('No tienes permisos de administrador');
       }
 
-      // Refrescar token antes de la operación
       final tokenRefrescado = await AutenticacionService.refreshTokenUser();
       if (!tokenRefrescado) {
         throw Exception('Sesión expirada. Inicia sesión nuevamente.');
@@ -264,7 +227,7 @@ class PartidoService {
       };
 
       final response = await http.put(
-        Uri.parse('${AppConfig.apiUrl}/admin/partidos/$partidoId/resultado'), // ← Usar endpoint de admin
+        Uri.parse('${AppConfig.apiUrl}/admin/partidos/$partidoId/resultado'),
         headers: await _getHeaders(),
         body: json.encode(data),
       );
@@ -277,9 +240,6 @@ class PartidoService {
     }
   }
 
-  // =========================
-  // ELIMINAR
-  // =========================
   static Future<void> eliminarPartido(int partidoId) async {
     try {
       await AppConfig.delete('/partidos/$partidoId');
@@ -288,15 +248,9 @@ class PartidoService {
     }
   }
 
-  // lib/services/partidoService.dart - AÑADIR
-
   static Future<void> finalizarPartido(int partidoId, int puntosLocal, int puntosVisitante) async {
     try {
-      // ✅ FIX: el backend espera las claves `resultadoLocal` /
-      // `resultadoVisitante` (ver PartidoController.finalizarPartido) y el
-      // endpoint es POST /partidos/{id}/finalizar (no PUT). Antes se
-      // enviaba PUT con `puntosLocal/puntosVisitante` y por eso el botón
-      // "Finalizar" devolvía 405/400 silenciosamente.
+
       final data = {
         'resultadoLocal': puntosLocal,
         'resultadoVisitante': puntosVisitante,
@@ -317,18 +271,16 @@ class PartidoService {
     return await AppConfig.post('/partidos/crear', data: partidoData);
   }
 
-  // ✅ CORREGIDO: Renombrar para mantener coherencia con el backend
   static Future<List<Partido>> crearPartidosConJornadas(Map<String, dynamic> data) async {
-    // 1º intento: endpoint backend que crea ambos en una llamada
+
     try {
       final response = await AppConfig.post('/partidos/crear-completo', data: data);
       final List<dynamic> dataList = response is List ? response : [];
       if (dataList.isNotEmpty) {
         return dataList.map((json) => Partido.fromJson(json)).toList();
       }
-    } catch (_) {/* caemos al fallback */}
+    } catch (_) {}
 
-    // Fallback: crear ida (+ vuelta opcional) con el endpoint simple
     final partidosCreados = <Partido>[];
 
     final ida = <String, dynamic>{
@@ -362,16 +314,10 @@ class PartidoService {
     return partidosCreados;
   }
 
-  // =========================
-  // ÁRBITRO
-  // =========================
   static Future<void> asignarArbitro(int partidoId, int arbitroId) async {
     await AppConfig.put('/partidos/$partidoId/arbitro/$arbitroId');
   }
 
-  // =========================
-  // FILTROS
-  // =========================
   static Future<List<Partido>> getPartidosByJornada(int jornada) async {
     final partidos = await listarPartidos();
     return partidos.where((p) => p.jornada == jornada).toList();
@@ -400,19 +346,6 @@ class PartidoService {
     }
   }
 
-
-
-  /// Actualiza un partido existente
-  ///
-  /// [partidoId] - ID del partido a actualizar
-  /// [data] - Mapa con los campos a actualizar:
-  ///   - equipoLocalId (opcional)
-  ///   - equipoVisitanteId (opcional)
-  ///   - fecha (opcional) - en formato ISO8601
-  ///   - pabellon (opcional)
-  ///   - ubicacion (opcional)
-  ///   - jornada (opcional)
-  ///   - ligaId (opcional)
   static Future<Partido> actualizarPartido(int partidoId, Map<String, dynamic> data) async {
   try {
   final response = await AppConfig.put('/partidos/$partidoId', data: data);
@@ -427,11 +360,6 @@ class PartidoService {
   }
   }
 
-  // ============================================================
-  // MÉTODO ALTERNATIVO: EDITAR PARTIDO (con más campos)
-  // ============================================================
-
-  /// Edita un partido completo (solo admin, partidos no finalizados)
   static Future<Partido> editarPartido({
   required int partidoId,
   int? equipoLocalId,
@@ -465,10 +393,6 @@ class PartidoService {
   }
   }
 
-  // ============================================================
-  // MÉTODO PARA OBTENER UN PARTIDO POR ID
-  // ============================================================
-
   static Future<Partido> obtenerPartidoPorId(int partidoId) async {
   try {
   final response = await AppConfig.get('/partidos/$partidoId');
@@ -482,6 +406,5 @@ class PartidoService {
   throw Exception('Error al obtener el partido: $e');
   }
   }
-
 
 }

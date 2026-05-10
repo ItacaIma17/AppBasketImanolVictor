@@ -1,4 +1,3 @@
-// Dominio/Repositorys/ArbitroRepository.java
 package Dominio.Repositorys;
 
 import Dominio.Entity.Arbitro;
@@ -24,14 +23,9 @@ public interface ArbitroRepository extends JpaRepository<Arbitro, Long> {
 
     boolean existsByCodigoArbitro(String codigoArbitro);
 
-    // Método para encontrar árbitros sin partidos asignados
     @Query("SELECT a FROM Arbitro a WHERE a.id NOT IN (SELECT p.arbitro.id FROM Partido p WHERE p.arbitro IS NOT NULL AND p.estado != 'FINALIZADO')")
     List<Arbitro> findArbitrosSinPartidos();
 
-
-    /**
-     * Buscar árbitros por nombre o apellidos (like)
-     */
     @Query("SELECT a FROM Arbitro a WHERE LOWER(a.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.apellidos) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.username) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Arbitro> buscarArbitros(@Param("query") String query);
 }

@@ -1,4 +1,3 @@
-// lib/screens/Admin/GestionEntrenadoresPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
@@ -72,7 +71,7 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with 
           _isLoading = false;
         });
 
-        print('✅ Datos cargados: ${_entrenadores.length} entrenadores, ${_equipos.length} equipos');
+        print(' Datos cargados: ${_entrenadores.length} entrenadores, ${_equipos.length} equipos');
       }
     } catch (e) {
       if (mounted) {
@@ -81,7 +80,7 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with 
           _isLoading = false;
         });
       }
-      print('❌ Error cargando datos: $e');
+      print(' Error cargando datos: $e');
     }
   }
 
@@ -225,7 +224,7 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Equipo "${equipo.nombre}" asignado a ${entrenador.nombre}'),
+            content: Text(' Equipo "${equipo.nombre}" asignado a ${entrenador.nombre}'),
             backgroundColor: Colors.green,
           ),
         );

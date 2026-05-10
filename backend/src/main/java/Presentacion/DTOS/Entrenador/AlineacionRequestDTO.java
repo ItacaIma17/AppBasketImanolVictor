@@ -26,16 +26,10 @@ public class AlineacionRequestDTO {
 
     private boolean confirmada;
 
-    /**
-     * Valida que la alineación tenga exactamente 5 titulares
-     */
     public boolean isValid() {
         return titulares != null && titulares.size() == 5;
     }
 
-    /**
-     * Obtiene todos los jugadores de la alineación (titulares + suplentes)
-     */
     public List<JugadorAlineacionRequestDTO> getAllJugadores() {
         List<JugadorAlineacionRequestDTO> all = new ArrayList<>();
         if (titulares != null) all.addAll(titulares);

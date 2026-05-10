@@ -1,14 +1,9 @@
-// lib/widgets/SeccionFavoritos.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../screens/JugadorDetallePage.dart';
 import '../models/jugador.dart';
 import '../services/FavoritosPage.dart';
 import 'Header.dart';
-
-// Nota: Necesitarás importar las páginas de equipo y liga
-// import '../screens/Equipos.dart';
-// import '../screens/GestionLigaPage.dart';
 
 class SeccionFavoritos extends StatefulWidget {
   const SeccionFavoritos({super.key});
@@ -116,8 +111,7 @@ class _SeccionFavoritosState extends State<SeccionFavoritos> {
               final favorito = _jugadoresFavoritos[index];
               return GestureDetector(
                 onTap: () {
-                  // Navegar al detalle del jugador
-                  // Necesitarás cargar el jugador completo o pasar el ID
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(

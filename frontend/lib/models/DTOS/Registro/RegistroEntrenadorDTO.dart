@@ -1,4 +1,3 @@
-// lib/models/DTOS/Registro/registerEntrenadorDTO.dart
 import '../../role.dart';
 import 'registroBaseDTO.dart';
 

@@ -40,7 +40,6 @@ public class Alineacion {
     @OneToMany(mappedBy = "alineacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JugadorAlineacion> jugadores = new ArrayList<>();
 
-    // Métodos helpers
     public void addJugador(JugadorAlineacion jugador) {
         jugadores.add(jugador);
         jugador.setAlineacion(this);

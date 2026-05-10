@@ -1,5 +1,3 @@
-// lib/screens/entrenador/PresentarAlineacionPage.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -58,21 +56,17 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
       _equipoId = entrenador.equipoId;
       final equipoIdEntrenador = _equipoId!;
 
-      // Obtener el equipo ID correcto según si es local o visitante
       final equipoIdPartido = widget.esLocal
           ? widget.partido.equipoLocalId
           : widget.partido.equipoVisitanteId;
 
-      // Verificar que el entrenador pertenece al equipo que quiere presentar alineación
       if (equipoIdPartido == null || equipoIdPartido != equipoIdEntrenador) {
         if (mounted) setState(() => _cargando = false);
         return;
       }
 
-      // Cargar plantilla de jugadores del equipo
       final jugadores = await EquipoService.getJugadoresEquipo(equipoIdEntrenador);
 
-      // Verificar si ya existe alineación
       Map<String, dynamic>? alineacionExistente;
       bool enviada = false;
       bool confirmada = false;
@@ -88,7 +82,6 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
         print('Error obteniendo alineación existente: $e');
       }
 
-      // Cargar alineación fija guardada localmente
       final prefs = await SharedPreferences.getInstance();
       final fijaJson = prefs.getString('alineacion_fija_equipo_$equipoIdEntrenador');
       final esFija = prefs.getBool('alineacion_fija_activa_$equipoIdEntrenador') ?? false;
@@ -102,9 +95,7 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
           _alineacionFija = esFija;
 
           if (alineacionExistente != null) {
-            // ✅ El backend devuelve `titulares` y `suplentes` como listas
-            // separadas (Map<String,Object>), NO un array combinado
-            // `jugadores` con `esTitular`. Hay que leerlas por separado.
+
             final titulares = (alineacionExistente['titulares'] as List?) ?? const [];
             final suplentes = (alineacionExistente['suplentes'] as List?) ?? const [];
 
@@ -119,16 +110,14 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
               else if (id is num) _suplentesIds.add(id.toInt());
             }
           } else if (fijaJson != null) {
-            // ✅ Reutilizar SIEMPRE la última alineación enviada por este
-            // entrenador (no exigir el flag esFija). El flag solo controla
-            // el aviso visual "alineación autocompletada".
+
             try {
               final fija = jsonDecode(fijaJson) as Map<String, dynamic>;
               final tits = (fija['titulares'] as List<dynamic>?) ?? [];
               final sups = (fija['suplentes'] as List<dynamic>?) ?? [];
               _titularesIds.addAll(tits.cast<int>());
               _suplentesIds.addAll(sups.cast<int>());
-              _alineacionFija = true; // muestra el aviso de "autocompletada"
+              _alineacionFija = true;
             } catch (e) {
               print('Error cargando alineación fija: $e');
             }
@@ -157,11 +146,10 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
     setState(() => _enviando = true);
 
     try {
-      // Construir un map alineado con AlineacionRequestDTO + JugadorAlineacionRequestDTO
-      // del backend (campos: jugadorId, nombre, apellido, dorsal, posicion, titular).
+
       Map<String, dynamic> _toJugadorPayload(int id, bool titular) {
         final jugador = _plantilla.firstWhere((j) => j.id == id);
-        // Algunos modelos guardan apellido(s) dentro de `nombreCompleto`.
+
         final nombreCompleto = jugador.nombreCompleto.trim();
         final partes = nombreCompleto.split(' ');
         final nombre = partes.isNotEmpty ? partes.first : nombreCompleto;
@@ -179,7 +167,6 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
       final titulares = _titularesIds.map((id) => _toJugadorPayload(id, true)).toList();
       final suplentes = _suplentesIds.map((id) => _toJugadorPayload(id, false)).toList();
 
-      // ✅ ESTRUCTURA EXACTA esperada por AlineacionRequestDTO (backend)
       final data = <String, dynamic>{
         'partidoId': widget.partido.id,
         'equipoId': _equipoId,
@@ -188,12 +175,10 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
         'confirmada': false,
       };
 
-      print('📤 Enviando alineación: ${jsonEncode(data)}');
+      print(' Enviando alineación: ${jsonEncode(data)}');
 
       await AlineacionService.presentarAlineacion(data);
 
-      // ✅ Guardar SIEMPRE la última alineación enviada para que el
-      // entrenador pueda reutilizarla en el siguiente partido.
       final prefs = await SharedPreferences.getInstance();
       final fijaData = {
         'titulares': _titularesIds.toList(),
@@ -207,21 +192,19 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
           _alineacionEnviada = true;
           _enviando = false;
         });
-        _showSnack('✅ Alineación enviada correctamente', isError: false);
+        _showSnack(' Alineación enviada correctamente', isError: false);
 
-        // Volver a la pantalla anterior después de 1.5 segundos
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) Navigator.pop(context);
         });
       }
     } catch (e) {
-      print('❌ Error enviando alineación: $e');
+      print(' Error enviando alineación: $e');
       _showSnack('Error al enviar: $e', isError: true);
       if (mounted) setState(() => _enviando = false);
     }
   }
 
-  // Función auxiliar para obtener datos del jugador
   Map<String, dynamic> _getJugadorData(int id) {
     final jugador = _plantilla.firstWhere((j) => j.id == id);
     return {
@@ -347,7 +330,7 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
               isTitular: true,
               max: MAX_TITULARES),
           const SizedBox(height: 16),
-          _buildSeccionJugadores('🪑 Suplentes', _plantilla,
+          _buildSeccionJugadores(' Suplentes', _plantilla,
               seleccionados: _suplentesIds,
               otros: _titularesIds,
               isTitular: false,

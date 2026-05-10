@@ -25,32 +25,24 @@ public class EstadisticasController {
     private final EquipoRepository equipoRepository;
     private final PartidoRepository partidoRepository;
 
-    // ============================================================
-    // ESTADÍSTICAS GLOBALES (desde Service)
-    // ============================================================
-
     @GetMapping("/globales")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getEstadisticasGlobales() {
-        log.info("📊 Obteniendo estadísticas globales");
+        log.info(" Obteniendo estadísticas globales");
         return ResponseEntity.ok(estadisticasService.getEstadisticasCompletas());
     }
 
     @GetMapping("/rapidas")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getEstadisticasRapidas() {
-        log.info("📊 Obteniendo estadísticas rápidas");
+        log.info(" Obteniendo estadísticas rápidas");
         return ResponseEntity.ok(estadisticasService.getEstadisticasRapidas());
     }
-
-    // ============================================================
-    // ESTADÍSTICAS DE JUGADOR
-    // ============================================================
 
     @GetMapping("/jugador/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getEstadisticasJugador(@PathVariable Long id) {
-        log.info("📊 Estadísticas del jugador ID: {}", id);
+        log.info(" Estadísticas del jugador ID: {}", id);
 
         Jugador jugador = jugadorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
@@ -64,7 +56,7 @@ public class EstadisticasController {
             @RequestParam(defaultValue = "puntos") String ordenar,
             @RequestParam(defaultValue = "10") int limite) {
 
-        log.info("📊 Top {} jugadores por {}", limite, ordenar);
+        log.info(" Top {} jugadores por {}", limite, ordenar);
 
         List<Jugador> jugadores = jugadorRepository.findAll();
         List<Map<String, Object>> ranking = jugadores.stream()
@@ -87,14 +79,10 @@ public class EstadisticasController {
         return ResponseEntity.ok(ranking);
     }
 
-    // ============================================================
-    // CLASIFICACIÓN POR LIGA
-    // ============================================================
-
     @GetMapping("/clasificacion/{ligaId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Map<String, Object>>> getClasificacion(@PathVariable Long ligaId) {
-        log.info("📊 Clasificación de la liga ID: {}", ligaId);
+        log.info(" Clasificación de la liga ID: {}", ligaId);
 
         var partidos = partidoRepository.findByLigaId(ligaId);
         var equiposStats = new HashMap<Long, Map<String, Object>>();
@@ -145,14 +133,10 @@ public class EstadisticasController {
         return ResponseEntity.ok(clasificacion);
     }
 
-    // ============================================================
-    // ESTADÍSTICAS DE EQUIPO
-    // ============================================================
-
     @GetMapping("/equipo/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getEstadisticasEquipo(@PathVariable Long id) {
-        log.info("📊 Estadísticas del equipo ID: {}", id);
+        log.info(" Estadísticas del equipo ID: {}", id);
 
         var equipo = equipoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
@@ -193,10 +177,6 @@ public class EstadisticasController {
 
         return ResponseEntity.ok(stats);
     }
-
-    // ============================================================
-    // MÉTODOS PRIVADOS
-    // ============================================================
 
     private Map<String, Object> buildJugadorStats(Jugador j) {
         Map<String, Object> stats = new LinkedHashMap<>();

@@ -1,11 +1,9 @@
-// lib/screens/Admin/ConfiguracionPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
-
 
 class ConfiguracionPage extends StatefulWidget {
   const ConfiguracionPage({super.key});
@@ -15,25 +13,21 @@ class ConfiguracionPage extends StatefulWidget {
 }
 
 class _ConfiguracionPageState extends State<ConfiguracionPage> {
-  // Configuración de notificaciones
+
   bool _notificacionesEmail = true;
   bool _notificacionesPush = true;
   bool _notificacionesPartidos = true;
 
-  // Configuración de privacidad
   bool _perfilPublico = true;
   bool _mostrarEmail = false;
 
-  // Configuración de la app
   String _idiomaSeleccionado = 'es';
   String _temaSeleccionado = 'claro';
   String _tamanoFuente = 'medio';
 
-  // Configuración de seguridad
   bool _autenticacionBiometrica = false;
   bool _recordarSesion = true;
 
-  // Estado de carga
   bool _isLoading = false;
 
   final List<Map<String, String>> _idiomas = [
@@ -44,9 +38,9 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   ];
 
   final List<Map<String, String>> _temas = [
-    {'codigo': 'claro', 'nombre': 'Claro', 'icono': '☀️'},
-    {'codigo': 'oscuro', 'nombre': 'Oscuro', 'icono': '🌙'},
-    {'codigo': 'sistema', 'nombre': 'Sistema', 'icono': '📱'},
+    {'codigo': 'claro', 'nombre': 'Claro', 'icono': ''},
+    {'codigo': 'oscuro', 'nombre': 'Oscuro', 'icono': ''},
+    {'codigo': 'sistema', 'nombre': 'Sistema', 'icono': ''},
   ];
 
   final List<Map<String, String>> _fuentes = [
@@ -129,7 +123,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                 );
                 return;
               }
-              // TODO: Llamar al servicio para cambiar contraseña
+
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Contraseña actualizada'), backgroundColor: Colors.green),
@@ -145,7 +139,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   Future<void> _exportarDatos() async {
     setState(() => _isLoading = true);
     try {
-      // TODO: Implementar exportación de datos
+
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +172,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
       setState(() => _isLoading = true);
       try {
         final prefs = await SharedPreferences.getInstance();
-        // Limpiar solo caché, no datos de sesión
+
         await prefs.remove('cache_equipos');
         await prefs.remove('cache_partidos');
         await prefs.remove('cache_ligas');
@@ -246,11 +240,10 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          // Perfil de Usuario
+
                           _buildPerfilUsuario(),
                           const SizedBox(height: 16),
 
-                          // Notificaciones
                           _buildConfigSection('NOTIFICACIONES', Icons.notifications_active, [
                             SwitchListTile(
                               title: const Text('Notificaciones por Email'),
@@ -285,7 +278,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Privacidad
                           _buildConfigSection('PRIVACIDAD', Icons.privacy_tip, [
                             SwitchListTile(
                               title: const Text('Perfil Público'),
@@ -310,7 +302,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Apariencia
                           _buildConfigSection('APARIENCIA', Icons.palette, [
                             ListTile(
                               title: const Text('Idioma'),
@@ -366,7 +357,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Seguridad
                           _buildConfigSection('SEGURIDAD', Icons.security, [
                             SwitchListTile(
                               title: const Text('Autenticación Biométrica'),
@@ -398,7 +388,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Datos y Almacenamiento
                           _buildConfigSection('DATOS Y ALMACENAMIENTO', Icons.storage, [
                             ListTile(
                               leading: const Icon(Icons.backup, color: AppColors.naranja),
@@ -417,7 +406,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Información
                           _buildConfigSection('INFORMACIÓN', Icons.info, [
                             ListTile(
                               leading: const Icon(Icons.info_outline, color: AppColors.naranja),
@@ -441,7 +429,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                           ]),
                           const SizedBox(height: 16),
 
-                          // Cerrar Sesión
                           Card(
                             color: Colors.red.withOpacity(0.1),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -463,7 +450,6 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
               ),
             ),
 
-            // Loading overlay
             if (_isLoading)
               Container(
                 color: Colors.black.withOpacity(0.5),
@@ -531,7 +517,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
             IconButton(
               icon: const Icon(Icons.edit, color: AppColors.naranja),
               onPressed: () {
-                // TODO: Navegar a editar perfil
+
               },
             ),
           ],
@@ -541,9 +527,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   }
 
   Widget _buildConfigSection(String titulo, IconData icono, List<Widget> children) {
-    // ✅ FIX "No Material widget": sustituimos el Container por un
-    // Material con el mismo color/radius. Así los ListTile/DropdownButton
-    // hijos siempre tienen Material ancestor sin depender del Scaffold.
+
     return Material(
       color: AppColors.blanco,
       borderRadius: BorderRadius.circular(12),

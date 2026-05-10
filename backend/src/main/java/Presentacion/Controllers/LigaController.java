@@ -23,19 +23,19 @@ public class LigaController {
     @PostMapping("/crear")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LigaResponse> crearLiga(@Valid @RequestBody LigaRequest dto) {
-        log.info("📝 Creando nueva liga: {}", dto.getNombreLiga());
+        log.info(" Creando nueva liga: {}", dto.getNombreLiga());
         return ResponseEntity.status(HttpStatus.CREATED).body(ligaService.crearLiga(dto));
     }
 
     @GetMapping("/listar")
     public ResponseEntity<List<LigaResponse>> listarLigas() {
-        log.info("📋 Listando todas las ligas");
+        log.info(" Listando todas las ligas");
         return ResponseEntity.ok(ligaService.listarTodasLigas());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<LigaResponse> obtenerLiga(@PathVariable Long id) {
-        log.info("🔍 Obteniendo liga con ID: {}", id);
+        log.info(" Obteniendo liga con ID: {}", id);
         return ResponseEntity.ok(ligaService.obtenerLigaPorId(id));
     }
 
@@ -44,14 +44,14 @@ public class LigaController {
     public ResponseEntity<LigaResponse> actualizarLiga(
             @PathVariable Long id,
             @Valid @RequestBody LigaRequest dto) {
-        log.info("✏️ Actualizando liga ID: {}", id);
+        log.info(" Actualizando liga ID: {}", id);
         return ResponseEntity.ok(ligaService.actualizarLiga(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminarLiga(@PathVariable Long id) {
-        log.info("🗑️ Eliminando liga ID: {}", id);
+        log.info(" Eliminando liga ID: {}", id);
         ligaService.eliminarLiga(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,4 +1,3 @@
-// lib/screens/Perfil/EditarPerfilPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
@@ -16,13 +15,11 @@ class EditarPerfilPage extends StatefulWidget {
 class _EditarPerfilPageState extends State<EditarPerfilPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para los campos
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
-  // Variables de estado
   bool _isLoading = false;
   bool _mostrarOldPassword = false;
   bool _mostrarNewPassword = false;
@@ -66,12 +63,10 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
       String? oldPassword;
       String? newPassword;
 
-      // Solo enviar username si cambió
       if (_usernameController.text != _usuarioActual?.username) {
         nuevoUsername = _usernameController.text;
       }
 
-      // Si está cambiando contraseña
       if (_cambiarPassword) {
         oldPassword = _oldPasswordController.text;
         newPassword = _newPasswordController.text;
@@ -90,7 +85,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context, true); // Volver con resultado true
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -138,19 +133,16 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Información del usuario (solo lectura)
+
                   _buildInfoCard(),
                   const SizedBox(height: 20),
 
-                  // Editar Username
                   _buildUsernameSection(),
                   const SizedBox(height: 20),
 
-                  // Cambiar Contraseña
                   _buildPasswordSection(),
                   const SizedBox(height: 30),
 
-                  // Botón guardar
                   _buildSaveButton(),
                 ],
               ),
@@ -260,7 +252,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  '⚠️ Tu nombre de usuario actual es: ${_usuarioActual?.username}',
+                  ' Tu nombre de usuario actual es: ${_usuarioActual?.username}',
                   style: const TextStyle(fontSize: 12, color: Colors.orange),
                 ),
               ),
@@ -389,7 +381,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
   }
 
   Widget _buildSaveButton() {
-    // Verificar si hay cambios pendientes
+
     final hasChanges = _usernameController.text != _usuarioActual?.username || _cambiarPassword;
 
     return SizedBox(

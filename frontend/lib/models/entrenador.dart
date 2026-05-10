@@ -1,5 +1,3 @@
-// lib/models/entrenador.dart
-
 class Entrenador {
   final int? id;
   final String nombre;

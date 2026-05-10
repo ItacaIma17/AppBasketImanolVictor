@@ -1,5 +1,3 @@
-// lib/screens/Admin/GestionArbitrosPage.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -21,14 +19,12 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
   bool _isLoading = true;
   bool _isCreating = false;
   String? _error;
-  String _filtro = 'TODOS'; // TODOS, ACTIVOS, INACTIVOS
+  String _filtro = 'TODOS';
 
-  // Formulario para crear/editar árbitro
   final _formKey = GlobalKey<FormState>();
   bool _isEditing = false;
   Arbitro? _editandoArbitro;
 
-  // Controladores del formulario
   final _nombreController = TextEditingController();
   final _apellidoController = TextEditingController();
   final _emailController = TextEditingController();
@@ -73,19 +69,16 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     }
   }
 
-
   List<Arbitro> get _arbitrosFiltrados {
     switch (_filtro) {
       case 'ACTIVOS':
-        return _arbitros.where((a) => a.activo == true).toList();  // ← a.activo funciona ahora
+        return _arbitros.where((a) => a.activo == true).toList();
       case 'INACTIVOS':
-        return _arbitros.where((a) => a.activo == false).toList();  // ← a.activo funciona ahora
+        return _arbitros.where((a) => a.activo == false).toList();
       default:
         return _arbitros;
     }
   }
-
-  // En GestionArbitrosPage.dart
 
   Future<void> _crearArbitro() async {
     if (!_formKey.currentState!.validate()) return;
@@ -95,7 +88,7 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     try {
       final arbitroData = {
         'nombre': _nombreController.text.trim(),
-        'apellido': _apellidoController.text.trim(),  // ← Usar 'apellido'
+        'apellido': _apellidoController.text.trim(),
         'email': _emailController.text.trim(),
         'username': _usernameController.text.trim(),
         'password': _passwordController.text.trim(),
@@ -127,8 +120,6 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     }
   }
 
-  // En GestionArbitrosPage.dart
-
   Future<void> _actualizarArbitro() async {
     if (!_formKey.currentState!.validate() || _editandoArbitro == null) return;
 
@@ -137,13 +128,12 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     try {
       final arbitroData = {
         'nombre': _nombreController.text.trim(),
-        'apellido': _apellidoController.text.trim(),  // ← Usar 'apellido'
+        'apellido': _apellidoController.text.trim(),
         'email': _emailController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'codigoArbitro': _licenciaController.text.trim(),
       };
 
-      // Solo incluir contraseña si se proporcionó una nueva
       if (_passwordController.text.trim().isNotEmpty) {
         arbitroData['password'] = _passwordController.text.trim();
       }
@@ -211,9 +201,6 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     }
   }
 
-
-  // En GestionArbitrosPage.dart
-
   Future<void> _cambiarEstadoArbitro(Arbitro arbitro) async {
     try {
       if (arbitro.id == null) {
@@ -241,19 +228,17 @@ class _GestionArbitrosPageState extends State<GestionArbitrosPage> {
     }
   }
 
-  // En GestionArbitrosPage.dart
-
   void _editarArbitro(Arbitro arbitro) {
     setState(() {
       _isEditing = true;
       _editandoArbitro = arbitro;
       _nombreController.text = arbitro.nombre ?? '';
-      _apellidoController.text = arbitro.apellido ?? '';  // ← Usar apellido
+      _apellidoController.text = arbitro.apellido ?? '';
       _emailController.text = arbitro.email;
       _usernameController.text = arbitro.username;
       _telefonoController.text = arbitro.telefono ?? '';
       _licenciaController.text = arbitro.codigoArbitro ?? '';
-      _passwordController.text = ''; // No mostrar contraseña
+      _passwordController.text = '';
     });
   }
 

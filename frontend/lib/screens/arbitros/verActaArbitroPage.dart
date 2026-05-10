@@ -1,4 +1,3 @@
-// lib/screens/arbitros/VerActaArbitroPage.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/actaPartido.dart';
@@ -219,19 +218,19 @@ class _VerActaArbitroPageState extends State<VerActaArbitroPage> {
   String _getTipoIcon(String tipo) {
     switch (tipo) {
       case 'CANASTA':
-        return '🏀';
+        return '';
       case 'TIRO_LIBRE':
         return '⬜';
       case 'TIRO_3PUNTOS':
-        return '3️⃣';
+        return '3';
       case 'FALTA':
-        return '⚠️';
+        return '';
       case 'TECNICA':
-        return '📋';
+        return '';
       case 'EXPULSION':
-        return '🚫';
+        return '';
       default:
-        return '📌';
+        return '';
     }
   }
 }

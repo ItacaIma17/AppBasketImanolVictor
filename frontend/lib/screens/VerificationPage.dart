@@ -1,5 +1,3 @@
-// lib/screens/VerificacionPage.dart
-
 import 'package:flutter/material.dart';
 import '../services/autenticacion_service.dart';
 import '../services/loggerService.dart';
@@ -62,7 +60,7 @@ class _VerificacionPageState extends State<VerificacionPage> {
       });
 
       if (response != null && mounted) {
-        // Verificar el rol y redirigir
+
         final usuario = AutenticacionService.usuarioActual;
 
         LoggerService.info('Verificación exitosa', tag: 'VERIFICACION', data: {
@@ -71,10 +69,9 @@ class _VerificacionPageState extends State<VerificacionPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Cuenta verificada exitosamente'), backgroundColor: Colors.green),
+          const SnackBar(content: Text(' Cuenta verificada exitosamente'), backgroundColor: Colors.green),
         );
 
-        // Redirigir según el rol
         if (usuario?.isAdmin == true) {
           Navigator.pushReplacement(
             context,
@@ -118,7 +115,7 @@ class _VerificacionPageState extends State<VerificacionPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('📧 Código reenviado a tu email'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text(' Código reenviado a tu email'), backgroundColor: Colors.orange),
         );
         LoggerService.info('Código reenviado exitosamente', tag: 'VERIFICACION');
       }

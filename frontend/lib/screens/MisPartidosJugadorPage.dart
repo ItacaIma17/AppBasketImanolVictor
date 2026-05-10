@@ -1,4 +1,3 @@
-// lib/screens/Jugador/MisPartidosJugadorPage.dart (nuevo archivo)
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -17,7 +16,7 @@ class MisPartidosJugadorPage extends StatefulWidget {
 class _MisPartidosJugadorPageState extends State<MisPartidosJugadorPage> {
   List<Partido> _partidos = [];
   bool _isLoading = true;
-  String _filtro = 'PROXIMOS'; // PROXIMOS, TODOS, FINALIZADOS
+  String _filtro = 'PROXIMOS';
   String? _error;
   String? _nombreEquipo;
 
@@ -165,7 +164,7 @@ class _MisPartidosJugadorPageState extends State<MisPartidosJugadorPage> {
   }
 
   Widget _buildPartidoCard(Partido partido) {
-    final esLocal = true; // Determinar si es local basado en el equipo del jugador
+    final esLocal = true;
     final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
 
     final now = DateTime.now();

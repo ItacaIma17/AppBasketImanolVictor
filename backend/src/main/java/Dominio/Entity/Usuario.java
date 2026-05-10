@@ -44,7 +44,6 @@ public class Usuario {
     @Column(length = 1000)
     private String refreshToken;
 
-    // RELACIONES CON ROLES ESPECÍFICOS
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Entrenador entrenador;
 
@@ -54,7 +53,6 @@ public class Usuario {
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Jugador jugador;
 
-    // Seguir equipo
     @ManyToMany
     @JoinTable(
             name = "usuario_equipos_seguidos",
@@ -63,7 +61,6 @@ public class Usuario {
     )
     private List<Equipo> listaEquiposSiguiendo = new ArrayList<>();
 
-    // Seguir jugadores
     @ManyToMany
     @JoinTable(
             name = "usuario_jugadores_seguidos",

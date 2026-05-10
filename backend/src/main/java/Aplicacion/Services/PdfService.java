@@ -22,15 +22,12 @@ public class PdfService {
     public byte[] generarActaPdf(ActaResponseDTO acta) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        // Crear el documento PDF
         PdfWriter writer = new PdfWriter(outputStream);
         PdfDocument pdfDoc = new PdfDocument(writer);
         Document document = new Document(pdfDoc);
 
-        // Crear fuente
         PdfFont font = PdfFontFactory.createFont();
 
-        // Título
         Paragraph titulo = new Paragraph("ACTA DE PARTIDO")
                 .setFont(font)
                 .setFontSize(20)
@@ -38,30 +35,26 @@ public class PdfService {
                 .setTextAlignment(TextAlignment.CENTER);
         document.add(titulo);
 
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new Paragraph(" "));
 
-        // Información del partido
         document.add(new Paragraph("Fecha: " + acta.getFechaActa().toString()).setFont(font));
         document.add(new Paragraph("Árbitro: " + acta.getArbitroNombre()).setFont(font));
         document.add(new Paragraph("Equipo Local: " + acta.getEquipoLocal()).setFont(font));
         document.add(new Paragraph("Equipo Visitante: " + acta.getEquipoVisitante()).setFont(font));
         document.add(new Paragraph("Resultado: " + acta.getResultadoLocal() + " - " + acta.getResultadoVisitante()).setFont(font));
 
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new Paragraph(" "));
 
-        // Tabla de eventos
         float[] columnWidths = {2, 3, 2, 2, 3};
         Table table = new Table(UnitValue.createPercentArray(columnWidths));
         table.setWidth(UnitValue.createPercentValue(100));
 
-        // Headers
         table.addHeaderCell(new Cell().add(new Paragraph("Minuto").setBold().setFont(font)));
         table.addHeaderCell(new Cell().add(new Paragraph("Equipo").setBold().setFont(font)));
         table.addHeaderCell(new Cell().add(new Paragraph("Jugador").setBold().setFont(font)));
         table.addHeaderCell(new Cell().add(new Paragraph("Tipo").setBold().setFont(font)));
         table.addHeaderCell(new Cell().add(new Paragraph("Descripción").setBold().setFont(font)));
 
-        // Eventos
         for (ActaResponseDTO.EventoResponseDTO evento : acta.getEventos()) {
             table.addCell(new Cell().add(new Paragraph(String.valueOf(evento.getMinuto())).setFont(font)));
             table.addCell(new Cell().add(new Paragraph(evento.getNombreEquipo()).setFont(font)));
@@ -72,14 +65,12 @@ public class PdfService {
 
         document.add(table);
 
-        // Observaciones
         if (acta.getObservaciones() != null && !acta.getObservaciones().isEmpty()) {
-            document.add(new Paragraph(" ")); // Espacio
+            document.add(new Paragraph(" "));
             document.add(new Paragraph("Observaciones:").setBold().setFont(font));
             document.add(new Paragraph(acta.getObservaciones()).setFont(font));
         }
 
-        // Cerrar documento
         document.close();
 
         return outputStream.toByteArray();

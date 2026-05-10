@@ -1,4 +1,3 @@
-// lib/models/partido.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -59,10 +58,6 @@ class Partido {
     this.jornada,
   });
 
-  // ============================================================
-  // MÉTODOS AUXILIARES
-  // ============================================================
-
   static int _toInt(dynamic value, {int defaultValue = 0}) {
     if (value == null) return defaultValue;
     if (value is int) return value;
@@ -79,21 +74,6 @@ class Partido {
     return null;
   }
 
-  // ============================================================
-  // PARSEO DE FECHAS
-  //
-  // Acepta los siguientes formatos (con o sin hora):
-  //   - "2026-04-23T14:00:00"      (ISO 8601)
-  //   - "2026-04-23T14:00:00.123Z" (ISO con milis y zona)
-  //   - "2026-04-23 14:00:00"      (ISO con espacio)
-  //   - "23/04/2026"               (dd/MM/yyyy)
-  //   - "23/04/2026 14:00"         (dd/MM/yyyy + hora opcional)
-  //   - "23-04-2026"               (dd-MM-yyyy)
-  // ============================================================
-
-  /// API pública para parsear fechas desde cualquier widget.
-  /// Devuelve `null` si el string no se puede parsear (en lugar de lanzar
-  /// `FormatException`), evitando los crashes de `DateTime.parse`.
   static DateTime? parseFecha(String fechaStr) => _parseDateTime(fechaStr);
 
   static DateTime? _parseDateTime(String fechaStr) {
@@ -101,19 +81,16 @@ class Partido {
     try {
       String clean = fechaStr.trim();
 
-      // Quitar zona/sufijo Z (no soportado por DateTime.parse cuando es timezone con offset)
       if (clean.contains('+')) clean = clean.split('+').first;
       if (clean.endsWith('Z')) clean = clean.substring(0, clean.length - 1);
 
-      // Recortar microsegundos por encima de los milisegundos
       if (clean.contains('.') && clean.contains('T')) {
         final parts = clean.split('.');
         if (parts.length >= 2) clean = parts[0];
       }
 
-      // Formato dd/MM/yyyy (con o sin hora detrás separada por espacio)
       if (clean.contains('/') && !clean.contains('T')) {
-        // Separar parte de fecha y parte de hora si existiese ("23/04/2026 14:00")
+
         String fechaPart = clean;
         String? horaPart;
         if (clean.contains(' ')) {
@@ -137,10 +114,9 @@ class Partido {
         }
       }
 
-      // Formato dd-MM-yyyy (sin la 'T' del ISO)
       if (clean.contains('-') && !clean.contains('T')) {
         final parts = clean.split(RegExp(r'[\s\-]'));
-        // ISO yyyy-MM-dd: parts[0].length == 4 → dejar a DateTime.parse
+
         if (parts.length >= 3 && parts[0].length <= 2) {
           final day = int.tryParse(parts[0]);
           final month = int.tryParse(parts[1]);
@@ -151,7 +127,6 @@ class Partido {
         }
       }
 
-      // ISO con espacio en lugar de T
       if (!clean.contains('T') && clean.contains(' ') &&
           RegExp(r'^\d{4}-').hasMatch(clean)) {
         clean = clean.replaceFirst(' ', 'T');
@@ -191,13 +166,9 @@ class Partido {
     }
   }
 
-  // ============================================================
-  // FROM JSON
-  // ============================================================
-
   factory Partido.fromJson(Map<String, dynamic> json) {
     if (kDebugMode) {
-      print('📦 Parseando partido: ${json['id']}');
+      print(' Parseando partido: ${json['id']}');
       print('   Local: ${json['nombreLocal']} vs Visitante: ${json['nombreVisitante']}');
     }
 
@@ -248,10 +219,6 @@ class Partido {
     );
   }
 
-  // ============================================================
-  // TO JSON
-  // ============================================================
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -272,10 +239,6 @@ class Partido {
     };
   }
 
-  // ============================================================
-  // GETTERS
-  // ============================================================
-
   bool get esProgramado => estado == 'PROGRAMADO';
   bool get esFinalizado => estado == 'FINALIZADO';
   bool get esEnCurso => estado == 'EN_CURSO';
@@ -287,9 +250,9 @@ class Partido {
 
   String get estadoTexto {
     switch (estado) {
-      case 'PROGRAMADO': return '📋 PROGRAMADO';
+      case 'PROGRAMADO': return ' PROGRAMADO';
       case 'EN_CURSO': return '⏳ EN CURSO';
-      case 'FINALIZADO': return '✅ FINALIZADO';
+      case 'FINALIZADO': return ' FINALIZADO';
       default: return estado;
     }
   }
@@ -303,12 +266,10 @@ class Partido {
     }
   }
 
-  /// Determina si el equipo dado es el local en este partido
   bool esLocalParaEquipo(int equipoId) {
     return equipoLocalId == equipoId;
   }
 
-  /// Devuelve el nombre del rival
   String getRival(int equipoId) {
     if (equipoLocalId == equipoId) {
       return nombreVisitante;
@@ -316,7 +277,6 @@ class Partido {
     return nombreLocal;
   }
 
-  /// Devuelve si el equipo tiene alineación presentada
   bool tieneAlineacionParaEquipo(int equipoId) {
     if (equipoLocalId == equipoId) {
       return tieneAlineacionLocal ?? false;

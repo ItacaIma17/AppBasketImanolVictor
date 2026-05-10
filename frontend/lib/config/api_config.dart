@@ -1,4 +1,3 @@
-// lib/config/app_config.dart
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -35,10 +34,6 @@ class AppConfig {
 
   static const int connectionTimeout = 30000;
   static const int receiveTimeout = 30000;
-
-  // ============================================================
-  // MÉTODOS HTTP GENÉRICOS
-  // ============================================================
 
   static Future<Map<String, String>> _getHeaders() async {
     final token = await AutenticacionService.getToken();
@@ -150,9 +145,7 @@ class AppConfig {
       } else if (response.statusCode == 401) {
         throw Exception('Sesión expirada. Por favor, inicia sesión nuevamente.');
       } else {
-        // ✅ FIX: incluir el código HTTP y, si está, el mensaje del backend.
-        // El antiguo "Error en la petición PUT" tapaba el motivo real (403,
-        // body de validación, etc.) y dificultaba el diagnóstico.
+
         String backendMsg = '';
         if (response.body.isNotEmpty) {
           try {
@@ -165,7 +158,7 @@ class AppConfig {
                   .toString();
             }
           } catch (_) {
-            // Body no es JSON, usar como texto plano
+
             backendMsg = response.body;
           }
         }
@@ -213,6 +206,5 @@ class AppConfig {
       rethrow;
     }
   }
-
 
 }

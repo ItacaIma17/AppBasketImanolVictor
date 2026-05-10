@@ -43,8 +43,6 @@ public class AdminService {
     private final PartidoRepository partidoRepository;
     private final EmailService emailService;
 
-    // ── PANEL RESUMEN ─────────────────────────────────────
-
     public AdminPanelInfoDTO obtenerResumen() {
         AdminPanelInfoDTO panel = new AdminPanelInfoDTO();
 
@@ -68,8 +66,6 @@ public class AdminService {
 
         return panel;
     }
-
-    // ── GESTIÓN DE USUARIOS ───────────────────────────────
 
     public List<UsuarioPerfilDTO> listarTodosUsuarios() {
         return userRepository.findAll()
@@ -115,7 +111,7 @@ public class AdminService {
         stats.put("partidosFinalizados", partidoRepository.countByEstado("FINALIZADO"));
         stats.put("partidosPendientes", partidoRepository.countByEstado("PROGRAMADO"));
 
-        log.info("📊 Estadísticas obtenidas: Usuarios={}, Equipos={}, Partidos={}",
+        log.info(" Estadísticas obtenidas: Usuarios={}, Equipos={}, Partidos={}",
                 stats.get("totalUsuarios"), stats.get("totalEquipos"), stats.get("totalPartidos"));
 
         return stats;
@@ -125,7 +121,6 @@ public class AdminService {
     public List<Map<String, Object>> obtenerActividadReciente() {
         List<Map<String, Object>> actividades = new ArrayList<>();
 
-        // Últimos usuarios registrados
         userRepository.findTop5ByOrderByIdDesc().forEach(user -> {
             Map<String, Object> actividad = new HashMap<>();
             actividad.put("accion", "Nuevo usuario registrado");
@@ -136,7 +131,6 @@ public class AdminService {
             actividades.add(actividad);
         });
 
-        // Últimos partidos programados
         partidoRepository.findTop5ByOrderByFechaDesc().forEach(partido -> {
             Map<String, Object> actividad = new HashMap<>();
             actividad.put("accion", "Partido programado");
@@ -149,7 +143,6 @@ public class AdminService {
 
         return actividades;
     }
-
 
     @Transactional
     public void bloquearUsuario(Long id) {
@@ -189,8 +182,6 @@ public class AdminService {
         userRepository.deleteById(id);
         log.info("Usuario eliminado: {}", usuario.getUsername());
     }
-
-    // ── GESTIÓN DE JUGADORES ──────────────────────────────
 
     public List<JugadorResponse> listarJugadoresSinEquipo() {
         return jugadorRepository.findByEquipoIsNull()
@@ -249,8 +240,6 @@ public class AdminService {
         });
     }
 
-    // ── GESTIÓN DE ENTRENADORES ───────────────────────────
-
     @Transactional
     public void asignarEntrenadorAEquipo(Long entrenadorId, Long equipoId) {
         Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
@@ -273,23 +262,18 @@ public class AdminService {
         }
     }
 
-
-// ── GESTIÓN DE ÁRBITROS (mejorada) ─────────────────────
-
     public List<ArbitroResponse> listarTodosArbitros() {
         return arbitroRepository.findAll().stream()
                 .map(ArbitroResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // Aplicacion/Services/AdminService.java
-
     public List<ArbitroResponse> listarArbitrosDisponibles() {
-        // El repositorio debe devolver List<Arbitro>, no List<ArbitroResponse>
+
         List<Arbitro> arbitros = arbitroRepository.findArbitrosSinPartidos();
 
         return arbitros.stream()
-                .map(ArbitroResponse::fromEntity)  // ← Ahora sí funciona
+                .map(ArbitroResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -303,7 +287,6 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        // Verificar que el partido no tenga ya un acta
         if (partido.getActaPartido() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Este partido ya tiene un acta finalizada");
@@ -343,11 +326,9 @@ public class AdminService {
         log.info("Árbitro desasignado del partido {}", partidoId);
     }
 
-    // ── GESTIÓN DE PARTIDOS ───────────────────────────────
-
     @Transactional
     public Partido crearPartido(Partido partido) {
-        // Validaciones básicas
+
         if (partido.getEquipoLocal() == null || partido.getEquipoVisitante() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los equipos son obligatorios");
         }
@@ -381,30 +362,20 @@ public class AdminService {
         log.info("Partido eliminado: {}", id);
     }
 
-    // ── RECORDATORIOS DE PARTIDOS ─────────────────────────
-
-    /**
-     * Envía recordatorio a todos los participantes de un partido:
-     * - Árbitro
-     * - Jugadores de ambos equipos
-     * - Entrenadores de ambos equipos
-     */
     @Transactional
     public void enviarRecordatorioPartido(Long partidoId) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        // Preparar DTO base con información del partido
         RecordatorioPartidoDTO dtoBase = new RecordatorioPartidoDTO();
-        dtoBase.setNombreRival(null); // Se seteará por cada usuario
+        dtoBase.setNombreRival(null);
         dtoBase.setFecha(partido.getFecha());
         dtoBase.setPabellon(partido.getPabellon());
         dtoBase.setDireccionPabellon(partido.getUbicacion());
 
         int emailsEnviados = 0;
 
-        // 1. Enviar al árbitro
         if (partido.getArbitro() != null) {
             RecordatorioPartidoDTO dtoArbitro = new RecordatorioPartidoDTO();
             dtoArbitro.setSendto(partido.getArbitro().getEmail());
@@ -424,25 +395,19 @@ public class AdminService {
             }
         }
 
-        // 2. Enviar a jugadores y entrenadores del equipo local
         emailsEnviados += enviarRecordatorioAEquipo(partido, partido.getEquipoLocal(), true);
 
-        // 3. Enviar a jugadores y entrenadores del equipo visitante
         emailsEnviados += enviarRecordatorioAEquipo(partido, partido.getEquipoVisitante(), false);
 
         log.info("Recordatorio de partido {} enviado a {} destinatarios", partidoId, emailsEnviados);
     }
 
-    /**
-     * Envía recordatorios a todos los miembros de un equipo
-     */
     private int enviarRecordatorioAEquipo(Partido partido, Equipo equipo, boolean esLocal) {
         int contador = 0;
         String nombreRival = esLocal ?
                 partido.getEquipoVisitante().getNombre() :
                 partido.getEquipoLocal().getNombre();
 
-        // Enviar al entrenador
         if (equipo.getEntrenador() != null) {
             RecordatorioPartidoDTO dtoEntrenador = new RecordatorioPartidoDTO();
             dtoEntrenador.setSendto(equipo.getEntrenador().getEmail());
@@ -461,7 +426,6 @@ public class AdminService {
             }
         }
 
-        // Enviar a jugadores
         if (equipo.getJugadores() != null) {
             for (Jugador jugador : equipo.getJugadores()) {
                 RecordatorioPartidoDTO dtoJugador = new RecordatorioPartidoDTO();
@@ -485,9 +449,6 @@ public class AdminService {
         return contador;
     }
 
-    /**
-     * Envía recordatorios para todos los partidos de un día específico
-     */
     public void enviarRecordatoriosPartidosDelDia(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         List<Partido> partidos = partidoRepository.findByFechaBetween(fechaInicio, fechaFin);
 
@@ -498,9 +459,6 @@ public class AdminService {
         log.info("Enviados recordatorios para {} partidos del día {}", partidos.size(), fechaInicio, fechaFin);
     }
 
-    /**
-     * Envía recordatorio solo al árbitro de un partido
-     */
     public void enviarRecordatorioArbitro(Long partidoId) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -530,9 +488,6 @@ public class AdminService {
         }
     }
 
-    /**
-     * Envía recordatorio a un equipo específico para un partido
-     */
     public void enviarRecordatorioAEquipo(Long partidoId, Long equipoId) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -552,8 +507,6 @@ public class AdminService {
         log.info("Recordatorio enviado a {} miembros del equipo {}", enviados, equipo.getNombre());
     }
 
-    // ── SANCIONES ─────────────────────────────────────────
-
     @Transactional
     public void sancionarJugador(SancionDTO dto) {
         Jugador jugador = jugadorRepository.findById(dto.getJugadorId())
@@ -567,7 +520,6 @@ public class AdminService {
                     dto.getPartidosSancion(),
                     dto.getMotivo());
 
-            // Email al entrenador también
             if (jugador.getEquipo() != null &&
                     jugador.getEquipo().getEntrenador() != null) {
                 emailService.enviarNotificacionSancionEntrenador(
@@ -585,12 +537,8 @@ public class AdminService {
                 dto.getPartidosSancion());
     }
 
-    // ── COMUNICADOS ───────────────────────────────────────
-
-    // ── COMUNICADOS ───────────────────────────────────────
-
     public void enviarComunicado(ComunicadoAdminDTO dto) {
-        // Caso 1: Envío a destinatarios específicos (lista de emails)
+
         if (dto.getDestinatarios() != null && !dto.getDestinatarios().isEmpty()) {
             dto.getDestinatarios().forEach(email -> {
                 try {
@@ -607,15 +555,14 @@ public class AdminService {
             return;
         }
 
-        // Caso 2: Envío por rol o a todos
         List<Usuario> destinatarios;
 
         if (dto.getRolDestino() == null || dto.getRolDestino().equalsIgnoreCase("TODOS")) {
-            // Enviar a todos los usuarios
+
             destinatarios = userRepository.findAll();
             log.info("Preparando envío masivo a TODOS los usuarios");
         } else {
-            // Enviar solo a un rol específico
+
             try {
                 Roles rol = Roles.valueOf(dto.getRolDestino().toUpperCase());
                 destinatarios = userRepository.findByRole(rol);
@@ -629,7 +576,6 @@ public class AdminService {
             }
         }
 
-        // Enviar emails a cada destinatario
         int exitosos = 0;
         int fallidos = 0;
 
@@ -651,8 +597,6 @@ public class AdminService {
         log.info("Comunicado enviado - Exitosos: {}, Fallidos: {}, Total: {}",
                 exitosos, fallidos, destinatarios.size());
     }
-
-    // ── PRIVADOS ──────────────────────────────────────────
 
     private Usuario findUsuario(Long id) {
         return userRepository.findById(id)

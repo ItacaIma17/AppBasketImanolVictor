@@ -7,3 +7,4 @@ public class AsignarEquipoDTO {
     private String codigoEntrenador;
     private Long equipoId;
 }
+

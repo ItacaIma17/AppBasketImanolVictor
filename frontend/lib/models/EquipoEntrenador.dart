@@ -1,4 +1,3 @@
-// lib/models/equipo_entrenador.dart
 import 'jugador.dart';
 
 class EquipoEntrenador {

@@ -41,7 +41,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
 
               Usuario usuario = snapshot.data!;
 
-              // Verificar si el usuario es árbitro
               final rolNormalizado = usuario.role;
               if (rolNormalizado != 'arbitro' && rolNormalizado != 'árbitro') {
                 return _buildNoValido();
@@ -55,7 +54,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Pantalla cuando no hay sesión iniciada
   Widget _buildSinSesion() {
     return Center(
       child: Column(
@@ -89,7 +87,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Pantalla cuando el usuario no es árbitro
   Widget _buildNoValido() {
     return Center(
       child: Column(
@@ -123,9 +120,8 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Pantalla principal de designaciones
   Widget _buildDesignaciones(Usuario usuario) {
-    // Datos de ejemplo - TODO: Cargar desde base de datos
+
     final designaciones = {
       'Jornada 1': [
         {
@@ -182,15 +178,13 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tarjeta informativa del árbitro (CENTRADA)
+
           _buildTarjetaArbitro(usuario),
           const SizedBox(height: 24),
 
-          // Resumen
           _buildResumen(designaciones),
           const SizedBox(height: 24),
 
-          // Designaciones por jornada
           if (designaciones.isEmpty)
             _buildSinDesignaciones()
           else
@@ -219,7 +213,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Tarjeta informativa del árbitro (CENTRADA)
   Widget _buildTarjetaArbitro(Usuario usuario) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -235,7 +228,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // CENTRADO
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 80,
@@ -255,7 +248,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
           const SizedBox(height: 16),
           Text(
             '${usuario.nombre} ${usuario.apellido}',
-            textAlign: TextAlign.center, // CENTRADO
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.blanco,
               fontSize: 20,
@@ -265,7 +258,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
           const SizedBox(height: 4),
           Text(
             'Árbitro',
-            textAlign: TextAlign.center, // CENTRADO
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.blanco.withOpacity(0.9),
               fontSize: 14,
@@ -277,7 +270,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Resumen de designaciones
   Widget _buildResumen(Map<String, List<Map<String, dynamic>>> designaciones) {
     int totalPartidos = 0;
     for (var jornada in designaciones.values) {
@@ -330,7 +322,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Estadística mini
   Widget _buildEstadisticaMini(String label, String valor, IconData icono) {
     return Expanded(
       child: Column(
@@ -358,7 +349,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Header de jornada
   Widget _buildHeaderJornada(String jornada) {
     return Row(
       children: [
@@ -387,7 +377,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Tarjeta de partido
   Widget _buildPartidoCard(Map<String, dynamic> partido) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -405,7 +394,7 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Equipos
+
           Row(
             children: [
               Expanded(
@@ -478,12 +467,10 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
 
           const SizedBox(height: 16),
 
-          // Separador
           Divider(color: Colors.grey[300]),
 
           const SizedBox(height: 12),
 
-          // Información adicional
           Row(
             children: [
               Expanded(
@@ -506,7 +493,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
 
           const SizedBox(height: 12),
 
-          // Pabellón
           _buildInfoItem(
             Icons.location_on,
             'Pabellón',
@@ -517,7 +503,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Widget auxiliar para items de información
   Widget _buildInfoItem(IconData icono, String label, String valor) {
     return Row(
       children: [
@@ -553,7 +538,6 @@ class _DesignacionesPageState extends State<DesignacionesPage> {
     );
   }
 
-  /// Sin designaciones
   Widget _buildSinDesignaciones() {
     return Center(
       child: Column(

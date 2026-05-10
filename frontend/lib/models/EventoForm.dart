@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -39,12 +37,12 @@ class _EventoFormState extends State<EventoForm> {
   ];
 
   final Map<String, String> _tiposDisplay = {
-    'CANASTA': '🏀 Canasta (2 puntos)',
-    'TIRO_3PUNTOS': '3️⃣ Triple (3 puntos)',
+    'CANASTA': ' Canasta (2 puntos)',
+    'TIRO_3PUNTOS': '3 Triple (3 puntos)',
     'TIRO_LIBRE': '⬜ Tiro Libre (1 punto)',
-    'FALTA': '⚠️ Falta',
-    'TECNICA': '📋 Falta Técnica',
-    'EXPULSION': '🚫 Expulsión',
+    'FALTA': ' Falta',
+    'TECNICA': ' Falta Técnica',
+    'EXPULSION': ' Expulsión',
   };
 
   @override
@@ -69,7 +67,6 @@ class _EventoFormState extends State<EventoForm> {
               ),
               const SizedBox(height: 20),
 
-              // Selección de equipo - CORREGIDO
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Equipo',
@@ -92,7 +89,6 @@ class _EventoFormState extends State<EventoForm> {
               ),
               const SizedBox(height: 16),
 
-              // Selección de jugador - CORREGIDO
               DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: const InputDecoration(
                   labelText: 'Jugador',
@@ -118,7 +114,6 @@ class _EventoFormState extends State<EventoForm> {
               ),
               const SizedBox(height: 16),
 
-              // Tipo de evento - CORREGIDO
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Tipo de Evento',
@@ -140,7 +135,6 @@ class _EventoFormState extends State<EventoForm> {
               ),
               const SizedBox(height: 16),
 
-              // Minuto
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: 'Minuto',
@@ -156,7 +150,6 @@ class _EventoFormState extends State<EventoForm> {
               ),
               const SizedBox(height: 16),
 
-              // Descripción (opcional)
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: 'Descripción (opcional)',

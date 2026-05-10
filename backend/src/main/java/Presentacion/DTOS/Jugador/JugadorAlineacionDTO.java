@@ -23,7 +23,6 @@ public class JugadorAlineacionDTO {
 
     private Boolean esTitular;
 
-    // Constructor para crear desde entidad Jugador
     public static JugadorAlineacionDTO fromJugador(Long jugadorId, String nombre, String apellido, Integer dorsal, String posicion) {
         return JugadorAlineacionDTO.builder()
                 .jugadorId(jugadorId)
@@ -34,7 +33,6 @@ public class JugadorAlineacionDTO {
                 .build();
     }
 
-    // Getters adicionales para compatibilidad
     public Long getJugadorId() {
         return jugadorId;
     }

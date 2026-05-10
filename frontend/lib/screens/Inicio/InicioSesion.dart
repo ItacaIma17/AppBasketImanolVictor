@@ -1,5 +1,3 @@
-// lib/screens/Inicio/InicioSesion.dart
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/screens/Admin/PanelAdminPage.dart';
@@ -45,7 +43,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // Logo + título
+
                 Center(
                   child: Column(
                     children: [
@@ -98,7 +96,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 40),
 
-                // Campo email
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
@@ -108,7 +105,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Campo contraseña
                 TextField(
                   controller: passCtrl,
                   obscureText: !mostrarPassword,
@@ -130,14 +126,13 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 10),
 
-                // Olvidaste contraseña
                 Align(
                   alignment: Alignment.centerRight,
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Implementar recuperación de contraseña
+
                       },
                       child: const Text(
                         "¿Olvidaste tu contraseña?",
@@ -149,7 +144,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Botón iniciar sesión
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: SizedBox(
@@ -179,7 +173,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Divisor
                 const Row(
                   children: [
                     Expanded(child: Divider(color: AppColors.blancoOpacidad54)),
@@ -196,7 +189,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Boton Google
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: _socialButton(
@@ -205,11 +197,10 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                     onPressed: () {
                     },
                   ),
-                ),           
+                ),
 
                 const SizedBox(height: 30),
 
-                // Registro
                 Center(
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -234,7 +225,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
 
                 const SizedBox(height: 20),
 
-                // Botón de invitado
                 Center(
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -300,9 +290,8 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     );
   }
 
-  /// Manejar el inicio de sesión con redirección por rol
   void _handleLogin() async {
-    // Validaciones básicas
+
     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -316,21 +305,20 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Intentar iniciar sesión
+
       bool loginExitoso = await AutenticacionService.login(
         emailCtrl.text,
         passCtrl.text,
       );
 
       if (loginExitoso && mounted) {
-        // Obtener el usuario actual después del login
+
         final usuario = AutenticacionService.usuarioActual;
 
-        print('✅ Login exitoso para: ${usuario?.username}');
-        print('🎭 Rol del usuario: ${usuario?.role}');
-        print('👑 Es administrador: ${usuario?.isAdmin}');
+        print(' Login exitoso para: ${usuario?.username}');
+        print(' Rol del usuario: ${usuario?.role}');
+        print(' Es administrador: ${usuario?.isAdmin}');
 
-        // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Inicio de sesión exitoso'),
@@ -339,34 +327,33 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
           ),
         );
 
-        // Redirigir según el rol
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
           if (usuario?.isAdmin == true) {
-            // Redirigir al Panel de Administrador
-            print('👑 Redirigiendo a PanelAdminPage');
+
+            print(' Redirigiendo a PanelAdminPage');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const PanelAdminPage()),
             );
           } else if (usuario?.isEntrenador == true) {
-            // Redirigir al Panel de Entrenador
-            print('🏆 Redirigiendo a PanelEntrenadorPage');
+
+            print(' Redirigiendo a PanelEntrenadorPage');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const PanelEntrenadorPage()),
             );
           } else if (usuario?.isJugador == true) {
-            // Redirigir al Panel de Jugador
-            print('🏀 Redirigiendo a PanelJugadorPage');
+
+            print(' Redirigiendo a PanelJugadorPage');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const InicioPage()),
             );
           } else {
-            // Redirigir a Inicio normal
-            print('👤 Redirigiendo a InicioPage');
+
+            print(' Redirigiendo a InicioPage');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const InicioPage()),
@@ -382,7 +369,7 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
         );
       }
     } catch (e) {
-      print('❌ Error en login: $e');
+      print(' Error en login: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

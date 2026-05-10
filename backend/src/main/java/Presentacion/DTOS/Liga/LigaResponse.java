@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Liga/LigaResponse.java
 package Presentacion.DTOS.Liga;
 
 import Dominio.Entity.Liga;

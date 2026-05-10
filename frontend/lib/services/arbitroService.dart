@@ -1,5 +1,3 @@
-// lib/services/arbitro_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -29,14 +27,6 @@ class ArbitroService {
     };
   }
 
-  // ============================================================
-  // OBTENER ÁRBITROS
-  // ============================================================
-
-  // Listar todos los árbitros
-  // lib/services/arbitro_service.dart - VERIFICAR ESTOS MÉTODOS
-
-// Listar todos los árbitros
   static Future<List<Arbitro>> listarArbitros() async {
     try {
       final response = await http.get(
@@ -56,7 +46,6 @@ class ArbitroService {
     }
   }
 
-// Listar árbitros disponibles (sin partidos asignados)
   static Future<List<Arbitro>> listarArbitrosDisponibles() async {
     try {
       final response = await http.get(
@@ -76,7 +65,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener árbitro por ID
   static Future<Arbitro> obtenerArbitroPorId(int id) async {
     try {
       final response = await http.get(
@@ -95,7 +83,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener árbitro por username
   static Future<Arbitro> obtenerArbitroPorUsername(String username) async {
     try {
       final response = await http.get(
@@ -114,13 +101,6 @@ class ArbitroService {
     }
   }
 
-
-
-  // ============================================================
-  // CREAR, ACTUALIZAR, ELIMINAR ÁRBITROS
-  // ============================================================
-
-  // Crear nuevo árbitro (solo admin)
   static Future<Arbitro> crearArbitro(Map<String, dynamic> arbitroData) async {
     try {
       final response = await http.post(
@@ -144,7 +124,6 @@ class ArbitroService {
     }
   }
 
-  // Actualizar árbitro
   static Future<Arbitro> actualizarArbitro(int id, Map<String, dynamic> arbitroData) async {
     try {
       final response = await http.put(
@@ -165,7 +144,6 @@ class ArbitroService {
     }
   }
 
-  // Eliminar árbitro (solo admin)
   static Future<void> eliminarArbitro(int id) async {
     try {
       final response = await http.delete(
@@ -183,7 +161,6 @@ class ArbitroService {
     }
   }
 
-  // Cambiar estado del árbitro (activar/desactivar)
   static Future<void> cambiarEstadoArbitro(int id, bool activo) async {
     try {
       final response = await http.put(
@@ -205,11 +182,6 @@ class ArbitroService {
     }
   }
 
-  // ============================================================
-  // PARTIDOS ASIGNADOS
-  // ============================================================
-
-  // Obtener partidos asignados al árbitro autenticado
   static Future<List<Partido>> getMisPartidos() async {
     try {
       final response = await http.get(
@@ -232,7 +204,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener próximos partidos del árbitro
   static Future<List<Partido>> getProximosPartidos() async {
     try {
       final response = await http.get(
@@ -252,7 +223,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener partidos finalizados del árbitro
   static Future<List<Partido>> getPartidosFinalizados() async {
     try {
       final response = await http.get(
@@ -272,7 +242,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener detalle de un partido específico
   static Future<Partido> getPartidoById(int partidoId) async {
     try {
       final response = await http.get(
@@ -291,13 +260,6 @@ class ArbitroService {
     }
   }
 
-  // ============================================================
-  // ALINEACIONES
-  // ============================================================
-
-  // lib/services/arbitro_service.dart - ACTUALIZAR ESTE MÉTODO
-
-  /// Obtener alineaciones de un partido (formato simple para compatibilidad)
   static Future<Map<String, dynamic>> getAlineacionesPartido(int partidoId) async {
     try {
       final response = await http.get(
@@ -329,11 +291,6 @@ class ArbitroService {
     }
   }
 
-  // ============================================================
-  // ACTAS
-  // ============================================================
-
-  // Verificar si el árbitro puede editar un acta
   static Future<bool> puedeEditarActa(int actaId) async {
     try {
       final response = await http.get(
@@ -352,11 +309,6 @@ class ArbitroService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS
-  // ============================================================
-
-  // Obtener estadísticas del árbitro
   static Future<Map<String, dynamic>> getEstadisticas() async {
     try {
       final response = await http.get(
@@ -375,11 +327,6 @@ class ArbitroService {
     }
   }
 
-  // ============================================================
-  // ASIGNACIONES (ADMIN)
-  // ============================================================
-
-  // Asignar árbitro a un partido (solo admin)
   static Future<void> asignarArbitroAPartido(int partidoId, int arbitroId) async {
     try {
       final response = await http.put(
@@ -397,7 +344,6 @@ class ArbitroService {
     }
   }
 
-  // Desasignar árbitro de un partido (solo admin)
   static Future<void> desasignarArbitro(int partidoId) async {
     try {
       final response = await http.delete(
@@ -415,7 +361,6 @@ class ArbitroService {
     }
   }
 
-  // Obtener partidos sin árbitro asignado (solo admin)
   static Future<List<Partido>> getPartidosSinArbitro() async {
     try {
       final response = await http.get(
@@ -435,23 +380,6 @@ class ArbitroService {
     }
   }
 
-
-
-  // lib/services/arbitro_service.dart - AÑADIR ESTOS MÉTODOS
-
-  // ============================================================
-  // ALINEACIONES PARA ACTA (ARBITRO)
-  // ============================================================
-
-  /// Obtener alineaciones de un partido para el acta (con estructura completa).
-  ///
-  /// El backend (`AlineacionesPartidoDTO`) devuelve:
-  ///   { partidoId, equipoLocal, equipoVisitante,
-  ///     alineacionLocal: AlineacionResponseDTO,
-  ///     alineacionVisitante: AlineacionResponseDTO,
-  ///     ambasPresentadas, ... }
-  /// y cada jugador trae los campos `jugadorId, nombre, apellido, dorsal,
-  /// posicion, titular` (NO `nombreJugador`).
   static Future<Map<String, dynamic>> getAlineacionesParaActa(int partidoId) async {
     try {
       final response = await http.get(
@@ -465,9 +393,8 @@ class ArbitroService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // ✅ FIX: leer `equipoLocal`/`equipoVisitante` (no `*Nombre`).
         final nombreLocal = (data['equipoLocal'] ??
-                data['equipoLocalNombre'] ?? // compat por si algún build viejo
+                data['equipoLocalNombre'] ??
                 'Local')
             .toString();
         final nombreVisitante = (data['equipoVisitante'] ??
@@ -489,17 +416,11 @@ class ArbitroService {
     }
   }
 
-  /// Parsear una alineación individual.
-  ///
-  /// Devuelve un mapa con `nombreEquipo`, `jugadores` (titulares + suplentes
-  /// concatenados con flag `titular`) y `confirmada`.
   static Map<String, dynamic>? _parseAlineacion(dynamic alineacion, String nombreEquipo) {
     if (alineacion == null) return null;
 
     String _nombreCompleto(Map j) {
-      // El backend serializa el JugadorAlineacionRequestDTO con `nombre` +
-      // `apellido`. Mantenemos compatibilidad con `nombreJugador` por si
-      // se llama desde otra ruta antigua.
+
       final nombre = (j['nombre'] ?? j['nombreJugador'] ?? '').toString().trim();
       final apellido = (j['apellido'] ?? '').toString().trim();
       if (apellido.isEmpty) return nombre;
@@ -514,7 +435,7 @@ class ArbitroService {
       jugadores.add({
         'jugadorId': raw['jugadorId'],
         'nombre': _nombreCompleto(raw),
-        'nombreJugador': _nombreCompleto(raw), // alias para compatibilidad
+        'nombreJugador': _nombreCompleto(raw),
         'dorsal': raw['dorsal'],
         'posicion': raw['posicion'],
         'titular': true,
@@ -541,8 +462,6 @@ class ArbitroService {
     };
   }
 
-
-  /// Confirmar las alineaciones de ambos equipos (árbitro)
   static Future<Map<String, dynamic>> confirmarAlineaciones(int partidoId) async {
     try {
       final response = await http.post(
@@ -562,7 +481,6 @@ class ArbitroService {
     }
   }
 
-  /// Verificar estado de alineaciones del partido
   static Future<Map<String, dynamic>> estadoAlineaciones(int partidoId) async {
     try {
       final response = await http.get(
@@ -584,7 +502,6 @@ class ArbitroService {
     }
   }
 
-  /// Verificar si un partido tiene alineaciones de ambos equipos
   static Future<bool> tieneAlineacionesCompletas(int partidoId) async {
     try {
       final alineaciones = await getAlineacionesParaActa(partidoId);

@@ -43,13 +43,11 @@ class _TiendaPageState extends State<TiendaPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Carrito arriba a la derecha
+
               _buildCarritoIcon(cantidadTotal),
 
-              // Filtro por categorías
               _buildCategorias(),
 
-              // Contenido
               Expanded(
                 child: _productos.isEmpty
                     ? _buildEstadoVacio()
@@ -62,7 +60,6 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 
-  /// Icono de carrito (separado del header original)
   Widget _buildCarritoIcon(int cantidadTotal) {
     return Container(
       alignment: Alignment.centerRight,
@@ -111,7 +108,6 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 
-  /// Filtro de categorías
   Widget _buildCategorias() {
     return Container(
       height: 50,
@@ -157,7 +153,6 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 
-  /// Lista de productos
   Widget _buildListaProductos() {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -175,7 +170,6 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 
-  /// Card de producto
   Widget _buildProductoCard(Map<String, dynamic> producto) {
     return Container(
       decoration: BoxDecoration(
@@ -240,7 +234,6 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 
-  /// Estado vacío
   Widget _buildEstadoVacio() {
     return Center(
       child: SingleChildScrollView(
@@ -447,3 +440,4 @@ class _TiendaPageState extends State<TiendaPage> {
     );
   }
 }
+

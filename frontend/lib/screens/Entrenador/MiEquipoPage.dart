@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/MiEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/EquipoEntrenador.dart';
@@ -28,12 +27,6 @@ class _MiEquipoPageState extends State<MiEquipoPage> {
     _cargarDatos();
   }
 
-  // lib/screens/Entrenador/MiEquipoPage.dart
-
-  // lib/screens/Entrenador/MiEquipoPage.dart
-
-  // lib/screens/Entrenador/MiEquipoPage.dart
-
   Future<void> _cargarDatos() async {
     setState(() {
       _isLoading = true;
@@ -41,19 +34,19 @@ class _MiEquipoPageState extends State<MiEquipoPage> {
     });
 
     try {
-      // Obtener información del equipo del entrenador
+
       final equipoData = await EntrenadorService.obtenerMiEquipo();
       final equipo = EquipoEntrenador.fromJson(equipoData);
 
       if (equipo.tieneEquipo) {
-        //  Usar el endpoint de equipos que sí funciona
+
         final jugadores = await EquipoService.getJugadoresEquipo(equipo.equipoId);
         setState(() {
           _miEquipo = equipo;
           _jugadores = jugadores;
           _isLoading = false;
         });
-        print('✅ Cargados ${jugadores.length} jugadores para ${equipo.nombreEquipo}');
+        print(' Cargados ${jugadores.length} jugadores para ${equipo.nombreEquipo}');
       } else {
         setState(() {
           _error = "No tienes un equipo asignado";
@@ -61,7 +54,7 @@ class _MiEquipoPageState extends State<MiEquipoPage> {
         });
       }
     } catch (e) {
-      print('❌ Error cargando datos: $e');
+      print(' Error cargando datos: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;

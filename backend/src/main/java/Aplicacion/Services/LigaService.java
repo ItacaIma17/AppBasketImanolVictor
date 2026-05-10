@@ -1,4 +1,3 @@
-// Aplicacion/Services/LigaService.java
 package Aplicacion.Services;
 
 import Dominio.Entity.Liga;
@@ -23,7 +22,7 @@ public class LigaService {
 
     @Transactional
     public LigaResponse crearLiga(LigaRequest dto) {
-        log.info("📝 Creando liga: {}", dto.getNombreLiga());
+        log.info(" Creando liga: {}", dto.getNombreLiga());
 
         if (dto.getNombreLiga() == null || dto.getNombreLiga().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre de la liga es obligatorio");
@@ -35,14 +34,14 @@ public class LigaService {
 
         Liga liga = dto.toEntity();
         Liga saved = ligaRepository.save(liga);
-        log.info("✅ Liga creada con ID: {}", saved.getId());
+        log.info(" Liga creada con ID: {}", saved.getId());
 
         return LigaResponse.fromEntity(saved);
     }
 
     @Transactional(readOnly = true)
     public List<LigaResponse> listarTodasLigas() {
-        log.info("📋 Listando todas las ligas");
+        log.info(" Listando todas las ligas");
         return ligaRepository.findAll().stream()
                 .map(LigaResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -50,7 +49,7 @@ public class LigaService {
 
     @Transactional(readOnly = true)
     public LigaResponse obtenerLigaPorId(Long id) {
-        log.info("🔍 Obteniendo liga con ID: {}", id);
+        log.info(" Obteniendo liga con ID: {}", id);
         Liga liga = ligaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Liga no encontrada"));
         return LigaResponse.fromEntity(liga);
@@ -58,7 +57,7 @@ public class LigaService {
 
     @Transactional(readOnly = true)
     public LigaResponse obtenerLigaPorNombre(String nombre) {
-        log.info("🔍 Obteniendo liga por nombre: {}", nombre);
+        log.info(" Obteniendo liga por nombre: {}", nombre);
         Liga liga = ligaRepository.findByNombreLiga(nombre)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Liga no encontrada"));
         return LigaResponse.fromEntity(liga);
@@ -66,7 +65,7 @@ public class LigaService {
 
     @Transactional
     public LigaResponse actualizarLiga(Long id, LigaRequest dto) {
-        log.info("✏️ Actualizando liga ID: {}", id);
+        log.info(" Actualizando liga ID: {}", id);
 
         Liga liga = ligaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Liga no encontrada"));
@@ -92,20 +91,20 @@ public class LigaService {
         }
 
         Liga updated = ligaRepository.save(liga);
-        log.info("✅ Liga actualizada: {}", updated.getNombreLiga());
+        log.info(" Liga actualizada: {}", updated.getNombreLiga());
 
         return LigaResponse.fromEntity(updated);
     }
 
     @Transactional
     public void eliminarLiga(Long id) {
-        log.info("🗑️ Eliminando liga ID: {}", id);
+        log.info(" Eliminando liga ID: {}", id);
 
         if (!ligaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Liga no encontrada");
         }
 
         ligaRepository.deleteById(id);
-        log.info("✅ Liga eliminada con ID: {}", id);
+        log.info(" Liga eliminada con ID: {}", id);
     }
 }

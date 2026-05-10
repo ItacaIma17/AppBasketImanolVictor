@@ -31,10 +31,6 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ─────────────────────────────
-    // GENERACIÓN
-    // ─────────────────────────────
-
     public String generateToken(String username, String role, String email) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpiration);
@@ -43,7 +39,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(username)
-                .claim("role", roleWithPrefix)  // ✅ Cambiado de "rol" a "role"
+                .claim("role", roleWithPrefix)
                 .claim("email", email)
                 .issuedAt(now)
                 .expiration(expiry)
@@ -61,7 +57,7 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(String username) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + 604800000); // 7 días
+        Date expiry = new Date(now.getTime() + 604800000);
 
         return Jwts.builder()
                 .subject(username)
@@ -75,12 +71,8 @@ public class JwtTokenProvider {
         return generateRefreshToken(usuario.getUsername());
     }
 
-    // ─────────────────────────────
-    // PARSEO - CORREGIDO
-    // ─────────────────────────────
-
     public Claims extractClaims(String token) {
-        // ✅ CORREGIDO: usar parser() en lugar de parse()
+
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -100,22 +92,18 @@ public class JwtTokenProvider {
     public String getRoleFromToken(String token) {
         try {
             Claims claims = extractClaims(token);
-            // ✅ Buscar primero "role", luego "rol"
+
             String role = claims.get("role", String.class);
             if (role == null) {
                 role = claims.get("rol", String.class);
             }
-            log.info("📝 Rol extraído del token: {}", role);
+            log.info(" Rol extraído del token: {}", role);
             return role;
         } catch (Exception e) {
             log.error("Error obteniendo role del token: {}", e.getMessage());
             return null;
         }
     }
-
-    // ─────────────────────────────
-    // VALIDACIÓN
-    // ─────────────────────────────
 
     public boolean validateToken(String token) {
         try {

@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/ProximosPartidosPage.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -10,7 +9,7 @@ import '../../services/partidoService.dart';
 import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
 import 'PresentarAlinecionPage.dart';
-// ✅ FIX: abrir detalle de partido desde la lista filtrada del entrenador.
+
 import '../DetallesPartido.dart';
 
 class ProximosPartidosPage extends StatefulWidget {
@@ -24,14 +23,9 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
   List<Partido> _partidos = [];
   EquipoEntrenador? _miEquipo;
   bool _isLoading = true;
-  String _filtro = 'PROXIMOS'; // PROXIMOS, TODOS, FINALIZADOS
+  String _filtro = 'PROXIMOS';
   String? _error;
 
-  // ============================================================
-  // FUNCIONES AUXILIARES PARA FECHAS
-  // ============================================================
-
-  /// Convierte fecha dd/MM/yyyy a DateTime de forma segura
   DateTime? _parseFecha(String fechaStr) {
     if (fechaStr.isEmpty) return null;
     try {
@@ -49,7 +43,6 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
     }
   }
 
-  /// Compara dos fechas para ordenar
   int _compareFechas(String fechaA, String fechaB) {
     final dateA = _parseFecha(fechaA);
     final dateB = _parseFecha(fechaB);
@@ -252,7 +245,6 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
     final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
     final esLocalJuego = esLocal;
 
-    // Parsear fecha de forma segura
     final fechaParsed = _parseFecha(partido.fecha);
     final now = DateTime.now();
     final nowSinHora = DateTime(now.year, now.month, now.day);
@@ -285,19 +277,16 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
       estadoIcono = Icons.event;
     }
 
-    // Determinar si tiene alineación presentada
     final tieneAlineacion = esLocal
         ? partido.tieneAlineacionLocal ?? false
         : partido.tieneAlineacionVisitante ?? false;
 
-    // Usar fecha directamente
     final fechaMostrar = partido.fecha;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      // ✅ Tarjeta clicable -> DetallePartidoPage. El botón "Presentar"
-      // sigue funcionando porque consume su propio tap.
+
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.push(
@@ -309,7 +298,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabecera
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -336,7 +325,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
               ],
             ),
             const SizedBox(height: 12),
-            // Fecha y hora
+
             Row(
               children: [
                 const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
@@ -374,7 +363,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
               ],
             ),
             const SizedBox(height: 12),
-            // Estado de alineación
+
             if (partido.estado != 'FINALIZADO' && !isPast)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -421,7 +410,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
                   ],
                 ),
               ),
-            // Resultado si está finalizado
+
             if (partido.estado == 'FINALIZADO')
               Container(
                 margin: const EdgeInsets.only(top: 12),
@@ -445,7 +434,7 @@ class _ProximosPartidosPageState extends State<ProximosPartidosPage> {
           ],
         ),
       ),
-      ), // cierra InkWell del FIX detalle-partido
+      ),
     );
   }
 }

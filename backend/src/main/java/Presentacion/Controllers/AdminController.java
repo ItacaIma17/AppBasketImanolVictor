@@ -34,16 +34,12 @@ public class AdminController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
-    // ── PANEL RESUMEN ─────────────────────────────────────
-
     @GetMapping("/panel")
     public ResponseEntity<AdminPanelInfoDTO> panel(
             HttpServletRequest request) {
         requireAdmin(request);
         return ResponseEntity.ok(adminService.obtenerResumen());
     }
-
-    // ── USUARIOS ──────────────────────────────────────────
 
     @GetMapping("/usuarios")
     public ResponseEntity<List<UsuarioPerfilDTO>> listarUsuarios(
@@ -102,20 +98,17 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-
     @GetMapping("/estadisticas")
     public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
-        log.info("📊 Obteniendo estadísticas del dashboard");
+        log.info(" Obteniendo estadísticas del dashboard");
         return ResponseEntity.ok(adminService.obtenerEstadisticas());
     }
 
     @GetMapping("/actividad-reciente")
     public ResponseEntity<List<Map<String, Object>>> obtenerActividadReciente() {
-        log.info("📋 Obteniendo actividad reciente");
+        log.info(" Obteniendo actividad reciente");
         return ResponseEntity.ok(adminService.obtenerActividadReciente());
     }
-
-    // ── JUGADORES ─────────────────────────────────────────
 
     @GetMapping("/jugadores/sin-equipo")
     public ResponseEntity<List<JugadorResponse>> sinEquipo(
@@ -144,8 +137,6 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    // ── ENTRENADORES ──────────────────────────────────────
-
     @PutMapping("/entrenadores/{entrenadorId}/equipo/{equipoId}")
     public ResponseEntity<Void> asignarEntrenador(
             @PathVariable Long entrenadorId,
@@ -156,8 +147,6 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    // ── ÁRBITROS ──────────────────────────────────────────
-
     @PutMapping("/arbitros/{arbitroId}/partido/{partidoId}")
     public ResponseEntity<Void> asignarArbitro(
             @RequestBody AsignarArbitroDTO asignarArbitro,
@@ -166,8 +155,6 @@ public class AdminController {
         adminService.asignarArbitroAPartido( asignarArbitro);
         return ResponseEntity.ok().build();
     }
-
-    // ── SANCIONES ─────────────────────────────────────────
 
     @PostMapping("/sanciones")
     public ResponseEntity<Void> sancionar(
@@ -178,8 +165,6 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    // ── COMUNICADOS ───────────────────────────────────────
-
     @PostMapping("/comunicados")
     public ResponseEntity<Void> comunicado(
             @RequestBody ComunicadoAdminDTO dto,
@@ -188,8 +173,6 @@ public class AdminController {
         adminService.enviarComunicado(dto);
         return ResponseEntity.ok().build();
     }
-
-    // ── PRIVADO ───────────────────────────────────────────
 
     private void requireAdmin(HttpServletRequest request) {
         String token = jwtTokenProvider.getTokenFromRequest(request);

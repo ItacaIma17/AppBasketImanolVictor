@@ -1,4 +1,3 @@
-// lib/models/role.dart
 enum Role {
   USUARIO,
   ENTRENADOR,

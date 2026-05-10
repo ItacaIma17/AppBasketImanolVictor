@@ -19,7 +19,7 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  // Variable para forzar refresco del FutureBuilder
+
   int _refreshKey = 0;
 
   @override
@@ -30,7 +30,7 @@ class _PerfilPageState extends State<PerfilPage> {
 
   void _cargarUsuario() {
     setState(() {
-      _refreshKey++; // Cambiar la key para forzar reconstrucción
+      _refreshKey++;
     });
   }
 
@@ -46,7 +46,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         child: SafeArea(
           child: FutureBuilder<Usuario?>(
-            key: ValueKey(_refreshKey), // ← AÑADIDO: key para refrescar
+            key: ValueKey(_refreshKey),
             future: AutenticacionService.obtenerUsuarioActual(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -130,11 +130,10 @@ class _PerfilPageState extends State<PerfilPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar y nombre (CENTRADO)
+
           _buildHeaderPerfil(usuario),
           const SizedBox(height: 30),
 
-          // Información personal
           _buildSeccion(
             titulo: 'Información Personal',
             children: [
@@ -165,7 +164,6 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 30),
 
-          // Rol e información adicional
           _buildSeccion(
             titulo: 'Información de Cuenta',
             children: [
@@ -186,7 +184,6 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 30),
 
-          // Estadísticas
           _buildSeccion(
             titulo: 'Mis Favoritos',
             children: [
@@ -234,7 +231,6 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SizedBox(height: 30),
 
-          // SECCIÓN DE ACCIONES (NUEVA)
           _buildSeccion(
             titulo: 'Acciones',
             children: [
@@ -251,7 +247,7 @@ class _PerfilPageState extends State<PerfilPage> {
                     MaterialPageRoute(builder: (context) => const EditarPerfilPage()),
                   );
                   if (result == true) {
-                    _cargarUsuario(); // Recargar perfil si hubo cambios
+                    _cargarUsuario();
                   }
                 },
               ),
@@ -444,7 +440,6 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  // CORREGIDO: recibe Role en lugar de String
   IconData _getIconoRol(Role rol) {
     switch (rol) {
       case Role.JUGADOR:

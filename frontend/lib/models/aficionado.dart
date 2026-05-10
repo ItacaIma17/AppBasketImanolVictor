@@ -15,10 +15,9 @@ class Aficionado {
     required this.telefono,
   });
 
-
-
   @override
   String toString() {
     return 'Aficionado --> DNI: $dni, nombre: $nombre, edad: $edad, email: $email, contraseña: $contrasenya, teléfono: $telefono';
   }
 }
+

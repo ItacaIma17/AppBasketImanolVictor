@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Equipo/CrearEquipoDTO.java
 package Presentacion.DTOS.Equipo;
 
 import lombok.Data;

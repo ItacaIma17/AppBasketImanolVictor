@@ -1,6 +1,3 @@
-// lib/screens/arbitros/MisPartidosArbitroPage.dart
-// Pantalla de partidos asignados al árbitro — versión mejorada con datos reales
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -26,11 +23,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
   bool _cargando = true;
   String? _error;
 
-  // ============================================================
-  // FUNCIONES AUXILIARES PARA FECHAS
-  // ============================================================
-
-  /// Convierte fecha dd/MM/yyyy a DateTime de forma segura
   DateTime? _parseFecha(String fechaStr) {
     if (fechaStr.isEmpty) return null;
     try {
@@ -47,7 +39,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
     }
   }
 
-  /// Convierte hora HH:mm a DateTime (para comparar)
   DateTime? _parseHoraConFecha(String fechaStr, String horaStr) {
     final fecha = _parseFecha(fechaStr);
     if (fecha == null) return null;
@@ -93,7 +84,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
         .where((p) => p.estado == 'PROGRAMADO' || p.estado == 'EN_CURSO')
         .toList();
 
-    // Ordenar por fecha y hora
     lista.sort((a, b) {
       final fechaHoraA = _parseHoraConFecha(a.fecha, a.hora);
       final fechaHoraB = _parseHoraConFecha(b.fecha, b.hora);
@@ -111,7 +101,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
         .where((p) => p.estado == 'FINALIZADO')
         .toList();
 
-    // Ordenar por fecha más reciente primero
     lista.sort((a, b) {
       final fechaA = _parseFecha(a.fecha);
       final fechaB = _parseFecha(b.fecha);
@@ -282,7 +271,7 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
       ),
       child: Column(
         children: [
-          // Cabecera estado
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -327,12 +316,11 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
             ),
           ),
 
-          // Cuerpo del partido
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-                // Equipos y resultado
+
                 Row(
                   children: [
                     Expanded(
@@ -356,7 +344,7 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold),
                           ),
-                        // Mostrar fecha y hora correctamente
+
                         Text(
                           '${partido.fecha} · ${partido.hora}',
                           style: const TextStyle(
@@ -389,7 +377,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
                   ),
                 ],
 
-                // Botones de acción
                 const SizedBox(height: 12),
                 _buildBotonesAccion(partido),
               ],
@@ -435,7 +422,7 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
       runSpacing: 8,
       alignment: WrapAlignment.center,
       children: [
-        // Confirmar alineaciones (disponible si no está finalizado)
+
         if (!esFinalizado)
           _buildBotonAccion(
             icono: Icons.checklist,
@@ -450,7 +437,6 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
             ).then((_) => _cargarPartidos()),
           ),
 
-        // Crear/subir acta
         _buildBotonAccion(
           icono: Icons.description_outlined,
           label: esFinalizado ? 'Ver Acta' : 'Subir Acta',

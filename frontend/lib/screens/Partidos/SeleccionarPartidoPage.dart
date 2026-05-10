@@ -1,4 +1,3 @@
-// lib/screens/Arbitro/SeleccionarPartidoPage.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -65,7 +64,6 @@ class _SeleccionarPartidoPageState extends State<SeleccionarPartidoPage> {
                         '${partido.nombreLocal} vs ${partido.nombreVisitante}',
                       ),
 
-                      // ⬇️ FECHA + HORA (tu modelo usa Strings)
                       subtitle: Text(
                         '${partido.fecha} ${partido.hora}',
                       ),

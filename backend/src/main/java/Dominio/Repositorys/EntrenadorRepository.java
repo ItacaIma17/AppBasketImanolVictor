@@ -1,4 +1,3 @@
-// Dominio/Repositorys/EntrenadorRepository.java
 package Dominio.Repositorys;
 
 import Dominio.Entity.Entrenador;
@@ -38,6 +37,5 @@ public interface EntrenadorRepository extends JpaRepository<Entrenador, Long> {
 
     @Query("SELECT e FROM Entrenador e WHERE e.usuario.id = :usuarioId")
     Optional<Entrenador> findByUsuarioId(@Param("usuarioId") Long usuarioId);
-
 
 }

@@ -1,5 +1,3 @@
-// lib/services/jugador_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -28,11 +26,6 @@ class JugadorService {
     };
   }
 
-  // ============================================================
-  // LISTAR JUGADORES
-  // ============================================================
-
-  // Listar todos los jugadores
   static Future<List<Jugador>> listarJugadores() async {
     try {
       final response = await http.get(
@@ -55,7 +48,6 @@ class JugadorService {
     }
   }
 
-  // Listar jugadores por equipo
   static Future<List<Jugador>> listarJugadoresPorEquipo(int equipoId) async {
     try {
       final response = await http.get(
@@ -75,7 +67,6 @@ class JugadorService {
     }
   }
 
-  // Listar jugadores sin equipo
   static Future<List<Jugador>> listarJugadoresSinEquipo() async {
     try {
       final response = await http.get(
@@ -95,7 +86,6 @@ class JugadorService {
     }
   }
 
-  // Listar jugadores destacados
   static Future<List<Jugador>> listarJugadoresDestacados() async {
     try {
       final response = await http.get(
@@ -115,11 +105,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // OBTENER JUGADOR
-  // ============================================================
-
-  // Obtener jugador por ID
   static Future<Jugador> obtenerJugadorPorId(int id) async {
     try {
       final response = await http.get(
@@ -138,7 +123,6 @@ class JugadorService {
     }
   }
 
-  // Obtener jugador por username
   static Future<Jugador> obtenerJugadorPorUsername(String username) async {
     try {
       final response = await http.get(
@@ -157,11 +141,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // CREAR, ACTUALIZAR, ELIMINAR JUGADORES
-  // ============================================================
-
-  // Crear nuevo jugador (solo admin)
   static Future<Jugador> crearJugador(Map<String, dynamic> jugadorData) async {
     try {
       final response = await http.post(
@@ -185,7 +164,6 @@ class JugadorService {
     }
   }
 
-  // Actualizar jugador
   static Future<Jugador> actualizarJugador(int id, Map<String, dynamic> jugadorData) async {
     try {
       final response = await http.put(
@@ -206,7 +184,6 @@ class JugadorService {
     }
   }
 
-  // Eliminar jugador (solo admin)
   static Future<void> eliminarJugador(int id) async {
     try {
       final response = await http.delete(
@@ -224,11 +201,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // ASIGNACIONES
-  // ============================================================
-
-  // Asignar jugador a equipo
   static Future<void> asignarJugadorAEquipo(int jugadorId, int equipoId) async {
     try {
       final response = await http.put(
@@ -246,7 +218,6 @@ class JugadorService {
     }
   }
 
-  // Desasignar jugador de equipo
   static Future<void> desasignarJugadorDeEquipo(int jugadorId) async {
     try {
       final response = await http.delete(
@@ -264,11 +235,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS
-  // ============================================================
-
-  // Obtener estadísticas de un jugador
   static Future<EstadisticasJugador> obtenerEstadisticasJugador(int jugadorId) async {
     try {
       final response = await http.get(
@@ -287,7 +253,6 @@ class JugadorService {
     }
   }
 
-  // Obtener ranking de jugadores por puntos
   static Future<List<Jugador>> getRankingPuntos() async {
     try {
       final response = await http.get(
@@ -307,7 +272,6 @@ class JugadorService {
     }
   }
 
-  // Obtener ranking de jugadores por rebotes
   static Future<List<Jugador>> getRankingRebotes() async {
     try {
       final response = await http.get(
@@ -327,7 +291,6 @@ class JugadorService {
     }
   }
 
-  // Obtener ranking de jugadores por asistencias
   static Future<List<Jugador>> getRankingAsistencias() async {
     try {
       final response = await http.get(
@@ -347,11 +310,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // PARTIDOS DEL JUGADOR
-  // ============================================================
-
-  // Obtener partidos del jugador autenticado
   static Future<List<dynamic>> getMisPartidos() async {
     try {
       final response = await http.get(
@@ -370,11 +328,6 @@ class JugadorService {
     }
   }
 
-  // ============================================================
-  // BÚSQUEDA
-  // ============================================================
-
-  // Buscar jugadores por nombre
   static Future<List<Jugador>> buscarJugadores(String query) async {
     try {
       final response = await http.get(
@@ -394,7 +347,6 @@ class JugadorService {
     }
   }
 
-  // Buscar jugadores por posición
   static Future<List<Jugador>> buscarJugadoresPorPosicion(String posicion) async {
     try {
       final response = await http.get(

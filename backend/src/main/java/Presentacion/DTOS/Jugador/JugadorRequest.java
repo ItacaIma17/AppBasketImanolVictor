@@ -21,6 +21,5 @@ public class JugadorRequest {
     private String codigoJugador;
     private Long equipoId;
 
-    // Si necesitas el rol
     private String role;
 }

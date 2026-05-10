@@ -1,4 +1,3 @@
-// lib/data/gestorFavoritos.dart
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavoritosManager {
@@ -6,11 +5,9 @@ class FavoritosManager {
   factory FavoritosManager() => _instance;
   FavoritosManager._internal();
 
-
   List<int> _equiposFavoritos = [];
   List<int> _jugadoresFavoritos = [];
   List<String> _categoriasFavoritas = [];
-
 
   List<int> get equiposFavoritos => _equiposFavoritos;
   List<int> get jugadoresFavoritos => _jugadoresFavoritos;
@@ -43,8 +40,6 @@ class FavoritosManager {
     await prefs.setStringList('categorias_favoritas', _categoriasFavoritas);
   }
 
- 
-  // ── EQUIPOS ──────────────────────────────────────────
   void agregarEquipoFavorito(int id) {
     if (!_equiposFavoritos.contains(id)) {
       _equiposFavoritos.add(id);
@@ -67,7 +62,6 @@ class FavoritosManager {
 
   bool esEquipoFavorito(int id) => _equiposFavoritos.contains(id);
 
-  // ── JUGADORES ─────────────────────────────────────────
   void agregarJugadorFavorito(int id) {
     if (!_jugadoresFavoritos.contains(id)) {
       _jugadoresFavoritos.add(id);
@@ -88,10 +82,8 @@ class FavoritosManager {
     }
   }
 
-
   bool esJugadorFavorito(int id) => _jugadoresFavoritos.contains(id);
 
-   // ── LIGAS/CATEGORÍAS ──────────────────────────────────
   void agregarCategoriaFavorita(String categoria) {
     if (!_categoriasFavoritas.contains(categoria)) {
       _categoriasFavoritas.add(categoria);

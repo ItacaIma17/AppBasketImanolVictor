@@ -11,3 +11,4 @@ public class ActualizarUsuarioDTO {
 
     private String newPassword;
 }
+

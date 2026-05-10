@@ -1,5 +1,3 @@
-// lib/screens/Admin/GestionJugadoresPage.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -24,15 +22,13 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
   bool _isLoading = true;
   bool _isCreating = false;
   String? _error;
-  String _filtro = 'TODOS'; // TODOS, SIN_EQUIPO, CON_EQUIPO
+  String _filtro = 'TODOS';
   String _busqueda = '';
 
-  // Formulario para crear/editar jugador
   final _formKey = GlobalKey<FormState>();
   bool _isEditing = false;
   Jugador? _editandoJugador;
 
-  // Controladores del formulario
   final _nombreController = TextEditingController();
   final _apellidoController = TextEditingController();
   final _emailController = TextEditingController();
@@ -139,12 +135,9 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
     }
   }
 
-  // En GestionJugadoresPage.dart - CORREGIR _actualizarJugador
-
   Future<void> _actualizarJugador() async {
     if (!_formKey.currentState!.validate() || _editandoJugador == null) return;
 
-    // Verificar que el id no sea null
     if (_editandoJugador!.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error: ID del jugador no válido'), backgroundColor: Colors.red),
@@ -166,7 +159,6 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
         'equipoId': _equipoId,
       };
 
-      // Usar el operador ! para indicar que no es null (después de la verificación)
       await JugadorService.actualizarJugador(_editandoJugador!.id!, jugadorData);
 
       if (mounted) {
@@ -239,7 +231,7 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
       _pesoController.text = jugador.peso.toString();
       _posicionController.text = jugador.posicion;
       _equipoId = jugador.equipoId;
-      _passwordController.text = ''; // No mostrar contraseña
+      _passwordController.text = '';
     });
   }
 
@@ -499,9 +491,6 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
     }
   }
 
-  // En GestionJugadoresPage.dart - CORREGIDO
-
-// Cambiar el DropdownButtonFormField para trabajar con int?
   Widget _buildFormulario() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -551,7 +540,7 @@ class _GestionJugadoresPageState extends State<GestionJugadoresPage> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                // CORREGIDO: Usar DropdownButtonFormField<int?> en lugar de <int>
+
                 DropdownButtonFormField<int?>(
                   decoration: const InputDecoration(labelText: 'Equipo'),
                   value: _equipoId,

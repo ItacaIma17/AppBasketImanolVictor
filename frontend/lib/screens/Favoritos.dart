@@ -17,7 +17,6 @@ import 'package:tfg_appfede/widgets/Favoritos/TarjetaJugadorFav.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 
-
 class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
 
@@ -44,10 +43,9 @@ void initState() {
   _cargarTodo();
 }
 
-
   Future<void> _cargarTodo() async {
     await FavoritosManager().cargarFavoritos();
-    await _cargarDatosIniciales(); // primero favoritos, luego datos
+    await _cargarDatosIniciales();
   }
 
   Future<void> _cargarDatosIniciales() async {
@@ -63,7 +61,7 @@ void initState() {
         _cargando = false;
       });
     } catch (e) {
-      print("❌ Error cargando datos iniciales: $e");
+      print(" Error cargando datos iniciales: $e");
       setState(() => _cargando = false);
     }
   }
@@ -108,7 +106,6 @@ void initState() {
     );
   }
 
-  /// Tabs
   Widget _buildTabs() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -138,7 +135,6 @@ void initState() {
     );
   }
 
- /// Ligas favoritas
 Widget _buildLigasTab() {
   final favoritas = FavoritosManager().categoriasFavoritas.toList();
 
@@ -152,7 +148,6 @@ Widget _buildLigasTab() {
     itemBuilder: (context, index) {
       final nombre = favoritas[index];
 
-      // Buscar liga por nombre
       final coincidencias = _todasLasLigas
           .where((l) => l.nombreLiga.toLowerCase() == nombre.toLowerCase())
           .toList();
@@ -182,14 +177,11 @@ Widget _buildLigasTab() {
   );
 }
 
-
-  /// Equipos favoritos
 Widget _buildEquiposTab() {
   final idsFavoritos = FavoritosManager().equiposFavoritos;
-  
-  // AÑADIR ESTAS DOS LÍNEAS:
-  print("🔍 IDs favoritos equipos: $idsFavoritos");
-  print("🔍 Equipos cargados: ${_todosLosEquipos.map((e) => '${e.id}:${e.nombre}').toList()}");
+
+  print(" IDs favoritos equipos: $idsFavoritos");
+  print(" Equipos cargados: ${_todosLosEquipos.map((e) => '${e.id}:${e.nombre}').toList()}");
 
   if (idsFavoritos.isEmpty) {
     return _buildEmptyState('No tienes equipos favoritos');
@@ -224,8 +216,6 @@ Widget _buildEquiposTab() {
   );
 }
 
-
-  /// Jugadores favoritos
  Widget _buildJugadoresTab() {
   final idsFavoritos = FavoritosManager().jugadoresFavoritos;
 
@@ -233,12 +223,10 @@ Widget _buildEquiposTab() {
     return _buildEmptyState('No tienes jugadores favoritos');
   }
 
-  // Obtener jugadores favoritos
   final jugadoresFavoritos = _todosLosJugadores
       .where((j) => idsFavoritos.contains(j.id))
       .toList();
 
-  // Filtrar por búsqueda
   final jugadoresFiltrados = _textoBusquedaJugador.isEmpty
       ? jugadoresFavoritos
       : jugadoresFavoritos
@@ -249,7 +237,7 @@ Widget _buildEquiposTab() {
 
   return Column(
     children: [
-      // Barra de búsqueda
+
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: TextField(
@@ -279,7 +267,6 @@ Widget _buildEquiposTab() {
         ),
       ),
 
-      // Lista de jugadores
       Expanded(
         child: jugadoresFiltrados.isEmpty
             ? _buildEmptyState('No se encontraron jugadores')
@@ -320,3 +307,4 @@ Widget _buildEquiposTab() {
     );
   }
 }
+

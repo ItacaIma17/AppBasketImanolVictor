@@ -34,13 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // 🔓 ENDPOINTS PÚBLICOS
         if (isPublicEndpoint(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 🔍 Obtener header Authorization
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -55,28 +53,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 if (jwtTokenProvider.validateToken(token)) {
-                    // ✅ Obtener el rol del token (ya viene con ROLE_)
-                    String role = jwtTokenProvider.getRoleFromToken(token);
-                    log.info("🎭 Rol extraído del token: {}", role);
 
-                    // ✅ Crear autoridades correctamente
+                    String role = jwtTokenProvider.getRoleFromToken(token);
+                    log.info(" Rol extraído del token: {}", role);
+
                     List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                             new SimpleGrantedAuthority(role)
                     );
 
-                    log.info("🔐 Autoridades asignadas: {}", authorities);
+                    log.info(" Autoridades asignadas: {}", authorities);
 
-                    // ✅ Crear autenticación
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    log.info("✅ Autenticación establecida para: {} con rol: {}", username, role);
+                    log.info(" Autenticación establecida para: {} con rol: {}", username, role);
                 }
             }
         } catch (Exception e) {
-            log.error("❌ Error procesando token JWT: {}", e.getMessage());
+            log.error(" Error procesando token JWT: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/widgets/AlineacionEquipo.dart';
 
-
-/// Modal para que los árbitros revisen y confirmen las alineaciones de un partido
-/// Muestra ambas alineaciones y permite confirmarlas
 class MostrarRevisionAlineaciones extends StatelessWidget {
   final Map<String, dynamic> partido;
   final Map<String, dynamic>? alineacionLocal;
@@ -29,22 +26,19 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header del modal
+
           _buildHeader(context),
 
-          // Contenido scrollable con ambas alineaciones
           Expanded(
             child: _buildContenido(),
           ),
 
-          // Botón de confirmar
           _buildBotonConfirmar(context),
         ],
       ),
     );
   }
 
-  /// Header del modal con título y botón cerrar
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -87,13 +81,12 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
     );
   }
 
-  /// Contenido scrollable con ambas alineaciones
   Widget _buildContenido() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Alineación equipo local
+
           AlineacionEquipoWidget(
             alineacion: alineacionLocal,
             esLocal: true,
@@ -101,12 +94,10 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Separador VS
           _buildSeparadorVS(),
 
           const SizedBox(height: 20),
 
-          // Alineación equipo visitante
           AlineacionEquipoWidget(
             alineacion: alineacionVisitante,
             esLocal: false,
@@ -116,7 +107,6 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
     );
   }
 
-  /// Separador "VS" entre alineaciones
   Widget _buildSeparadorVS() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -136,7 +126,6 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
     );
   }
 
-  /// Botón de confirmar alineaciones
   Widget _buildBotonConfirmar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -161,7 +150,7 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            // Validar que ambas alineaciones existan
+
             if (alineacionLocal == null || alineacionVisitante == null) {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +162,6 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
               return;
             }
 
-            // Mostrar diálogo de confirmación
             _mostrarDialogoConfirmacion(context);
           },
           icon: const Icon(Icons.check_circle, color: AppColors.blanco),
@@ -190,7 +178,6 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
     );
   }
 
-  /// Diálogo de confirmación final
   void _mostrarDialogoConfirmacion(BuildContext context) {
     showDialog(
       context: context,
@@ -210,9 +197,9 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
             onPressed: () {
-              Navigator.pop(dialogContext); // Cerrar diálogo
-              Navigator.pop(context); // Cerrar modal
-              onConfirmar(); // Ejecutar callback
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+              onConfirmar();
             },
             child: const Text(
               'Confirmar',
@@ -224,7 +211,6 @@ class MostrarRevisionAlineaciones extends StatelessWidget {
     );
   }
 
-  /// Método estático para mostrar el modal fácilmente
   static void mostrar({
     required BuildContext context,
     required Map<String, dynamic> partido,

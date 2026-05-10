@@ -27,10 +27,9 @@ class DetallePartidoPage extends StatefulWidget {
 }
 
 class _DetallePartidoPageState extends State<DetallePartidoPage> {
-  // Estadísticas del partido
+
   late Map<String, dynamic> _estadisticas;
 
-  // Acta del partido
   ActaPartido? _acta;
   bool _cargandoActa = true;
 
@@ -88,17 +87,15 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Widget separado - Marcador
+
                       MarcadorPartido(partido: widget.partido),
 
                       const SizedBox(height: 24),
 
-                      // Widget separado - Estadísticas
                       EstadisticasPartido(estadisticas: _estadisticas),
 
                       const SizedBox(height: 24),
 
-                      // Acta del partido
                       _buildActaPartido(),
                     ],
                   ),
@@ -118,7 +115,7 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
         color: AppColors.negro,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(51), // Reemplaza withOpacity(0.2)
+            color: Colors.black.withAlpha(51),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -155,8 +152,6 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
     );
   }
 
-  /// Acta del Partido - Simplificada
-  /// Solo 2 acciones: SUBIR (árbitros) y VER (todos)
   Widget _buildActaPartido() {
     final rol = widget.userRole ?? AutenticacionService.usuarioActual?.role;
     final esArbitro = rol == Role.ARBITRO;
@@ -354,7 +349,7 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.naranja.withAlpha(38), // Reemplaza withOpacity(0.15)
+                  color: AppColors.naranja.withAlpha(38),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text("'${e.minuto}",
@@ -395,8 +390,6 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
       ],
     );
   }
-
-  // ==================== HELPER ====================
 
   void _mostrarError(String mensaje) {
     if (!mounted) return;

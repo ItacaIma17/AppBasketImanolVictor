@@ -1,4 +1,3 @@
-// lib/screens/Equipos/ListaEquiposPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';

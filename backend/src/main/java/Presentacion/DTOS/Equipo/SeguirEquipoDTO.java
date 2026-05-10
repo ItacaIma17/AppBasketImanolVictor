@@ -1,6 +1,5 @@
 package Presentacion.DTOS.Equipo;
 
-
 import lombok.Data;
 
 @Data
@@ -12,3 +11,4 @@ public class SeguirEquipoDTO {
 
     private int posicion;
 }
+

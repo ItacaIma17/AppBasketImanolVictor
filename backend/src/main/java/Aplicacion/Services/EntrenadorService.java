@@ -1,4 +1,3 @@
-// Aplicacion/Services/EntrenadorService.java
 package Aplicacion.Services;
 
 import Dominio.Entity.Entrenador;
@@ -38,7 +37,6 @@ public class EntrenadorService {
     private static final String CODIGO_PREFIX = "ENT-";
     private static final SecureRandom random = new SecureRandom();
 
-    // Generar código único para entrenador
     public String generarCodigoEntrenador() {
         String codigo;
         do {
@@ -50,12 +48,10 @@ public class EntrenadorService {
         return codigo;
     }
 
-    // Crear entrenador desde DTO (admin)
     @Transactional
     public EntrenadorRequest crearEntrenador(CrearEntrenadorDTO dto) {
         log.info("Creando entrenador: {}", dto.getUsername());
 
-        // Validaciones
         if (entrenadorRepository.existsByUsername(dto.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El username ya está en uso");
@@ -71,7 +67,6 @@ public class EntrenadorService {
                     "El código de entrenador ya está en uso");
         }
 
-        // Crear entrenador
         Entrenador entrenador = new Entrenador();
         entrenador.setNombre(dto.getNombre());
         entrenador.setApellido(dto.getApellido());
@@ -91,14 +86,10 @@ public class EntrenadorService {
         return EntrenadorRequest.fromEntity(saved);
     }
 
-    // Crear entrenador desde registro (con código)
-    // En EntrenadorService.crearDesdeRegistro()
-
     @Transactional
     public Entrenador crearDesdeRegistro(RegisterEntrenadorDTO dto, Usuario usuario) {
         log.info("Creando entrenador desde registro con código: {}", dto.getCodigoEntrenador());
 
-        // Verificar que el usuario tiene username
         if (usuario.getUsername() == null || usuario.getUsername().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "El usuario no tiene username asignado");
@@ -107,11 +98,9 @@ public class EntrenadorService {
         log.info("   Username del usuario: {}", usuario.getUsername());
         log.info("   Email del usuario: {}", usuario.getEmail());
 
-        // Buscar o crear entrenador
         Entrenador entrenador = entrenadorRepository.findByCodigoEntrenador(dto.getCodigoEntrenador())
                 .orElse(new Entrenador());
 
-        // Asignar datos del usuario
         entrenador.setNombre(dto.getNombre());
         entrenador.setApellido(dto.getApellido());
         entrenador.setUsername(usuario.getUsername());
@@ -124,50 +113,42 @@ public class EntrenadorService {
         entrenador.setUsuario(usuario);
 
         Entrenador saved = entrenadorRepository.save(entrenador);
-        log.info("✅ Entrenador creado con ID: {}, Username: {}", saved.getId(), saved.getUsername());
+        log.info(" Entrenador creado con ID: {}, Username: {}", saved.getId(), saved.getUsername());
 
         return saved;
     }
-
-    // Aplicacion/Services/EntrenadorService.java
 
     @Transactional
     public EntrenadorEquipoDTO asignarEquipoAEntrenador(AsignarEquipoDTO dto, String adminUsername) {
         log.info("Admin {} asignando equipo {} a entrenador con código {}",
                 adminUsername, dto.getEquipoId(), dto.getCodigoEntrenador());
 
-        // Buscar al entrenador por su código
         Entrenador entrenador = entrenadorRepository.findByCodigoEntrenador(dto.getCodigoEntrenador())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Entrenador no encontrado con código: " + dto.getCodigoEntrenador()));
 
-        // Buscar el equipo
         Equipo equipo = equipoRepository.findById(dto.getEquipoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Equipo no encontrado con ID: " + dto.getEquipoId()));
 
-        // ✅ Verificar si el equipo ya tiene entrenador
         if (equipo.getEntrenador() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El equipo '" + equipo.getNombre() + "' ya tiene un entrenador asignado");
         }
 
-        // ✅ Verificar si el entrenador ya tiene equipo
         if (entrenador.getEquipo() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El entrenador '" + entrenador.getNombre() + "' ya tiene un equipo asignado");
         }
 
-        // ✅ ASIGNAR EN AMBAS DIRECCIONES
-        entrenador.setEquipo(equipo);  // Entrenador → Equipo
-        equipo.setEntrenador(entrenador);  // Equipo → Entrenador (importante!)
+        entrenador.setEquipo(equipo);
+        equipo.setEntrenador(entrenador);
 
         entrenadorRepository.save(entrenador);
         equipoRepository.save(equipo);
 
-        log.info("✅ Equipo '{}' asignado a entrenador '{}'", equipo.getNombre(), entrenador.getNombre());
+        log.info(" Equipo '{}' asignado a entrenador '{}'", equipo.getNombre(), entrenador.getNombre());
 
-        // Verificar que se guardó correctamente
         Entrenador verificado = entrenadorRepository.findById(entrenador.getId()).get();
         log.info("Verificación - Entrenador {} tiene equipo: {}",
                 verificado.getUsername(),
@@ -176,12 +157,9 @@ public class EntrenadorService {
         return buildResponse(entrenador, equipo);
     }
 
-    // Aplicacion/Services/EntrenadorService.java
-
     public EntrenadorEquipoDTO obtenerMiEquipo(String username) {
-        log.info("🔍 Buscando equipo del entrenador: {}", username);
+        log.info(" Buscando equipo del entrenador: {}", username);
 
-        // Buscar el entrenador por username
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Entrenador no encontrado: " + username));
@@ -218,25 +196,21 @@ public class EntrenadorService {
         return response;
     }
 
-    // Listar todos los entrenadores
     @Transactional(readOnly = true)
     public List<EntrenadorRequest> listarTodosEntrenadores() {
         return EntrenadorRequest.fromEntityList(entrenadorRepository.findAll());
     }
 
-    // Listar entrenadores sin equipo
     @Transactional(readOnly = true)
     public List<EntrenadorRequest> listarEntrenadoresSinEquipo() {
         return EntrenadorRequest.fromEntityList(entrenadorRepository.findEntrenadoresSinEquipo());
     }
 
-    // Listar entrenadores con equipo
     @Transactional(readOnly = true)
     public List<EntrenadorRequest> listarEntrenadoresConEquipo() {
         return EntrenadorRequest.fromEntityList(entrenadorRepository.findEntrenadoresConEquipo());
     }
 
-    // Obtener entrenador por ID
     @Transactional(readOnly = true)
     public EntrenadorRequest obtenerEntrenadorPorId(Long id) {
         Entrenador entrenador = entrenadorRepository.findById(id)
@@ -245,7 +219,6 @@ public class EntrenadorService {
         return EntrenadorRequest.fromEntity(entrenador);
     }
 
-    // Obtener entrenador por username
     @Transactional(readOnly = true)
     public EntrenadorRequest obtenerEntrenadorPorUsername(String username) {
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
@@ -254,7 +227,6 @@ public class EntrenadorService {
         return EntrenadorRequest.fromEntity(entrenador);
     }
 
-    // Actualizar password
     public void actualizarPassword(String email, String nuevaPasswordEncriptada) {
         Entrenador entrenador = entrenadorRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
@@ -263,14 +235,12 @@ public class EntrenadorService {
         log.info("Password actualizado para entrenador: {}", email);
     }
 
-    // Obtener ID por email
     public Long obtenerIdPorEmail(String email) {
         return entrenadorRepository.findByEmail(email)
                 .map(Entrenador::getId)
                 .orElse(null);
     }
 
-    // Marcar como verificado
     public void marcarComoVerificado(String email) {
         Entrenador entrenador = entrenadorRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
@@ -279,7 +249,6 @@ public class EntrenadorService {
         log.info("Entrenador verificado: {}", email);
     }
 
-    // Eliminar entrenador
     @Transactional
     public void eliminarEntrenador(Long id) {
         log.info("Eliminando entrenador con ID: {}", id);

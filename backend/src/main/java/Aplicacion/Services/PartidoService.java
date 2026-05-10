@@ -31,21 +31,17 @@ public class PartidoService {
     private final ArbitroRepository arbitroRepository;
     private final JugadorRepository jugadorRepository;
     private final ActaPartidoRepository actaPartidoRepository;
-    // ============================================================
-    // CREAR PARTIDO
-    // ============================================================
 
     @Transactional
     public PartidoResponse crearPartido(PartidoRequestDTO dto) {
         log.info("========================================");
-        log.info("🏀 Creando partido:");
+        log.info(" Creando partido:");
         log.info("   Equipo Local ID: {}", dto.getEquipoLocalId());
         log.info("   Equipo Visitante ID: {}", dto.getEquipoVisitanteId());
         log.info("   Fecha: {}", dto.getFecha());
         log.info("   Ubicación: {}", dto.getUbicacion());
         log.info("   Liga ID: {}", dto.getLigaId());
 
-        // Validar equipos
         if (dto.getEquipoLocalId() == null || dto.getEquipoVisitanteId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Los equipos local y visitante son obligatorios");
@@ -59,13 +55,11 @@ public class PartidoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Equipo visitante no encontrado con ID: " + dto.getEquipoVisitanteId()));
 
-        // Validar que la jornada sea válida
         if (dto.getJornada() == null || dto.getJornada() < 1 || dto.getJornada() > 22) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "La jornada debe ser entre 1 y 22");
         }
 
-        // Validar que no exista ya un partido entre estos equipos en la misma jornada
         boolean existeEnJornada = partidoRepository.existsByEquiposAndJornada(
                 equipoLocal.getId(), equipoVisitante.getId(), dto.getJornada());
         if (existeEnJornada) {
@@ -73,13 +67,11 @@ public class PartidoService {
                     "Ya existe un partido entre estos equipos en la jornada " + dto.getJornada());
         }
 
-        // Validar que no sean el mismo equipo
         if (equipoLocal.getId().equals(equipoVisitante.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Un equipo no puede jugar contra sí mismo");
         }
 
-        // Validar fecha
         if (dto.getFecha() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "La fecha del partido es obligatoria");
@@ -90,7 +82,6 @@ public class PartidoService {
                     "La fecha del partido no puede ser en el pasado");
         }
 
-        // Validar que no exista ya un partido entre estos equipos
         boolean existe = partidoRepository.existsPartidoEntreEquipos(
                 equipoLocal.getId(), equipoVisitante.getId());
         if (existe) {
@@ -98,7 +89,6 @@ public class PartidoService {
                     "Ya existe un partido programado entre estos equipos");
         }
 
-        // Crear partido
         Partido partido = new Partido();
         partido.setEquipoLocal(equipoLocal);
         partido.setEquipoVisitante(equipoVisitante);
@@ -107,7 +97,6 @@ public class PartidoService {
         partido.setJornada(dto.getJornada());
         partido.setEstado("PROGRAMADO");
 
-        // Asignar liga si se proporciona
         if (dto.getLigaId() != null) {
             Liga liga = ligaRepository.findById(dto.getLigaId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -116,20 +105,17 @@ public class PartidoService {
         }
 
         Partido saved = partidoRepository.save(partido);
-        log.info("✅ Partido creado con ID: {}", saved.getId());
+        log.info(" Partido creado con ID: {}", saved.getId());
         log.info("========================================");
 
         return PartidoResponse.fromEntity(saved);
     }
 
-    // Aplicacion/Services/PartidoService.java - Añadir método
-
     @Transactional
     public List<PartidoResponse> crearPartidosConJornadas(CrearPartidoCompletoDTO dto) {
-        log.info("🏀 Creando partidos con jornadas");
+        log.info(" Creando partidos con jornadas");
         List<Partido> partidosCreados = new ArrayList<>();
 
-        // Validar equipos
         Equipo equipoLocal = equipoRepository.findById(dto.getEquipoLocalId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo local no encontrado"));
         Equipo equipoVisitante = equipoRepository.findById(dto.getEquipoVisitanteId())
@@ -139,7 +125,6 @@ public class PartidoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un equipo no puede jugar contra sí mismo");
         }
 
-        // Crear partido de ida
         Partido partidoIda = new Partido();
         partidoIda.setEquipoLocal(equipoLocal);
         partidoIda.setEquipoVisitante(equipoVisitante);
@@ -149,7 +134,6 @@ public class PartidoService {
         partidoIda.setJornada(dto.getJornadaIda());
         partidoIda.setEstado("PROGRAMADO");
 
-        // Asignar árbitro si se especificó
         if (dto.getArbitroId() != null) {
             Arbitro arbitroIda = arbitroRepository.findById(dto.getArbitroId()).orElse(null);
             if (arbitroIda != null) {
@@ -164,30 +148,28 @@ public class PartidoService {
         }
 
         partidosCreados.add(partidoRepository.save(partidoIda));
-        log.info("✅ Partido de ida creado - Jornada: {}", dto.getJornadaIda());
+        log.info(" Partido de ida creado - Jornada: {}", dto.getJornadaIda());
 
-        // Crear partido de vuelta si se solicita
         if (dto.isCrearVuelta()) {
             Partido partidoVuelta = new Partido();
-            partidoVuelta.setEquipoLocal(equipoVisitante);  // Intercambiar locales
+            partidoVuelta.setEquipoLocal(equipoVisitante);
             partidoVuelta.setEquipoVisitante(equipoLocal);
 
             if (dto.getFechaVuelta() != null) {
                 partidoVuelta.setFecha(dto.getFechaVuelta());
             } else if (dto.getDiferenciaJornadas() != null) {
-                // Calcular fecha automáticamente (7 días por jornada)
+
                 partidoVuelta.setFecha(dto.getFechaIda().plusDays(dto.getDiferenciaJornadas() * 7L));
             } else {
-                partidoVuelta.setFecha(dto.getFechaIda().plusDays(77)); // 11 jornadas * 7 días
+                partidoVuelta.setFecha(dto.getFechaIda().plusDays(77));
             }
 
-            // Para la vuelta: el pabellón debe ser el del equipo visitante (que ahora es local en la vuelta)
             String pabellonVuelta = dto.getPabellonVuelta();
             if (pabellonVuelta == null || pabellonVuelta.isBlank()) {
-                // Usar el estadio del equipo visitante (que es el local en la vuelta)
+
                 pabellonVuelta = equipoVisitante.getNombreEstadio() != null && !equipoVisitante.getNombreEstadio().isBlank()
                         ? equipoVisitante.getNombreEstadio()
-                        : dto.getPabellonIda(); // Fallback al de ida solo si no hay otro
+                        : dto.getPabellonIda();
             }
             String ubicacionVuelta = dto.getUbicacionVuelta();
             if (ubicacionVuelta == null || ubicacionVuelta.isBlank()) {
@@ -198,7 +180,6 @@ public class PartidoService {
             partidoVuelta.setJornada(dto.getJornadaVuelta() != null ? dto.getJornadaVuelta() : dto.getJornadaIda() + 11);
             partidoVuelta.setEstado("PROGRAMADO");
 
-            // Asignar el mismo árbitro a la vuelta si se especificó
             if (dto.getArbitroId() != null) {
                 Arbitro arbitroVuelta = arbitroRepository.findById(dto.getArbitroId()).orElse(null);
                 if (arbitroVuelta != null) {
@@ -212,7 +193,7 @@ public class PartidoService {
             }
 
             partidosCreados.add(partidoRepository.save(partidoVuelta));
-            log.info("✅ Partido de vuelta creado - Jornada: {}", partidoVuelta.getJornada());
+            log.info(" Partido de vuelta creado - Jornada: {}", partidoVuelta.getJornada());
         }
 
         return partidosCreados.stream()
@@ -220,11 +201,9 @@ public class PartidoService {
                 .collect(Collectors.toList());
     }
 
-    // Aplicacion/Services/PartidoService.java - Añadir estos métodos
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByJugador(String username) {
-        log.info("📋 Buscando partidos para jugador: {}", username);
+        log.info(" Buscando partidos para jugador: {}", username);
 
         Jugador jugador = jugadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -243,7 +222,7 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> getProximosPartidosByJugador(String username) {
-        log.info("📋 Buscando próximos partidos para jugador: {}", username);
+        log.info(" Buscando próximos partidos para jugador: {}", username);
 
         Jugador jugador = jugadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -258,13 +237,9 @@ public class PartidoService {
         return getProximosPartidosByEquipo(equipoId);
     }
 
-    // ============================================================
-    // LISTAR PARTIDOS
-    // ============================================================
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> listarTodosPartidos() {
-        log.info("📋 Listando todos los partidos");
+        log.info(" Listando todos los partidos");
         return partidoRepository.findAll().stream()
                 .map(PartidoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -272,7 +247,7 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> listarPartidosPorEstado(String estado) {
-        log.info("📋 Listando partidos con estado: {}", estado);
+        log.info(" Listando partidos con estado: {}", estado);
         return partidoRepository.findByEstado(estado).stream()
                 .map(PartidoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -280,7 +255,7 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> listarPartidosPendientes() {
-        log.info("📋 Listando partidos pendientes");
+        log.info(" Listando partidos pendientes");
         return partidoRepository.findPartidosPendientes().stream()
                 .map(PartidoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -288,21 +263,15 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> listarPartidosFuturos() {
-        log.info("📋 Listando partidos futuros");
+        log.info(" Listando partidos futuros");
         return partidoRepository.findPartidosFuturos(LocalDateTime.now()).stream()
                 .map(PartidoResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // ============================================================
-    // PARTIDOS POR EQUIPO
-    // ============================================================
-
-
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByEquipoAndEstado(Long equipoId, String estado) {
-        log.info("📋 Buscando partidos para equipo ID: {} con estado: {}", equipoId, estado);
+        log.info(" Buscando partidos para equipo ID: {} con estado: {}", equipoId, estado);
 
         if (!equipoRepository.existsById(equipoId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -316,7 +285,7 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> getProximosPartidosByEquipo(Long equipoId) {
-        log.info("📋 Buscando próximos partidos para equipo ID: {}", equipoId);
+        log.info(" Buscando próximos partidos para equipo ID: {}", equipoId);
 
         if (!equipoRepository.existsById(equipoId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -328,13 +297,9 @@ public class PartidoService {
                 .collect(Collectors.toList());
     }
 
-    // ============================================================
-    // PARTIDOS POR ENTRENADOR
-    // ============================================================
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByEntrenador(String username) {
-        log.info("📋 Buscando partidos para entrenador: {}", username);
+        log.info(" Buscando partidos para entrenador: {}", username);
 
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -353,7 +318,7 @@ public class PartidoService {
 
     @Transactional(readOnly = true)
     public List<PartidoResponse> getProximosPartidosByEntrenador(String username) {
-        log.info("📋 Buscando próximos partidos para entrenador: {}", username);
+        log.info(" Buscando próximos partidos para entrenador: {}", username);
 
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -368,16 +333,9 @@ public class PartidoService {
         return getProximosPartidosByEquipo(equipoId);
     }
 
-    // ============================================================
-    // PARTIDOS POR ÁRBITRO
-    // ============================================================
-
-
-    // Aplicacion/Services/PartidoService.java - Verificar este método
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByArbitro(String username) {
-        log.info("📋 Buscando partidos para árbitro: {}", username);
+        log.info(" Buscando partidos para árbitro: {}", username);
 
         Arbitro arbitro = arbitroRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -400,13 +358,9 @@ public class PartidoService {
         return PartidoResponse.fromEntity(partido);
     }
 
-    // ============================================================
-    // PARTIDOS POR LIGA
-    // ============================================================
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByLiga(Long ligaId) {
-        log.info("📋 Buscando partidos para liga ID: {}", ligaId);
+        log.info(" Buscando partidos para liga ID: {}", ligaId);
 
         if (!ligaRepository.existsById(ligaId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -418,13 +372,9 @@ public class PartidoService {
                 .collect(Collectors.toList());
     }
 
-    // ============================================================
-    // OBTENER UN PARTIDO
-    // ============================================================
-
     @Transactional(readOnly = true)
     public PartidoResponse obtenerPartidoPorId(Long id) {
-        log.info("🔍 Buscando partido con ID: {}", id);
+        log.info(" Buscando partido con ID: {}", id);
 
         Partido partido = partidoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -433,14 +383,9 @@ public class PartidoService {
         return PartidoResponse.fromEntity(partido);
     }
 
-
-    // ============================================================
-    // ACTUALIZAR PARTIDO
-    // ============================================================
-
     @Transactional
     public PartidoResponse actualizarPartido(Long id, PartidoRequestDTO dto) {
-        log.info("✏️ Actualizando partido ID: {}  payload={}", id, dto);
+        log.info(" Actualizando partido ID: {}  payload={}", id, dto);
 
         Partido partido = partidoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -466,8 +411,7 @@ public class PartidoService {
         }
 
         if (dto.getFecha() != null) {
-            // Solo bloqueamos fechas pasadas si el partido sigue PROGRAMADO.
-            // Permitimos ajustes para EN_CURSO o reprogramaciones especiales.
+
             if ("PROGRAMADO".equals(partido.getEstado())
                     && dto.getFecha().isBefore(LocalDateTime.now())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -499,7 +443,6 @@ public class PartidoService {
             partido.setLiga(liga);
         }
 
-        // ✅ NUEVO: el endpoint PUT /partidos/{id} acepta arbitroId.
         if (dto.getArbitroId() != null) {
             Arbitro arbitro = arbitroRepository.findById(dto.getArbitroId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -512,16 +455,14 @@ public class PartidoService {
         }
 
         Partido saved = partidoRepository.save(partido);
-        log.info("✅ Partido actualizado: {}", saved.getId());
+        log.info(" Partido actualizado: {}", saved.getId());
 
         return PartidoResponse.fromEntity(saved);
     }
 
-
-
     @Transactional
     public PartidoResponse actualizarResultado(Long partidoId, Map<String, Integer> resultado) {
-        log.info("✏️ Actualizando resultado del partido ID: {}", partidoId);
+        log.info(" Actualizando resultado del partido ID: {}", partidoId);
 
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -540,42 +481,38 @@ public class PartidoService {
         partido.setEstado("FINALIZADO");
 
         Partido saved = partidoRepository.save(partido);
-        log.info("✅ Resultado actualizado: {} - {}", resultadoLocal, resultadoVisitante);
+        log.info(" Resultado actualizado: {} - {}", resultadoLocal, resultadoVisitante);
 
         return PartidoResponse.fromEntity(saved);
     }
 
         @Transactional
         public PartidoResponse asignarArbitro(Long partidoId, Long arbitroId) {
-            log.info("👨‍⚖️ Asignando árbitro ID: {} al partido ID: {}", arbitroId, partidoId);
-    
+            log.info(" Asignando árbitro ID: {} al partido ID: {}", arbitroId, partidoId);
+
             Partido partido = partidoRepository.findById(partidoId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Partido no encontrado con ID: " + partidoId));
-    
+
             Arbitro arbitro = arbitroRepository.findById(arbitroId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Árbitro no encontrado con ID: " + arbitroId));
-    
+
             if (partido.getEstado().equals("FINALIZADO")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "No se puede asignar árbitro a un partido finalizado");
             }
-    
+
             partido.setArbitro(arbitro);
             Partido saved = partidoRepository.save(partido);
-            log.info("✅ Árbitro {} asignado al partido {}", arbitro.getNombre(), saved.getId());
-    
+            log.info(" Árbitro {} asignado al partido {}", arbitro.getNombre(), saved.getId());
+
             return PartidoResponse.fromEntity(saved);
         }
 
-    // ============================================================
-    // ELIMINAR PARTIDO
-    // ============================================================
-
     @Transactional
     public void eliminarPartido(Long id) {
-        log.info("🗑️ Eliminando partido ID: {}", id);
+        log.info(" Eliminando partido ID: {}", id);
 
         Partido partido = partidoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -587,16 +524,12 @@ public class PartidoService {
         }
 
         partidoRepository.deleteById(id);
-        log.info("✅ Partido eliminado: {}", id);
+        log.info(" Partido eliminado: {}", id);
     }
-
-    // ============================================================
-    // CAMBIAR ESTADO
-    // ============================================================
 
     @Transactional
     public PartidoResponse cambiarEstado(Long partidoId, String nuevoEstado) {
-        log.info("🔄 Cambiando estado del partido ID: {} a {}", partidoId, nuevoEstado);
+        log.info(" Cambiando estado del partido ID: {} a {}", partidoId, nuevoEstado);
 
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -612,16 +545,14 @@ public class PartidoService {
 
         partido.setEstado(nuevoEstado);
         Partido saved = partidoRepository.save(partido);
-        log.info("✅ Estado del partido {} cambiado a {}", saved.getId(), nuevoEstado);
+        log.info(" Estado del partido {} cambiado a {}", saved.getId(), nuevoEstado);
 
         return PartidoResponse.fromEntity(saved);
     }
 
-    // Aplicacion/Services/PartidoService.java
-
     @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosByEquipo(Long equipoId) {
-        log.info("📋 Buscando partidos para equipo ID: {}", equipoId);
+        log.info(" Buscando partidos para equipo ID: {}", equipoId);
 
         if (!equipoRepository.existsById(equipoId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -633,21 +564,14 @@ public class PartidoService {
                 .collect(Collectors.toList());
     }
 
-
-    // ============================================================
-// AÑADIR A PartidoService.java
-// ============================================================
-
-    // 1. Detalle completo del partido
     @Transactional(readOnly = true)
     public Map<String, Object> getDetalleCompletoPartido(Long partidoId) {
-        log.info("📋 Obteniendo detalle completo del partido: {}", partidoId);
+        log.info(" Obteniendo detalle completo del partido: {}", partidoId);
 
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Partido no encontrado con ID: " + partidoId));
 
-        // Buscar acta si existe
         ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId).orElse(null);
 
         Map<String, Object> detalle = new HashMap<>();
@@ -658,7 +582,6 @@ public class PartidoService {
                 acta.getResultadoLocal() + " - " + acta.getResultadoVisitante() : "Pendiente");
         detalle.put("fechaFormateada", partido.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
 
-        // Información de equipos
         detalle.put("equipoLocal", Map.of(
                 "id", partido.getEquipoLocal().getId(),
                 "nombre", partido.getEquipoLocal().getNombre(),
@@ -670,7 +593,6 @@ public class PartidoService {
                 "escudo", partido.getEquipoVisitante().getEscudoUrl()
         ));
 
-        // Información del árbitro
         if (partido.getArbitro() != null) {
             detalle.put("arbitro", Map.of(
                     "id", partido.getArbitro().getId(),
@@ -682,10 +604,9 @@ public class PartidoService {
         return detalle;
     }
 
-    // 2. Finalizar partido
     @Transactional
     public PartidoResponse finalizarPartido(Long partidoId, int resultadoLocal, int resultadoVisitante) {
-        log.info("🏁 Finalizando partido ID: {} - Resultado: {} - {}", partidoId, resultadoLocal, resultadoVisitante);
+        log.info(" Finalizando partido ID: {} - Resultado: {} - {}", partidoId, resultadoLocal, resultadoVisitante);
 
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -699,17 +620,15 @@ public class PartidoService {
         partido.setResultadoVisitante(resultadoVisitante);
         partido.setEstado("FINALIZADO");
 
-        // Actualizar estadísticas de los equipos
         actualizarEstadisticasEquipo(partido.getEquipoLocal().getId(), resultadoLocal, resultadoVisitante);
         actualizarEstadisticasEquipo(partido.getEquipoVisitante().getId(), resultadoVisitante, resultadoLocal);
 
         return PartidoResponse.fromEntity(partidoRepository.save(partido));
     }
 
-    // 3. Historial de partidos de un equipo
     @Transactional(readOnly = true)
     public Map<String, Object> getHistorialEquipo(Long equipoId) {
-        log.info("📋 Obteniendo historial del equipo: {}", equipoId);
+        log.info(" Obteniendo historial del equipo: {}", equipoId);
 
         List<Partido> partidos = partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId);
 
@@ -753,7 +672,6 @@ public class PartidoService {
         return historial;
     }
 
-    // 4. Método privado para actualizar estadísticas del equipo
     private void actualizarEstadisticasEquipo(Long equipoId, int puntosFavor, int puntosContra) {
         Equipo equipo = equipoRepository.findById(equipoId).orElse(null);
         if (equipo == null) return;

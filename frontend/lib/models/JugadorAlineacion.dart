@@ -1,7 +1,5 @@
 class JugadorAlineacion {
-  // ✅ FIX: el backend (JugadorAlineacionRequestDTO) NO envía `id` ni
-  // `nombreCompleto`, así que estos campos se vuelven opcionales y
-  // `nombreCompleto` se calcula a partir de `nombre + apellido`.
+
   final int? id;
   final int jugadorId;
   final String nombre;
@@ -46,9 +44,7 @@ class JugadorAlineacion {
     return JugadorAlineacion(
       id: _toIntOrNull(json['id']),
       jugadorId: _toInt(json['jugadorId']),
-      // El backend serializa nombre/apellido por separado.
-      // Aceptamos también `nombreJugador` por compatibilidad con
-      // /alineaciones/partido/{id}/equipo/{equipoId}.
+
       nombre: (json['nombre'] ?? json['nombreJugador'] ?? '').toString(),
       apellido: json['apellido']?.toString(),
       dorsal: _toInt(json['dorsal']),

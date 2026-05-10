@@ -1,4 +1,3 @@
-// lib/screens/equipos/ListadoEquiposPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/equipo.dart';
@@ -230,9 +229,7 @@ class _ListadoEquiposPageState extends State<ListadoEquiposPage> {
 
   Widget _buildDropdownFiltro(
       String label, String value, List<String> opciones, ValueChanged<String?> onChanged) {
-    // ✅ FIX: envolver DropdownButton en Material para evitar el error
-    // "No Material widget found" cuando se renderiza dentro de un
-    // Container con gradiente sin Scaffold padre directo.
+
     return Material(
       color: Colors.transparent,
       child: Container(

@@ -1,17 +1,15 @@
-// lib/widgets/Header.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 class HeaderApp extends StatelessWidget implements PreferredSizeWidget {
   final String titulo;
-  final List<Widget>? actions;  // ← Añadir este parámetro
+  final List<Widget>? actions;
 
   const HeaderApp({
     super.key,
     required this.titulo,
-    this.actions,  // ← Añadir
+    this.actions,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +25,7 @@ class HeaderApp extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: true,
       iconTheme: const IconThemeData(color: AppColors.blanco),
-      actions: actions,  // ← Usar el parámetro
+      actions: actions,
     );
   }
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Widget reutilizable para navegar entre jornadas
-/// Usado en: ConfirmarAlineaciones, PresentarAlineacion, Partidos
 class HeaderJornadaNavegacion extends StatelessWidget {
   final int jornadaActual;
   final int totalJornadas;
@@ -37,7 +35,7 @@ class HeaderJornadaNavegacion extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Título con botón atrás (opcional)
+
           if (titulo != null)
             Row(
               children: [
@@ -61,11 +59,10 @@ class HeaderJornadaNavegacion extends StatelessWidget {
 
           if (titulo != null) const SizedBox(height: 16),
 
-          // Navegación de jornadas
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Botón anterior
+
               IconButton(
                 icon: const Icon(
                   Icons.chevron_left,
@@ -79,7 +76,6 @@ class HeaderJornadaNavegacion extends StatelessWidget {
 
               const SizedBox(width: 16),
 
-              // Indicador de jornada
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
@@ -119,7 +115,6 @@ class HeaderJornadaNavegacion extends StatelessWidget {
 
               const SizedBox(width: 16),
 
-              // Botón siguiente
               IconButton(
                 icon: const Icon(
                   Icons.chevron_right,
@@ -133,7 +128,6 @@ class HeaderJornadaNavegacion extends StatelessWidget {
             ],
           ),
 
-          // Indicador de jornadas totales
           const SizedBox(height: 8),
           Text(
             'de $totalJornadas jornadas',

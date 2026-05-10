@@ -32,16 +32,16 @@ public class Partido {
     @Column(nullable = false)
     private LocalDateTime fecha;
 
-    private String ubicacion;  // Esto es direccionPabellon
+    private String ubicacion;
 
     private String pabellon;
 
-    private Integer resultadoLocal;  // puntosLocal
+    private Integer resultadoLocal;
 
-    private Integer resultadoVisitante;  // puntosVisitante
+    private Integer resultadoVisitante;
 
     @Column(nullable = false)
-    private String estado;  // PROGRAMADO, EN_CURSO, FINALIZADO
+    private String estado;
 
     @ManyToOne
     @JoinColumn(name = "acta_partido_id")
@@ -54,8 +54,8 @@ public class Partido {
     }
 
     @Column
-    private String hora;  
+    private String hora;
 
     @Column
-    private Integer jornada;  
+    private Integer jornada;
 }

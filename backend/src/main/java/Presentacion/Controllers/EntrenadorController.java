@@ -1,4 +1,3 @@
-// Presentacion/Controllers/EntrenadorController.java
 package Presentacion.Controllers;
 
 import Aplicacion.Services.EntrenadorService;
@@ -42,7 +41,6 @@ public class EntrenadorController {
     @PreAuthorize("hasRole('ENTRENADOR')")
     public ResponseEntity<EntrenadorEquipoDTO> obtenerMiEquipo(HttpServletRequest request) {
 
-        // Obtener el username del SecurityContextHolder
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -66,18 +64,13 @@ public class EntrenadorController {
         }
     }
 
-    // ============================================================
-    // OBTENER MI EQUIPO (MÉTODO ALTERNATIVO CON TOKEN)
-    // ============================================================
-
     @GetMapping("/mi-equipo-v2")
     @PreAuthorize("hasRole('ENTRENADOR')")
     public ResponseEntity<EntrenadorEquipoDTO> obtenerMiEquipoV2(HttpServletRequest request) {
 
-        // Extraer token del header
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.error("❌ No hay token de autenticación");
+            log.error(" No hay token de autenticación");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -85,11 +78,11 @@ public class EntrenadorController {
         String username = jwtTokenProvider.getUsernameFromToken(token);
 
         if (username == null) {
-            log.error("❌ No se pudo extraer username del token");
+            log.error(" No se pudo extraer username del token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        log.info("📋 Obteniendo equipo del entrenador (v2): {}", username);
+        log.info(" Obteniendo equipo del entrenador (v2): {}", username);
 
         try {
             EntrenadorEquipoDTO equipo = entrenadorService.obtenerMiEquipo(username);
@@ -121,7 +114,6 @@ public class EntrenadorController {
             @RequestBody AsignarEquipoDTO dto,
             HttpServletRequest request) {
 
-        // Obtener admin username del token
         String authHeader = request.getHeader("Authorization");
         String token = authHeader.substring(7);
         String adminUsername = jwtTokenProvider.getUsernameFromToken(token);
@@ -168,19 +160,14 @@ public class EntrenadorController {
         return ResponseEntity.noContent().build();
     }
 
-    // Presentacion/Controllers/EntrenadorController.java
-
-    // Presentacion/Controllers/EntrenadorController.java
-
     @GetMapping("/mis-jugadores")
     @PreAuthorize("hasRole('ENTRENADOR')")
     public ResponseEntity<List<JugadorResponse>> getMisJugadores(
-            HttpServletRequest request) {  // ✅ Cambiar a HttpServletRequest
+            HttpServletRequest request) {
 
-        // Extraer token del header manualmente
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.error("❌ No hay token de autenticación");
+            log.error(" No hay token de autenticación");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -188,27 +175,26 @@ public class EntrenadorController {
         String username = jwtTokenProvider.getUsernameFromToken(token);
 
         if (username == null) {
-            log.error("❌ No se pudo extraer username del token");
+            log.error(" No se pudo extraer username del token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        log.info("📋 Obteniendo jugadores del entrenador: {}", username);
+        log.info(" Obteniendo jugadores del entrenador: {}", username);
 
-        // Buscar el entrenador
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Entrenador no encontrado: " + username));
 
         if (entrenador.getEquipo() == null) {
-            log.warn("⚠️ Entrenador {} no tiene equipo asignado", username);
+            log.warn(" Entrenador {} no tiene equipo asignado", username);
             return ResponseEntity.ok(List.of());
         }
 
         Long equipoId = entrenador.getEquipo().getId();
-        log.info("✅ Entrenador {} tiene equipo ID: {}", username, equipoId);
+        log.info(" Entrenador {} tiene equipo ID: {}", username, equipoId);
 
         List<JugadorResponse> jugadores = equipoService.getJugadoresByEquipoId(equipoId);
-        log.info("📊 Se encontraron {} jugadores", jugadores.size());
+        log.info(" Se encontraron {} jugadores", jugadores.size());
 
         return ResponseEntity.ok(jugadores);
     }

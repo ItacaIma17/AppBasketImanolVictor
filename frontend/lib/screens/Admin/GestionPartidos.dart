@@ -1,4 +1,3 @@
-// lib/screens/Admin/GestionPartidosPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/partido.dart';
@@ -25,7 +24,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
   bool _loading = true;
   String? _error;
 
-  // Filtros
   String? _filtroEstado;
   int? _filtroJornada;
   String _searchQuery = '';
@@ -98,7 +96,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
       builder: (context) => CrearPartidoCompletoDialog(
         equipos: _equipos,
         onPartidoCreado: () => _cargarDatos(),
-        partidoToEdit: partido, // Pasar partido a editar
+        partidoToEdit: partido,
       ),
     );
   }
@@ -155,7 +153,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
   }
 
   Widget _buildFiltros() {
-    // Obtener jornadas únicas
+
     final jornadasUnicas = _partidos
         .map((p) => p.jornada)
         .where((j) => j != null)
@@ -214,9 +212,9 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                     icon: const Icon(Icons.arrow_drop_down, color: AppColors.naranja),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('Todos', style: TextStyle(color: Colors.white))),
-                      const DropdownMenuItem(value: 'PROGRAMADO', child: Text('📋 Programados', style: TextStyle(color: Colors.white))),
+                      const DropdownMenuItem(value: 'PROGRAMADO', child: Text(' Programados', style: TextStyle(color: Colors.white))),
                       const DropdownMenuItem(value: 'EN_CURSO', child: Text('⏳ En curso', style: TextStyle(color: Colors.white))),
-                      const DropdownMenuItem(value: 'FINALIZADO', child: Text('✅ Finalizados', style: TextStyle(color: Colors.white))),
+                      const DropdownMenuItem(value: 'FINALIZADO', child: Text(' Finalizados', style: TextStyle(color: Colors.white))),
                     ],
                     onChanged: (value) => setState(() => _filtroEstado = value),
                   ),
@@ -352,7 +350,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
         ),
         child: Column(
           children: [
-            // Cabecera con estado
+
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
@@ -381,12 +379,11 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
               ),
             ),
 
-            // Cuerpo del partido
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Equipos y resultado
+
                   Row(
                     children: [
                       Expanded(
@@ -412,7 +409,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                         ),
                       ),
 
-                      // Resultado o VS
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -465,7 +461,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
 
                   const SizedBox(height: 16),
 
-                  // Información adicional
                   Row(
                     children: [
                       const Icon(Icons.calendar_today, size: 14, color: Colors.white54),
@@ -491,7 +486,6 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
 
                   const SizedBox(height: 16),
 
-                  // Botones de acción
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

@@ -5,3 +5,4 @@ public class GlobalException extends RuntimeException {
         super(message);
     }
 }
+

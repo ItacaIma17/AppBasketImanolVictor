@@ -1,4 +1,3 @@
-// lib/screens/equipos/DetalleEquipoPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/data/gestorFavoritos.dart';
@@ -34,7 +33,6 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   int _selectedTab = 0;
   String? _error;
 
-  // Función auxiliar para parsear fecha dd/MM/yyyy a DateTime
   DateTime? _parseFecha(String fechaStr) {
     if (fechaStr.isEmpty) return null;
     try {
@@ -62,7 +60,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
   Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
     try {
-      // Si no tenemos el equipo cargado, lo pedimos por id
+
       if (_equipo == null) {
         _equipo = await EquipoService.obtenerEquipo(widget.equipoId!);
       }
@@ -337,7 +335,6 @@ Widget _buildJugadoresList() {
     );
   }
 
-  
    Widget _buildJugadorCard(Jugador jugador) {
     final esJugadorFavorito = FavoritosManager().esJugadorFavorito(jugador.id!);
 
@@ -402,7 +399,7 @@ Widget _buildJugadoresList() {
   }
 
   Widget _buildSeccionPartidos() {
-    // Filtrar próximos partidos (no finalizados)
+
     final proximosPartidos = _partidos
         .where((p) => p.estado != 'FINALIZADO')
         .toList()
@@ -413,7 +410,6 @@ Widget _buildJugadoresList() {
         return fechaA.compareTo(fechaB);
       });
 
-    // Filtrar partidos finalizados
     final finalizados = _partidos
         .where((p) => p.estado == 'FINALIZADO')
         .toList()

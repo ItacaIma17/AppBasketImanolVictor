@@ -1,4 +1,3 @@
-// lib/services/autenticacion_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
@@ -40,10 +39,6 @@ class AutenticacionService {
     return headers;
   }
 
-  // ============================================================
-  // INICIALIZACIÓN
-  // ============================================================
-
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -68,8 +63,6 @@ class AutenticacionService {
     }
   }
 
-  // lib/services/autenticacion_service.dart - Añadir este método
-
   static Future<String?> getToken() async {
     if (_token != null) return _token;
 
@@ -87,14 +80,11 @@ class AutenticacionService {
     return null;
   }
 
-  // En autenticacion_service.dart - Añadir método para verificar token
-
   static Future<bool> verificarTokenValido() async {
     try {
       final token = await getToken();
       if (token == null) return false;
 
-      // Verificar si el token ha expirado
       final parts = token.split('.');
       if (parts.length != 3) return false;
 
@@ -106,7 +96,7 @@ class AutenticacionService {
       if (exp != null) {
         final expDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
         if (expDate.isBefore(DateTime.now())) {
-          // Token expirado, intentar refrescar
+
           return await refreshTokenUser();
         }
       }
@@ -117,7 +107,6 @@ class AutenticacionService {
     }
   }
 
-// También añade este método para obtener headers de forma asíncrona
   static Future<Map<String, String>> getHeadersAsync() async {
     final token = await getToken();
     return {
@@ -181,8 +170,6 @@ class AutenticacionService {
     }
   }
 
-
-
   static Future<Map<String, dynamic>> actualizarPerfil({
     String? username,
     String? oldPassword,
@@ -216,7 +203,6 @@ class AutenticacionService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // Actualizar usuario en memoria si cambió username
         if (_usuarioActual != null && username != null && username.isNotEmpty) {
           _usuarioActual = _usuarioActual!.copyWith(username: username);
           await _guardarSesion();
@@ -254,10 +240,6 @@ class AutenticacionService {
       LoggerService.error('Error guardando sesión: $e');
     }
   }
-
-  // ============================================================
-  // LOGIN
-  // ============================================================
 
   static Future<bool> login(String username, String password) async {
     try {
@@ -494,14 +476,13 @@ class AutenticacionService {
 
   static Future<void> cerrarSesion() async {
     try {
-      // Intentar llamar al backend (pero no es crítico)
+
       if (_usuarioActual != null && _token != null) {
         try {
-          // ✅ Crear headers SIN el token (opcional, o usar el token actual)
+
           final headers = {
             'Content-Type': 'application/json',
-            // Opcional: añadir Authorization si el endpoint lo requiere
-            // 'Authorization': 'Bearer $_token',
+
           };
 
           await http.post(
@@ -509,14 +490,14 @@ class AutenticacionService {
             headers: headers,
           ).timeout(const Duration(seconds: 3));
         } catch (e) {
-          // Ignorar errores del backend, el logout local es lo importante
+
           print('Backend logout falló (ignorado): $e');
         }
       }
     } catch (e) {
       print('Error en logout: $e');
     } finally {
-      // ✅ Siempre limpiar la sesión local
+
       await _limpiarSesion();
       LoggerService.info('Sesión cerrada');
     }
@@ -530,7 +511,6 @@ class AutenticacionService {
     _jugadorActual = null;
     _arbitroActual = null;
 
-    // Limpiar almacenamiento persistente
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('refresh_token');

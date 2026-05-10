@@ -1,4 +1,3 @@
-// lib/services/acta_service.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -7,7 +6,6 @@ import '../models/actaPartido.dart';
 import 'autenticacion_service.dart';
 import 'loggerService.dart';
 import 'package:path_provider/path_provider.dart';
-
 
 class ActaService {
   static String get baseUrl => AppConfig.apiUrl;
@@ -21,11 +19,6 @@ class ActaService {
     return headers;
   }
 
-  // ============================================================
-  // GUARDAR ACTA
-  // ============================================================
-
-  /// Guardar una nueva acta (solo árbitro)
   static Future<ActaPartido> guardarActa(Map<String, dynamic> actaData) async {
     try {
       LoggerService.info('Guardando acta', tag: 'ACTA', data: {'partidoId': actaData['partidoId']});
@@ -51,11 +44,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // OBTENER ACTA
-  // ============================================================
-
-  /// Obtener acta por ID de partido
   static Future<ActaPartido> obtenerActaPorPartido(int partidoId) async {
     try {
       LoggerService.info('Obteniendo acta del partido', tag: 'ACTA', data: {'partidoId': partidoId});
@@ -81,7 +69,6 @@ class ActaService {
     }
   }
 
-  /// Obtener acta por ID de acta
   static Future<ActaPartido> obtenerActaPorId(int actaId) async {
     try {
       final response = await http.get(
@@ -100,11 +87,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // ACTUALIZAR ACTA
-  // ============================================================
-
-  /// Actualizar acta existente (solo árbitro que la creó o admin)
   static Future<ActaPartido> actualizarActa(int actaId, Map<String, dynamic> actaData) async {
     try {
       LoggerService.info('Actualizando acta', tag: 'ACTA', data: {'actaId': actaId});
@@ -130,11 +112,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // ELIMINAR ACTA
-  // ============================================================
-
-  /// Eliminar acta (solo admin)
   static Future<void> eliminarActa(int actaId) async {
     try {
       LoggerService.info('Eliminando acta', tag: 'ACTA', data: {'actaId': actaId});
@@ -157,9 +134,6 @@ class ActaService {
     }
   }
 
-  // =========================================================
-  // PDF
-  // =========================================================
   static Future<File> descargarActaPdf(int partidoId) async {
     try {
       LoggerService.info('Descargando PDF del acta', tag: 'ACTA', data: {'partidoId': partidoId});
@@ -170,13 +144,11 @@ class ActaService {
       ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
-        // Obtener el directorio de documentos
+
         final directory = await getApplicationDocumentsDirectory();
 
-        // Crear el archivo
         final file = File('${directory.path}/acta_partido_$partidoId.pdf');
 
-        // Escribir los bytes del PDF
         await file.writeAsBytes(response.bodyBytes);
 
         LoggerService.info('PDF descargado exitosamente', tag: 'ACTA',
@@ -192,11 +164,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // VERIFICACIONES
-  // ============================================================
-
-  /// Verificar si un partido tiene acta
   static Future<bool> tieneActa(int partidoId) async {
     try {
       final response = await http.get(
@@ -215,7 +182,6 @@ class ActaService {
     }
   }
 
-  /// Verificar si el usuario puede editar el acta
   static Future<bool> puedeEditarActa(int actaId) async {
     try {
       final response = await http.get(
@@ -234,11 +200,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // LISTAR ACTAS
-  // ============================================================
-
-  /// Listar todas las actas (solo admin)
   static Future<List<ActaPartido>> listarTodasActas() async {
     try {
       final response = await http.get(
@@ -258,7 +219,6 @@ class ActaService {
     }
   }
 
-  /// Listar actas por árbitro
   static Future<List<ActaPartido>> listarActasPorArbitro(int arbitroId) async {
     try {
       final response = await http.get(
@@ -278,7 +238,6 @@ class ActaService {
     }
   }
 
-  /// Listar actas por equipo
   static Future<List<ActaPartido>> listarActasPorEquipo(int equipoId) async {
     try {
       final response = await http.get(
@@ -298,11 +257,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // ESTADÍSTICAS
-  // ============================================================
-
-  /// Obtener estadísticas de un jugador de un partido
   static Future<Map<String, dynamic>> getEstadisticasJugador(int partidoId, int jugadorId) async {
     try {
       final response = await http.get(
@@ -321,7 +275,6 @@ class ActaService {
     }
   }
 
-  /// Obtener estadísticas de un equipo en un partido
   static Future<Map<String, dynamic>> getEstadisticasEquipo(int partidoId, int equipoId) async {
     try {
       final response = await http.get(
@@ -340,11 +293,6 @@ class ActaService {
     }
   }
 
-  // ============================================================
-  // COMPARTIR ACTA
-  // ============================================================
-
-  /// Compartir acta por email
   static Future<void> compartirActaPorEmail(int actaId, String email) async {
     try {
       final response = await http.post(
@@ -365,10 +313,6 @@ class ActaService {
     }
   }
 
-
-  // lib/services/acta_service.dart - AÑADIR ESTE MÉTODO
-
-  /// Verificar si un partido tiene acta (versión simple)
   static Future<bool> existeActa(int partidoId) async {
     try {
       final response = await http.get(

@@ -1,4 +1,3 @@
-// lib/screens/Admin/PanelAdminPage.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +7,6 @@ import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
 import 'GestionPartidos.dart';
 
-// Importar las páginas que existen
 import 'GestionPartidosPage.dart' hide GestionPartidosPage;
 import 'GestionUsuariosPage.dart';
 import 'GestionEntrenadoresPage.dart';

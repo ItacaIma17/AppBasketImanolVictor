@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Entrenador/CrearEntrenadorDTO.java
 package Presentacion.DTOS.Entrenador;
 
 import lombok.Data;

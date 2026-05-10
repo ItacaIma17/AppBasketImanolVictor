@@ -16,7 +16,6 @@ public interface ActaPartidoRepository extends JpaRepository<ActaPartido, Long> 
 
     boolean existsByPartidoId(Long partidoId);
 
-    // NUEVOS MÉTODOS
     List<ActaPartido> findByArbitroId(Long arbitroId);
 
     @Query("SELECT a FROM ActaPartido a WHERE a.partido.equipoLocal.id = :equipoId OR a.partido.equipoVisitante.id = :equipoId")

@@ -1,5 +1,3 @@
-// Dominio/Repositorys/EquipoRepository.java - VERSIÓN CORREGIDA
-
 package Dominio.Repositorys;
 
 import Dominio.Entity.Equipo;
@@ -29,7 +27,6 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     @Query("SELECT e FROM Equipo e WHERE e.solicitudPendiente = true")
     List<Equipo> findEquiposConSolicitudPendiente();
 
-    // ✅ MÉTODO CORRECTO - Contar equipos por liga
     @Query("SELECT COUNT(e) FROM Equipo e WHERE e.liga.id = :ligaId")
     long countByLigaId(@Param("ligaId") Long ligaId);
 }

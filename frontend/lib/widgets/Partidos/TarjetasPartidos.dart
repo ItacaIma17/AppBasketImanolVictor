@@ -1,4 +1,3 @@
-// lib/widgets/TarjetaPartido.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/partido.dart';
@@ -46,7 +45,7 @@ class TarjetaPartido extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Fecha y hora
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -60,10 +59,9 @@ class TarjetaPartido extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Equipos y resultado
               Row(
                 children: [
-                  // Equipo local
+
                   Expanded(
                     child: Column(
                       children: [
@@ -91,7 +89,6 @@ class TarjetaPartido extends StatelessWidget {
                     ),
                   ),
 
-                  // Resultado o VS
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -110,7 +107,6 @@ class TarjetaPartido extends StatelessWidget {
                     ),
                   ),
 
-                  // Equipo visitante
                   Expanded(
                     child: Column(
                       children: [
@@ -142,7 +138,6 @@ class TarjetaPartido extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Pabellón
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -160,7 +155,6 @@ class TarjetaPartido extends StatelessWidget {
                 ],
               ),
 
-              // Estado
               if (esProgramado) ...[
                 const SizedBox(height: 10),
                 Container(

@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Usuarios/Register/RegisterEntrenadorDTO.java
 package Presentacion.DTOS.Usuarios.Register;
 
 import Dominio.Entity.Roles.Roles;

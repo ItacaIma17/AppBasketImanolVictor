@@ -1,4 +1,3 @@
-// lib/screens/InicioApp.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -48,12 +47,10 @@ class _InicioPageState extends State<InicioPage> {
   List<Jugador> _jugadores = [];
   bool _cargando = true;
 
-  // Búsqueda
   final TextEditingController _searchCtrl = TextEditingController();
   bool _buscando = false;
   List<_ResultadoBusqueda> _resultados = [];
 
-  // Favoritos
   final FavoritosManager _favManager = FavoritosManager();
 
   @override
@@ -84,10 +81,6 @@ class _InicioPageState extends State<InicioPage> {
       final usuario = results[0] as Usuario?;
       var partidosResult = results[2] as List<Partido>;
 
-      // ✅ Si el usuario es ENTRENADOR, descartamos el listado global y
-      // mostramos sólo los partidos de su equipo. El backend ya filtra
-      // por equipo en /partidos/entrenador/mis-partidos
-      // (PartidoService.getPartidosByEntrenador → getPartidosByEquipo).
       if (usuario != null && usuario.isEntrenador) {
         try {
           partidosResult = await PartidoService.getPartidosEntrenador();
@@ -111,7 +104,6 @@ class _InicioPageState extends State<InicioPage> {
     }
   }
 
-  // Función auxiliar para obtener un equipo por ID
   Equipo? _getEquipoById(int? equipoId) {
     if (equipoId == null) return null;
     try {
@@ -120,8 +112,6 @@ class _InicioPageState extends State<InicioPage> {
       return null;
     }
   }
-
-  // ─── BÚSQUEDA ──────────────────────────────────────────────────────────────
 
   void _onSearch(String query) {
     final q = query.trim().toLowerCase();
@@ -191,8 +181,6 @@ class _InicioPageState extends State<InicioPage> {
     }
   }
 
-  // ─── BUILD ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,8 +245,6 @@ class _InicioPageState extends State<InicioPage> {
     );
   }
 
-  // ─── SLIVER APP BAR ──────────────────────────────────────────────────────
-
   Widget _buildSliverHeader() {
     return SliverAppBar(
       floating: true,
@@ -297,8 +283,6 @@ class _InicioPageState extends State<InicioPage> {
       ],
     );
   }
-
-  // ─── BUSCADOR GLOBAL ──────────────────────────────────────────────────────
 
   Widget _buildBuscador() {
     return Hero(
@@ -407,8 +391,6 @@ class _InicioPageState extends State<InicioPage> {
     }
   }
 
-  // ─── BIENVENIDA ───────────────────────────────────────────────────────────
-
   Widget _buildBienvenida() {
     final hora = DateTime.now().hour;
     final saludo = hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches';
@@ -432,7 +414,7 @@ class _InicioPageState extends State<InicioPage> {
             ),
             child: Center(
               child: Text(
-                nombre.isNotEmpty ? nombre[0].toUpperCase() : '👋',
+                nombre.isNotEmpty ? nombre[0].toUpperCase() : '',
                 style: const TextStyle(color: AppColors.blanco, fontSize: 20,
                     fontWeight: FontWeight.bold),
               ),
@@ -482,8 +464,6 @@ class _InicioPageState extends State<InicioPage> {
       ),
     );
   }
-
-  // ─── FAVORITOS RÁPIDOS ────────────────────────────────────────────────────
 
   Widget _buildFavoritosRapidos() {
     final equiposFav = _favManager.equiposFavoritos;
@@ -604,8 +584,6 @@ class _InicioPageState extends State<InicioPage> {
       ),
     );
   }
-
-  // ─── ACCESOS RÁPIDOS ──────────────────────────────────────────────────────
 
   Widget _buildAccesosRapidos() {
     final rol = _usuario?.role;
@@ -774,8 +752,6 @@ class _InicioPageState extends State<InicioPage> {
     );
   }
 
-  // ─── PRÓXIMOS PARTIDOS ────────────────────────────────────────────────────
-
   List<Partido> get _proximos => _partidos
       .where((p) => p.estado == 'PROGRAMADO')
       .take(3)
@@ -795,7 +771,7 @@ class _InicioPageState extends State<InicioPage> {
   }
 
   Widget _buildTarjetaPartidoMini(Partido p) {
-    // Obtener los equipos completos
+
     final equipoLocal = _getEquipoById(p.equipoLocalId);
     final equipoVisitante = _getEquipoById(p.equipoVisitanteId);
 
@@ -812,7 +788,7 @@ class _InicioPageState extends State<InicioPage> {
         ),
         child: Row(
           children: [
-            // Escudo local - CLIC PARA IR AL EQUIPO
+
             GestureDetector(
               onTap: () {
                 if (equipoLocal != null) {
@@ -852,7 +828,7 @@ class _InicioPageState extends State<InicioPage> {
                 ],
               ),
             ),
-            // Escudo visitante - CLIC PARA IR AL EQUIPO
+
             GestureDetector(
               onTap: () {
                 if (equipoVisitante != null) {
@@ -893,8 +869,6 @@ class _InicioPageState extends State<InicioPage> {
       ),
     );
   }
-
-  // ─── LIGAS DESTACADAS ────────────────────────────────────────────────────
 
   Widget _buildLigasDestacadas() {
     if (_ligas.isEmpty) return const SizedBox.shrink();
@@ -980,8 +954,6 @@ class _InicioPageState extends State<InicioPage> {
     );
   }
 
-  // ─── ESTADÍSTICAS RÁPIDAS ─────────────────────────────────────────────────
-
   Widget _buildEstadisticasRapidas() {
     final total = _partidos.length;
     final finalizados = _partidos.where((p) => p.estado == 'FINALIZADO').length;
@@ -1021,8 +993,6 @@ class _InicioPageState extends State<InicioPage> {
   Widget _buildDivider() =>
       Container(width: 1, height: 30, color: Colors.white.withOpacity(0.1));
 
-  // ─── HELPER TÍTULO ────────────────────────────────────────────────────────
-
   Widget _buildTituloSeccion(String titulo, IconData icono, Color color) {
     return Row(
       children: [
@@ -1056,8 +1026,6 @@ class _InicioPageState extends State<InicioPage> {
   }
 }
 
-// ─── MODELO RESULTADO BÚSQUEDA ──────────────────────────────────────────────
-
 class _ResultadoBusqueda {
   final String tipo;
   final String nombre;
@@ -1073,8 +1041,6 @@ class _ResultadoBusqueda {
     required this.icono,
   });
 }
-
-// ─── MODELO ACCESO RÁPIDO ───────────────────────────────────────────────────
 
 class _AccesoRapido {
   final IconData icon;

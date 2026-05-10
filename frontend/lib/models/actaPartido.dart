@@ -1,4 +1,3 @@
-// lib/models/acta.dart
 class ActaPartido {
   final int? id;
   final int partidoId;

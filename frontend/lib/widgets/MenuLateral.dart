@@ -1,6 +1,3 @@
-// lib/widgets/MenuLateral.dart — VERSIÓN MEJORADA
-// Navegación fluida, diseño profesional, no usa pushReplacement para poder volver atrás
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/models/role.dart';
@@ -53,10 +50,10 @@ class MenuLateral extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // ── HEADER ──────────────────────────────────────────
+
             _buildDrawerHeader(inicialAvatar, nombreMostrar, emailMostrar, rol),
-            const Divider(color: AppColors.blancoOpacidad70), 
-            // ── ITEMS CON SCROLL ────────────────────────────────
+            const Divider(color: AppColors.blancoOpacidad70),
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -85,7 +82,6 @@ class MenuLateral extends StatelessWidget {
                       titulo: 'Mi Perfil',
                       onTap: () => _navegar(context, const PerfilPage())),
 
-                  // ══ ENTRENADOR ══════════════════════════════════
                   if (rol == Role.ENTRENADOR && entrenador != null) ...[
                     _buildSeparador('MI EQUIPO'),
                     _buildDrawerItem(context,
@@ -143,7 +139,6 @@ class MenuLateral extends StatelessWidget {
                     ],
                   ],
 
-                  // ══ ÁRBITRO ═════════════════════════════════════
                   if (rol == Role.ARBITRO) ...[
                     _buildSeparador('ÁRBITRO'),
                     _buildDrawerItem(context,
@@ -168,7 +163,6 @@ class MenuLateral extends StatelessWidget {
                             context, const SeleccionarPartidoActaPage())),
                   ],
 
-                  // ══ JUGADOR ═════════════════════════════════════
                   if (rol == Role.JUGADOR && jugador != null) ...[
                     _buildSeparador('JUGADOR'),
                     if (jugador.tieneEquipo) ...[
@@ -197,7 +191,6 @@ class MenuLateral extends StatelessWidget {
                   ],
                   const Divider(color: AppColors.blancoOpacidad70),
 
-                  // ══ ADMIN ════════════════════════════════════════
                   if (rol == Role.ADMIN) ...[
                     _buildSeparador('ADMINISTRACIÓN'),
                     _buildDrawerItem(context,
@@ -215,7 +208,6 @@ class MenuLateral extends StatelessWidget {
                   ],
                   const Divider(color: AppColors.blancoOpacidad70),
 
-                  // ══ COMÚN ════════════════════════════════════════
                   _buildSeparador('AJUSTES'),
                   _buildDrawerItem(context,
                       icono: Icons.settings_outlined,
@@ -250,8 +242,6 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  // ─── HEADER ──────────────────────────────────────────────────────────────
-
   Widget _buildDrawerHeader(
       String inicial, String nombre, String email, Role? rol) {
     return Container(
@@ -262,7 +252,7 @@ class MenuLateral extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar
+
           Container(
             width: 56,
             height: 56,
@@ -311,8 +301,6 @@ class MenuLateral extends StatelessWidget {
       ),
     );
   }
-
-  // ─── ITEM DE MENÚ ────────────────────────────────────────────────────────
 
   Widget _buildDrawerItem(
       BuildContext context, {
@@ -370,8 +358,6 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  // ─── SEPARADOR DE SECCIÓN ────────────────────────────────────────────────
-
   Widget _buildSeparador(String titulo) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 16, 4),
@@ -384,12 +370,10 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  // ─── NAVEGACIÓN MEJORADA ─────────────────────────────────────────────────
-
   void _navegar(BuildContext context, Widget page) {
-    Navigator.pop(context); // cerrar drawer
+    Navigator.pop(context);
     final destino = page.runtimeType;
-    // Si ya estamos en esa pantalla, no apilar duplicado
+
     if (ModalRoute.of(context)?.settings.name == destino.toString()) return;
 
     Navigator.of(context).push(
@@ -406,15 +390,13 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  // ─── HELPERS ─────────────────────────────────────────────────────────────
-
   String _etiquetaRol(Role rol) {
     switch (rol) {
-      case Role.ADMIN: return '🔧 Administrador';
-      case Role.ENTRENADOR: return '📋 Entrenador';
-      case Role.ARBITRO: return '⚖️ Árbitro';
-      case Role.JUGADOR: return '🏀 Jugador';
-      case Role.AFICIONADO: return '👤 Aficionado';
+      case Role.ADMIN: return ' Administrador';
+      case Role.ENTRENADOR: return ' Entrenador';
+      case Role.ARBITRO: return ' Árbitro';
+      case Role.JUGADOR: return ' Jugador';
+      case Role.AFICIONADO: return ' Aficionado';
       default: return 'Usuario';
     }
   }

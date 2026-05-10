@@ -88,3 +88,4 @@ class TarjetaJugador extends StatelessWidget {
     );
   }
 }
+

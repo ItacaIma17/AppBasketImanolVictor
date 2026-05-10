@@ -26,12 +26,7 @@ public class PartidoRequestDTO {
 
     private Integer jornada;
 
-    /** Pabellón en el que se juega el partido. */
     private String pabellon;
 
-    /**
-     * ID del árbitro (opcional). Permite asignar / cambiar árbitro al
-     * actualizar un partido sin necesidad de un endpoint separado.
-     */
     private Long arbitroId;
 }

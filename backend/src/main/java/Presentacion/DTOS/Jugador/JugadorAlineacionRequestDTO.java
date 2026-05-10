@@ -17,7 +17,6 @@ public class JugadorAlineacionRequestDTO {
     private String posicion;
     private boolean titular;
 
-    // Constructor simplificado para compatibilidad
     public static JugadorAlineacionRequestDTO fromJugador(Long jugadorId, String nombre, String apellido, int dorsal, String posicion, boolean titular) {
         return JugadorAlineacionRequestDTO.builder()
                 .jugadorId(jugadorId)

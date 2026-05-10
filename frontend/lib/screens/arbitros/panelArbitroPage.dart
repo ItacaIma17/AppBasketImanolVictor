@@ -1,4 +1,3 @@
-// lib/screens/Arbitro/PanelArbitroPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/arbitro.dart';

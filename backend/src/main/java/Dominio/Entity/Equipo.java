@@ -65,3 +65,4 @@ public class Equipo {
     @Column(name = "puntos_contra")
     private Integer puntosContra = 0;
 }
+

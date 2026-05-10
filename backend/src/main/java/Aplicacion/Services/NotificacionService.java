@@ -1,7 +1,3 @@
-// ============================================================
-// NotificacionService.java — NUEVO SERVICIO DE NOTIFICACIONES
-// Aplicacion/Services/NotificacionService.java
-// ============================================================
 package Aplicacion.Services;
 
 import Dominio.Entity.Partido;
@@ -28,15 +24,6 @@ public class NotificacionService {
     private static final DateTimeFormatter FORMATO_FECHA =
             DateTimeFormatter.ofPattern("EEEE dd 'de' MMMM 'a las' HH:mm", new Locale("es", "ES"));
 
-    // ─────────────────────────────────────────────────────────
-    // Notificaciones de partido
-    // ─────────────────────────────────────────────────────────
-
-    /**
-     * Notifica a todos los usuarios relacionados con un partido
-     * (jugadores de ambos equipos, entrenadores, árbitro) cuando
-     * se crea o modifica.
-     */
     public void notificarPartidoCreado(Partido partido) {
         if (partido == null) return;
 
@@ -44,7 +31,7 @@ public class NotificacionService {
                 ? partido.getFecha().format(FORMATO_FECHA)
                 : "fecha por confirmar";
 
-        String asunto = "📅 Nuevo partido programado - " +
+        String asunto = " Nuevo partido programado - " +
                 partido.getEquipoLocal().getNombre() + " vs " +
                 partido.getEquipoVisitante().getNombre();
 
@@ -54,34 +41,25 @@ public class NotificacionService {
         notificarEquipo(partido, asunto, cuerpo);
     }
 
-    /**
-     * Envía una notificación por email a un destinatario específico
-     */
     public void enviarNotificacion(String email, String asunto, String mensaje) {
         try {
             String cuerpoHtml = emailTemplate(asunto, mensaje);
             emailService.sendHtmlMail(email, asunto, cuerpoHtml);
-            log.info("📧 Notificación enviada a: {}", email);
+            log.info(" Notificación enviada a: {}", email);
         } catch (Exception e) {
-            log.error("❌ Error enviando notificación a {}: {}", email, e.getMessage());
+            log.error(" Error enviando notificación a {}: {}", email, e.getMessage());
         }
     }
 
-    /**
-     * Envía una notificación en texto plano
-     */
     public void enviarNotificacionTexto(String email, String asunto, String mensaje) {
         try {
             emailService.sendTextMail(email, asunto, mensaje);
-            log.info("📧 Notificación texto enviada a: {}", email);
+            log.info(" Notificación texto enviada a: {}", email);
         } catch (Exception e) {
-            log.error("❌ Error enviando notificación a {}: {}", email, e.getMessage());
+            log.error(" Error enviando notificación a {}: {}", email, e.getMessage());
         }
     }
 
-    /**
-     * Envía un comunicado masivo a todos los usuarios o por rol
-     */
     public void enviarComunicadoMasivo(List<String> emails, String asunto, String mensaje) {
         int enviados = 0;
         int fallidos = 0;
@@ -93,20 +71,17 @@ public class NotificacionService {
                 enviados++;
             } catch (Exception e) {
                 fallidos++;
-                log.error("❌ Error enviando a {}: {}", email, e.getMessage());
+                log.error(" Error enviando a {}: {}", email, e.getMessage());
             }
         }
 
-        log.info("📧 Comunicado masivo enviado - Exitosos: {}, Fallidos: {}", enviados, fallidos);
+        log.info(" Comunicado masivo enviado - Exitosos: {}, Fallidos: {}", enviados, fallidos);
     }
 
-    /**
-     * Notifica cuando el resultado de un partido es registrado.
-     */
     public void notificarResultadoPartido(Partido partido) {
         if (partido == null) return;
 
-        String asunto = "🏀 Resultado: " +
+        String asunto = " Resultado: " +
                 partido.getEquipoLocal().getNombre() + " " +
                 partido.getResultadoLocal() + " - " +
                 partido.getResultadoVisitante() + " " +
@@ -122,7 +97,6 @@ public class NotificacionService {
 
         notificarEquipo(partido, asunto, cuerpo);
 
-        // Notificar también al árbitro
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has registrado el resultado del partido entre <strong>" +
                     partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
@@ -135,9 +109,6 @@ public class NotificacionService {
         }
     }
 
-    /**
-     * Notifica al árbitro asignado a un partido.
-     */
     public void notificarArbitroAsignado(Partido partido) {
         if (partido == null || partido.getArbitro() == null) return;
         if (partido.getArbitro().getEmail() == null) return;
@@ -146,28 +117,25 @@ public class NotificacionService {
                 ? partido.getFecha().format(FORMATO_FECHA)
                 : "fecha por confirmar";
 
-        String asunto = "⚖️ Nueva designación - " +
+        String asunto = " Nueva designación - " +
                 partido.getEquipoLocal().getNombre() + " vs " +
                 partido.getEquipoVisitante().getNombre();
 
         String cuerpo = "Has sido designado como árbitro para el partido:<br><br>" +
                 "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
                 "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
-                "📅 <strong>Fecha:</strong> " + fecha + "<br>" +
-                "🏟️ <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
-                "📍 <strong>Ubicación:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +
+                " <strong>Fecha:</strong> " + fecha + "<br>" +
+                " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
+                " <strong>Ubicación:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +
                 "Recuerda validar las alineaciones antes del partido.";
 
         enviarNotificacion(partido.getArbitro().getEmail(), asunto, cuerpo);
     }
 
-    /**
-     * Notifica al entrenador cuando la alineación ha sido confirmada por el árbitro.
-     */
     public void notificarAlineacionConfirmada(Partido partido, String emailEntrenador, String nombreEquipo) {
         if (emailEntrenador == null) return;
 
-        String asunto = "✅ Alineación confirmada - " + nombreEquipo;
+        String asunto = " Alineación confirmada - " + nombreEquipo;
         String cuerpo = "La alineación de <strong>" + nombreEquipo + "</strong> ha sido confirmada " +
                 "por el árbitro para el partido del " +
                 (partido.getFecha() != null ? partido.getFecha().format(FORMATO_FECHA) : "próximo partido") + ".<br><br>" +
@@ -176,13 +144,10 @@ public class NotificacionService {
         enviarNotificacion(emailEntrenador, asunto, cuerpo);
     }
 
-    /**
-     * Notifica al entrenador cuando la alineación ha sido rechazada/modificada
-     */
     public void notificarAlineacionRechazada(Partido partido, String emailEntrenador, String nombreEquipo, String motivo) {
         if (emailEntrenador == null) return;
 
-        String asunto = "⚠️ Alineación requiere cambios - " + nombreEquipo;
+        String asunto = " Alineación requiere cambios - " + nombreEquipo;
         String cuerpo = "La alineación de <strong>" + nombreEquipo + "</strong> requiere modificaciones.<br><br>" +
                 "<strong>Motivo:</strong> " + motivo + "<br><br>" +
                 "Por favor, revisa y vuelve a enviar la alineación antes del partido del " +
@@ -191,13 +156,10 @@ public class NotificacionService {
         enviarNotificacion(emailEntrenador, asunto, cuerpo);
     }
 
-    /**
-     * Notifica cuando se sube el acta de un partido.
-     */
     public void notificarActaSubida(Partido partido) {
         if (partido == null) return;
 
-        String asunto = "📋 Acta disponible - " +
+        String asunto = " Acta disponible - " +
                 partido.getEquipoLocal().getNombre() + " vs " +
                 partido.getEquipoVisitante().getNombre();
 
@@ -208,7 +170,6 @@ public class NotificacionService {
 
         notificarEquipo(partido, asunto, cuerpo);
 
-        // Notificar también al árbitro
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has subido el acta del partido entre <strong>" +
                     partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
@@ -219,9 +180,6 @@ public class NotificacionService {
         }
     }
 
-    /**
-     * Notifica a todos los usuarios sobre un comunicado general
-     */
     public void notificarComunicadoGeneral(String asunto, String mensaje) {
         List<Usuario> usuarios = userRepository.findAll();
         int enviados = 0;
@@ -240,17 +198,12 @@ public class NotificacionService {
             }
         }
 
-        log.info("📢 Comunicado general '{}' enviado a {} usuarios", asunto, enviados);
+        log.info(" Comunicado general '{}' enviado a {} usuarios", asunto, enviados);
     }
-
-    // ─────────────────────────────────────────────────────────
-    // Utilidades internas
-    // ─────────────────────────────────────────────────────────
 
     private void notificarEquipo(Partido partido, String asunto, String cuerpo) {
         String cuerpoHtml = emailTemplate(asunto, cuerpo);
 
-        // Notificar jugadores equipo local
         if (partido.getEquipoLocal() != null && partido.getEquipoLocal().getJugadores() != null) {
             partido.getEquipoLocal().getJugadores().forEach(j -> {
                 if (j.getEmail() != null && !j.getEmail().isEmpty()) {
@@ -264,7 +217,6 @@ public class NotificacionService {
             });
         }
 
-        // Notificar jugadores equipo visitante
         if (partido.getEquipoVisitante() != null && partido.getEquipoVisitante().getJugadores() != null) {
             partido.getEquipoVisitante().getJugadores().forEach(j -> {
                 if (j.getEmail() != null && !j.getEmail().isEmpty()) {
@@ -278,7 +230,6 @@ public class NotificacionService {
             });
         }
 
-        // Notificar entrenadores
         if (partido.getEquipoLocal() != null && partido.getEquipoLocal().getEntrenador() != null) {
             String email = partido.getEquipoLocal().getEntrenador().getEmail();
             if (email != null && !email.isEmpty()) {
@@ -298,9 +249,9 @@ public class NotificacionService {
         return intro + "<br><br>" +
                 "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs <strong>" +
                 partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
-                "📅 <strong>Fecha:</strong> " + fecha + "<br>" +
-                "🏟️ <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
-                "📍 <strong>Dirección:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +
+                " <strong>Fecha:</strong> " + fecha + "<br>" +
+                " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
+                " <strong>Dirección:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +
                 "Puedes consultar todos los detalles en la aplicación FAB.";
     }
 
@@ -325,7 +276,7 @@ public class NotificacionService {
                 "<body>" +
                 "<div class='container'>" +
                 "<div class='header'>" +
-                "<h1>🏀 Federación Aragonesa de Basket</h1>" +
+                "<h1> Federación Aragonesa de Basket</h1>" +
                 "<p>Oficial</p>" +
                 "</div>" +
                 "<div class='content'>" +

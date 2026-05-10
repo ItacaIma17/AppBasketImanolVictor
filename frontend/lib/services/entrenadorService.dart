@@ -1,4 +1,3 @@
-// lib/services/entrenador_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -11,7 +10,6 @@ import 'autenticacion_service.dart';
 class EntrenadorService {
   static String get baseUrl => AppConfig.apiUrl;
 
-  // Generar código de entrenador (admin)
   static Future<String> generarCodigo() async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');
@@ -41,7 +39,6 @@ class EntrenadorService {
     return headers;
   }
 
-  // Crear entrenador (admin)
   static Future<Entrenador> crearEntrenador(Map<String, dynamic> data) async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');
@@ -62,7 +59,6 @@ class EntrenadorService {
     }
   }
 
-  // Asignar equipo a entrenador (admin)
   static Future<EntrenadorEquipo> asignarEquipo({
     required String codigoEntrenador,
     required int equipoId,
@@ -89,7 +85,6 @@ class EntrenadorService {
     }
   }
 
-  // Obtener mi equipo (entrenador autenticado)
   static Future<Map<String, dynamic>> obtenerMiEquipo() async {
     try {
       final token = AutenticacionService.token;
@@ -105,7 +100,7 @@ class EntrenadorService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 404) {
-        // No tiene equipo - esto es normal, no es error
+
         throw Exception('no_tiene_equipo');
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         throw Exception('No autorizado');
@@ -113,62 +108,56 @@ class EntrenadorService {
         throw Exception('Error al obtener equipo: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Error obteniendo mi equipo: $e');
+      print(' Error obteniendo mi equipo: $e');
       rethrow;
     }
   }
-
-
-  // lib/services/entrenadorService.dart
-
-  // lib/services/entrenadorService.dart
 
   static Future<List<Jugador>> getMisJugadores() async {
     try {
       final token = AutenticacionService.token;
       if (token == null) {
-        print('❌ No hay token disponible');
+        print(' No hay token disponible');
         return [];
       }
 
-      print('📡 Obteniendo jugadores del entrenador');
-      print('🔑 Token disponible: ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
+      print(' Obteniendo jugadores del entrenador');
+      print(' Token disponible: ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
 
       final response = await http.get(
         Uri.parse('${AppConfig.apiUrl}/entrenadores/mis-jugadores'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',  // ← Asegurar que se envía
+          'Authorization': 'Bearer $token',
         },
       ).timeout(const Duration(seconds: 30));
 
-      print('📡 Status code: ${response.statusCode}');
-      print('📡 Response body: ${response.body}');
+      print(' Status code: ${response.statusCode}');
+      print(' Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('✅ Jugadores encontrados: ${data.length}');
+        print(' Jugadores encontrados: ${data.length}');
         return data.map((j) => Jugador.fromJson(j)).toList();
       } else if (response.statusCode == 401) {
-        print('❌ Token expirado o inválido, refrescando...');
-        // Intentar refrescar el token
+        print(' Token expirado o inválido, refrescando...');
+
         final refreshed = await AutenticacionService.refreshTokenUser();
         if (refreshed) {
-          print('✅ Token refrescado, reintentando...');
-          return await getMisJugadores();  // Reintentar
+          print(' Token refrescado, reintentando...');
+          return await getMisJugadores();
         }
         return [];
       } else {
-        print('❌ Error: ${response.statusCode}');
+        print(' Error: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('❌ Error obteniendo jugadores: $e');
+      print(' Error obteniendo jugadores: $e');
       return [];
     }
   }
 
-  // Listar todos los entrenadores (admin)
   static Future<List<Entrenador>> listarEntrenadores() async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');
@@ -189,7 +178,6 @@ class EntrenadorService {
     }
   }
 
-  // Listar entrenadores sin equipo (admin)
   static Future<List<Entrenador>> listarEntrenadoresSinEquipo() async {
     try {
       final response = await http.get(
@@ -201,19 +189,18 @@ class EntrenadorService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((e) => Entrenador.fromJson(e)).toList();
       } else if (response.statusCode == 403) {
-        print('❌ No autorizado para ver entrenadores');
+        print(' No autorizado para ver entrenadores');
         return [];
       } else {
-        print('❌ Error al cargar entrenadores: ${response.statusCode}');
+        print(' Error al cargar entrenadores: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('❌ Excepción al cargar entrenadores: $e');
+      print(' Excepción al cargar entrenadores: $e');
       return [];
     }
   }
 
-  // Listar entrenadores con equipo (admin)
   static Future<List<Entrenador>> listarEntrenadoresConEquipo() async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');
@@ -248,12 +235,11 @@ class EntrenadorService {
         return [];
       }
     } catch (e) {
-      print('❌ Excepción al cargar equipos: $e');
+      print(' Excepción al cargar equipos: $e');
       return [];
     }
   }
 
-  // Obtener entrenador por ID
   static Future<Entrenador> obtenerEntrenadorPorId(int id) async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');
@@ -273,7 +259,6 @@ class EntrenadorService {
     }
   }
 
-  // Eliminar entrenador
   static Future<void> eliminarEntrenador(int id) async {
     final token = AutenticacionService.token;
     if (token == null) throw Exception('No autenticado');

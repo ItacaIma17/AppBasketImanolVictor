@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Equipo/EquipoRequest.java
 package Presentacion.DTOS.Equipo;
 
 import Dominio.Entity.Equipo;
@@ -18,7 +17,7 @@ public class EquipoRequest {
     private String nombreEstadio;
     private Integer anoFundacion;
     private String escudoUrl;
-    private Long ligaId;  // ← Asegurar que existe
+    private Long ligaId;
 
     public Equipo toEntity() {
         Equipo equipo = new Equipo();
@@ -30,7 +29,6 @@ public class EquipoRequest {
         }
         equipo.setEscudoUrl(this.escudoUrl);
 
-        // No asignar liga aquí, se hace en el servicio
         return equipo;
     }
 }

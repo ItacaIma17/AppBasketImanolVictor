@@ -1,4 +1,3 @@
-// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:tfg_appfede/config/api_config.dart';
@@ -17,7 +16,6 @@ class ApiService {
     return headers;
   }
 
-  // Método auxiliar para obtener headers
   static Future<Map<String, String>> getHeaders() async {
     final token = await AutenticacionService.getToken();
     return {
@@ -26,7 +24,6 @@ class ApiService {
     };
   }
 
-  // GET request
   static Future<dynamic> get(String endpoint) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');
@@ -70,7 +67,6 @@ class ApiService {
     }
   }
 
-  // POST request
   static Future<dynamic> post(String endpoint, {Map<String, dynamic>? data}) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');
@@ -115,7 +111,6 @@ class ApiService {
     }
   }
 
-  // PUT request
   static Future<dynamic> put(String endpoint, {Map<String, dynamic>? data}) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');
@@ -160,7 +155,6 @@ class ApiService {
     }
   }
 
-  // DELETE request
   static Future<void> delete(String endpoint) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');

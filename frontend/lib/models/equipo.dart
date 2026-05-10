@@ -1,4 +1,3 @@
-// lib/models/equipo.dart
 import 'jugador.dart';
 
 class Equipo {
@@ -18,7 +17,6 @@ class Equipo {
   final int? numeroJugadores;
   final List<Jugador>? jugadores;
 
-  // Estadísticas de clasificación
   final int? puntos;
   final int? partidosJugados;
   final int? partidosGanados;

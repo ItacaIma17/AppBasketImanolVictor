@@ -1,4 +1,3 @@
-// lib/screens/Entrenador/MisPartidosEntrenadorPage.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -21,7 +20,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
   List<Partido> _partidos = [];
   bool _isLoading = true;
   String? _error;
-  String _filtro = 'PROGRAMADO'; // PROGRAMADO, FINALIZADO, TODOS
+  String _filtro = 'PROGRAMADO';
 
   @override
   void initState() {
@@ -165,7 +164,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
         itemCount: _partidosFiltrados.length,
         itemBuilder: (context, index) {
           final partido = _partidosFiltrados[index];
-          final esLocal = true; // Determinar según el equipo del entrenador
+          final esLocal = true;
           return _buildPartidoCard(partido, esLocal);
         },
       ),
@@ -176,14 +175,13 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
     final fechaPartido = DateTime.parse('${partido.fecha} ${partido.hora}');
     final now = DateTime.now();
     final estaFinalizado = fechaPartido.isBefore(now);
-    //determina alineacion
+
     final tieneAlineacion = esLocal
         ? (partido.tieneAlineacionLocal ?? false)
         : (partido.tieneAlineacionVisitante ?? false);
 
     final esLocalJuego = esLocal;
 
-    // convertir id de String a int (si es posible)
     final partidoId = int.tryParse(partido.id.toString()) ?? 0;
     final equipoLocalId = int.tryParse(partido.equipoLocalId.toString()) ?? 0;
 
@@ -282,8 +280,6 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
     );
   }
 
-
-
   Widget _buildEstadoChip(Partido partido, bool tieneAlineacion) {
     if (partido.estado == 'FINALIZADO') {
       return Container(
@@ -349,7 +345,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
   }
 
   void _verActa(int partidoId) async {
-    // Navegar a ver acta
+
     Navigator.push(
       context,
       MaterialPageRoute(

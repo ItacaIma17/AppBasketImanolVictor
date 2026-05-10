@@ -1,4 +1,3 @@
-// Pantalla para ver acta (entrenador)
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -25,7 +24,7 @@ class VerActaEntrenadorPage extends StatelessWidget {
               onPressed: () async {
                 try {
                   final file = await ActaService.descargarActaPdf(partidoId);
-                  // Abrir PDF
+
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error: $e'),

@@ -1,6 +1,3 @@
-// lib/widgets/Partidos/CrearPartidoCompletoDialog.dart
-// VERSIÓN CORREGIDA - Mejor manejo de árbitros
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
@@ -33,7 +30,6 @@ class _CrearPartidoCompletoDialogState
     extends State<CrearPartidoCompletoDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  // Equipos y árbitro
   Equipo? _equipoLocal;
   Equipo? _equipoVisitante;
   Arbitro? _arbitro;
@@ -42,7 +38,6 @@ class _CrearPartidoCompletoDialogState
   String? _errorArbitros;
   bool _esEdicion = false;
 
-  // Datos partido de ida
   final TextEditingController _pabellonIdaCtrl = TextEditingController();
   final TextEditingController _ubicacionIdaCtrl = TextEditingController();
   DateTime _fechaIda = DateTime.now().add(const Duration(days: 7));
@@ -50,7 +45,6 @@ class _CrearPartidoCompletoDialogState
   int? _jornadaIda;
   int? _ligaId;
 
-  // Partido de vuelta
   bool _crearVuelta = true;
   final TextEditingController _pabellonVueltaCtrl = TextEditingController();
   DateTime? _fechaVuelta;
@@ -73,7 +67,6 @@ class _CrearPartidoCompletoDialogState
       _esEdicion = true;
       final partido = widget.partidoToEdit!;
 
-      // Buscar equipos por nombre (o ID si está disponible)
       _equipoLocal = widget.equipos.firstWhere(
             (e) => e.nombre == partido.nombreLocal,
         orElse: () => widget.equipos.firstWhere(
@@ -93,9 +86,8 @@ class _CrearPartidoCompletoDialogState
       _pabellonIdaCtrl.text = partido.pabellon;
       _ubicacionIdaCtrl.text = partido.direccionPabellon;
       _jornadaIda = partido.jornada;
-      _crearVuelta = false; // En edición no se crea vuelta
+      _crearVuelta = false;
 
-      // Inicializar fecha/hora desde el partido a editar
       final fechaParseada = Partido.parseFecha(partido.fecha);
       if (fechaParseada != null) {
         _fechaIda = fechaParseada;
@@ -128,29 +120,20 @@ class _CrearPartidoCompletoDialogState
     try {
       List<Arbitro> arbitros = [];
 
-      // ✅ FIX: en edición, /arbitros/disponibles excluye al árbitro ya
-      // asignado al partido (porque tiene partido no FINALIZADO) y a
-      // cualquier otro árbitro con asignaciones. En esos casos el dropdown
-      // se quedaba vacío. Reglas:
-      //   - Modo edición → directamente listar TODOS los árbitros.
-      //   - Modo creación → intentar disponibles; si el resultado está
-      //     vacío o falla, caer al listado completo.
-      // Ambas rutas usan los servicios existentes (ArbitroService).
       if (_esEdicion) {
         arbitros = await ArbitroService.listarArbitros();
-        debugPrint('✅ [edición] Árbitros totales cargados: ${arbitros.length}');
+        debugPrint(' [edición] Árbitros totales cargados: ${arbitros.length}');
       } else {
         try {
           arbitros = await ArbitroService.listarArbitrosDisponibles();
-          debugPrint('✅ Árbitros disponibles cargados: ${arbitros.length}');
+          debugPrint(' Árbitros disponibles cargados: ${arbitros.length}');
         } catch (e) {
-          debugPrint('⚠️ Error cargando árbitros disponibles: $e');
+          debugPrint(' Error cargando árbitros disponibles: $e');
         }
         if (arbitros.isEmpty) {
-          // El endpoint /arbitros/disponibles devolvió 0 → fallback al
-          // listado completo (antes solo se hacía fallback en excepción).
+
           arbitros = await ArbitroService.listarArbitros();
-          debugPrint('✅ Fallback a listado completo: ${arbitros.length}');
+          debugPrint(' Fallback a listado completo: ${arbitros.length}');
         }
       }
 
@@ -159,8 +142,6 @@ class _CrearPartidoCompletoDialogState
           _arbitros = arbitros;
           _loadingArbitros = false;
 
-          // Si estamos editando y el partido ya tiene árbitro asignado,
-          // preseleccionarlo en el dropdown.
           if (_esEdicion &&
               widget.partidoToEdit?.arbitroId != null &&
               _arbitro == null) {
@@ -169,13 +150,13 @@ class _CrearPartidoCompletoDialogState
                     (a) => a.id == widget.partidoToEdit!.arbitroId,
               );
             } catch (_) {
-              _arbitro = null; // no se encontró, dejar sin asignar
+              _arbitro = null;
             }
           }
         });
       }
     } catch (e) {
-      debugPrint('❌ Error fatal cargando árbitros: $e');
+      debugPrint(' Error fatal cargando árbitros: $e');
       if (mounted) {
         setState(() {
           _errorArbitros = 'No se pudieron cargar los árbitros: $e';
@@ -185,17 +166,9 @@ class _CrearPartidoCompletoDialogState
     }
   }
 
-  // ✅ Liga "efectiva" usada para filtrar el listado de equipos:
-  //   1) la liga inicial recibida por constructor (modo creación desde Liga
-  //      o modo edición desde un partido existente), si no
-  //   2) la del primer equipo seleccionado.
-  // Si no hay nada → null y no se aplica filtro.
   int? get _ligaEfectiva =>
       _ligaId ?? _equipoLocal?.ligaId ?? _equipoVisitante?.ligaId;
 
-  // Equipos permitidos para los dropdowns: si hay liga efectiva, sólo los
-  // de esa liga; si no, todos. Esto impide elegir equipos de ligas
-  // distintas en un mismo partido.
   List<Equipo> get _equiposPermitidos {
     final liga = _ligaEfectiva;
     if (liga == null) return widget.equipos;
@@ -205,9 +178,7 @@ class _CrearPartidoCompletoDialogState
   void _onEquipoLocalChanged(Equipo? equipo) {
     setState(() {
       _equipoLocal = equipo;
-      // ✅ Si el visitante actual no es de la misma liga que el nuevo
-      // local, lo descartamos para que el dropdown no muestre un valor
-      // inválido y para evitar partidos entre ligas distintas.
+
       if (equipo != null &&
           _equipoVisitante != null &&
           _equipoVisitante!.ligaId != equipo.ligaId) {
@@ -232,7 +203,7 @@ class _CrearPartidoCompletoDialogState
   void _onEquipoVisitanteChanged(Equipo? equipo) {
     setState(() {
       _equipoVisitante = equipo;
-      // ✅ Mismo criterio simétrico que en _onEquipoLocalChanged.
+
       if (equipo != null &&
           _equipoLocal != null &&
           _equipoLocal!.ligaId != equipo.ligaId) {
@@ -286,7 +257,7 @@ class _CrearPartidoCompletoDialogState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionLabel('🏀 Equipos'),
+                      _buildSectionLabel(' Equipos'),
                       _buildEquiposRow(),
                       if (_equipoLocal != null &&
                           _equipoVisitante != null &&
@@ -294,7 +265,7 @@ class _CrearPartidoCompletoDialogState
                         _buildWarning(
                             'Un equipo no puede jugar contra sí mismo'),
                       const SizedBox(height: 16),
-                      _buildSectionLabel('⚖️ Árbitro'),
+                      _buildSectionLabel(' Árbitro'),
                       _buildArbitroSelector(),
                       const SizedBox(height: 16),
                       _buildPartidoIda(),
@@ -318,8 +289,6 @@ class _CrearPartidoCompletoDialogState
       ),
     );
   }
-
-  // ─── HEADER ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return Container(
@@ -354,8 +323,6 @@ class _CrearPartidoCompletoDialogState
     );
   }
 
-  // ─── LABEL DE SECCIÓN ────────────────────────────────────────────────────
-
   Widget _buildSectionLabel(String texto) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -383,8 +350,6 @@ class _CrearPartidoCompletoDialogState
       ),
     );
   }
-
-  // ─── EQUIPOS ─────────────────────────────────────────────────────────────
 
   Widget _buildEquiposRow() {
     return Row(
@@ -419,10 +384,9 @@ class _CrearPartidoCompletoDialogState
       Function(Equipo?) onChanged,
       Color accentColor,
       ) {
-    // ✅ Sólo se ofrecen equipos de la liga efectiva (cuando hay una).
+
     final permitidos = _equiposPermitidos;
-    // Si el valor actual no está en la lista filtrada, mostramos null para
-    // evitar el assertion de DropdownButton ("value not in items").
+
     final dropdownValue = (value != null && permitidos.contains(value))
         ? value
         : null;
@@ -465,8 +429,6 @@ class _CrearPartidoCompletoDialogState
       validator: (v) => v == null ? 'Requerido' : null,
     );
   }
-
-  // ─── ÁRBITRO ─────────────────────────────────────────────────────────────
 
   Widget _buildArbitroSelector() {
     if (_loadingArbitros) {
@@ -577,8 +539,7 @@ class _CrearPartidoCompletoDialogState
                   fontSize: 13,
                   fontStyle: FontStyle.italic)),
         ),
-        // ✅ FIX: Column con `mainAxisSize: min` y altura controlada
-        // para evitar el "BOTTOM OVERFLOWED BY 3 PIXELS" en el dropdown.
+
         ..._arbitros.map((a) => DropdownMenuItem(
           value: a,
           child: Row(
@@ -627,8 +588,6 @@ class _CrearPartidoCompletoDialogState
       onChanged: (v) => setState(() => _arbitro = v),
     );
   }
-
-  // ─── PARTIDO IDA ─────────────────────────────────────────────────────────
 
   Widget _buildPartidoIda() {
     return _buildPartidoCard(
@@ -685,8 +644,6 @@ class _CrearPartidoCompletoDialogState
     );
   }
 
-  // ─── SWITCH VUELTA ───────────────────────────────────────────────────────
-
   Widget _buildSwitchVuelta() {
     return Container(
       decoration: BoxDecoration(
@@ -714,8 +671,6 @@ class _CrearPartidoCompletoDialogState
       ),
     );
   }
-
-  // ─── PARTIDO VUELTA ──────────────────────────────────────────────────────
 
   Widget _buildPartidoVuelta() {
     final fechaVuelta =
@@ -810,8 +765,6 @@ class _CrearPartidoCompletoDialogState
     );
   }
 
-  // ─── FOOTER ──────────────────────────────────────────────────────────────
-
   Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -887,8 +840,6 @@ class _CrearPartidoCompletoDialogState
       ),
     );
   }
-
-  // ─── HELPERS VISUALES ────────────────────────────────────────────────────
 
   Widget _buildPartidoCard({
     required String titulo,
@@ -1104,16 +1055,13 @@ class _CrearPartidoCompletoDialogState
     );
   }
 
-  // ─── LÓGICA DE CREACIÓN ──────────────────────────────────────────────────
-
   Future<void> _crearPartidos() async {
     if (!_formKey.currentState!.validate()) return;
     if (_equipoLocal?.id == _equipoVisitante?.id) {
       _showSnack('Un equipo no puede jugar contra sí mismo', isError: true);
       return;
     }
-    // ✅ Aunque los dropdowns ya filtran por liga, validamos por si llega
-    // un equipo sin ligaId o por seguridad si se cambian datos en runtime.
+
     if (_equipoLocal != null &&
         _equipoVisitante != null &&
         _equipoLocal!.ligaId != _equipoVisitante!.ligaId) {
@@ -1126,14 +1074,12 @@ class _CrearPartidoCompletoDialogState
 
     try {
       if (_esEdicion && widget.partidoToEdit != null) {
-        // ✅ Lógica de edición
+
         final fechaHora = DateTime(
           _fechaIda.year, _fechaIda.month, _fechaIda.day,
           _horaIda.hour, _horaIda.minute,
         );
 
-        // Construimos el body con los campos que reconoce
-        // PartidoRequestDTO en el backend (incluye arbitroId).
         final updateData = <String, dynamic>{
           'equipoLocalId': _equipoLocal!.id,
           'equipoVisitanteId': _equipoVisitante!.id,
@@ -1152,9 +1098,9 @@ class _CrearPartidoCompletoDialogState
           updateData,
         );
 
-        _showSnack('✅ Partido actualizado correctamente', isError: false);
+        _showSnack(' Partido actualizado correctamente', isError: false);
       } else {
-        // ✅ Lógica de creación (usando el método correcto)
+
         final fechaHoraIda = DateTime(
           _fechaIda.year, _fechaIda.month, _fechaIda.day,
           _horaIda.hour, _horaIda.minute,
@@ -1192,13 +1138,12 @@ class _CrearPartidoCompletoDialogState
               : _equipoVisitante?.nombreEstadio ?? '';
         }
 
-        // ✅ CORRECCIÓN: usar el método correcto
         await PartidoService.crearPartidosConJornadas(data);
 
         _showSnack(
           _crearVuelta
-              ? '✅ Partidos de ida y vuelta programados'
-              : '✅ Partido programado correctamente',
+              ? ' Partidos de ida y vuelta programados'
+              : ' Partido programado correctamente',
           isError: false,
         );
       }

@@ -1,7 +1,3 @@
-// lib/screens/Admin/GestionUsuariosPage.dart
-// FIX: Dropdown envuelto en Material para evitar "No Material widget found"
-// Datos reales desde el backend + filtros funcionales
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/usuario.dart';
@@ -36,10 +32,7 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
       final data = await AdminService.listarTodosUsuarios();
       if (mounted) {
         setState(() {
-          // ✅ FIX: AdminService devuelve `List<Usuario>` (objetos tipados),
-          // pero esta página los maneja como `Map<String, dynamic>`.
-          // Convertimos cada usuario a su mapa con `toJson()` para
-          // poder seguir accediendo con u['nombre'], u['email'], etc.
+
           _usuarios = data.map((u) => u.toJson()).toList();
           _aplicarFiltros();
           _cargando = false;
@@ -118,7 +111,7 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header con botón atrás
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
                 child: Row(
@@ -140,7 +133,6 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
                 ),
               ),
 
-              // Filtros — envueltos en Material para el Dropdown
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
@@ -167,7 +159,7 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    // ✅ FIX: Material wrapper para DropdownButton
+
                     Material(
                       color: Colors.transparent,
                       child: Container(
@@ -200,7 +192,6 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
                 ),
               ),
 
-              // Contador
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Row(
@@ -212,7 +203,6 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
                 ),
               ),
 
-              // Lista
               Expanded(
                 child: _cargando
                     ? const Center(child: CircularProgressIndicator(
@@ -359,11 +349,11 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
 
   String _labelRol(String rol) {
     switch (rol.toUpperCase()) {
-      case 'JUGADOR': return '🏀 Jugador';
-      case 'ENTRENADOR': return '📋 Entrenador';
-      case 'ARBITRO': return '⚖️ Árbitro';
-      case 'ADMIN': return '🔧 Admin';
-      default: return '👤 Aficionado';
+      case 'JUGADOR': return ' Jugador';
+      case 'ENTRENADOR': return ' Entrenador';
+      case 'ARBITRO': return ' Árbitro';
+      case 'ADMIN': return ' Admin';
+      default: return ' Aficionado';
     }
   }
 }

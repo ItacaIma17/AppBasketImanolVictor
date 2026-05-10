@@ -1,4 +1,3 @@
-// Presentacion/DTOS/Equipo/ActualizarEquipoDTO.java
 package Presentacion.DTOS.Equipo;
 
 import lombok.Data;

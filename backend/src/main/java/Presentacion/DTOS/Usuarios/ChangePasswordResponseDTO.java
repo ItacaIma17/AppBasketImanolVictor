@@ -9,3 +9,4 @@ public class ChangePasswordResponseDTO {
     private String email;
     private LocalDateTime fechaActualizacion;
 }
+

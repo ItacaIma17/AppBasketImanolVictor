@@ -44,10 +44,6 @@ public class AlineacionResponseDTO {
 
     private List<JugadorAlineacionRequestDTO> suplentes;
 
-    // ============================================================
-    // MÉTODO fromEntity (UN SOLO DTO)
-    // ============================================================
-
     public static AlineacionResponseDTO fromEntity(Alineacion alineacion) {
         if (alineacion == null) return null;
 
@@ -87,16 +83,6 @@ public class AlineacionResponseDTO {
                 .build();
     }
 
-    // ============================================================
-    // MÉTODO fromEntities (PARA LISTAS - CON "S")
-    // ============================================================
-
-    /**
-     * Convierte una lista de entidades Alineacion a una lista de AlineacionResponseDTO
-     *
-     * @param alineaciones Lista de entidades Alineacion
-     * @return Lista de AlineacionResponseDTO
-     */
     public static List<AlineacionResponseDTO> fromEntities(List<Alineacion> alineaciones) {
         if (alineaciones == null) {
             return List.of();
@@ -106,20 +92,6 @@ public class AlineacionResponseDTO {
                 .collect(Collectors.toList());
     }
 
-    // ============================================================
-    // MÉTODO fromEntitiesConPartido (PARA OBTENER AMBAS ALINEACIONES)
-    // ============================================================
-
-    /**
-     * Crea un DTO combinado con ambas alineaciones del partido
-     *
-     * @param alineacionLocal Alineación del equipo local
-     * @param alineacionVisitante Alineación del equipo visitante
-     * @param partidoId ID del partido
-     * @param nombreLocal Nombre del equipo local
-     * @param nombreVisitante Nombre del equipo visitante
-     * @return Map con la información combinada
-     */
     public static java.util.Map<String, Object> fromEntitiesConPartido(
             AlineacionResponseDTO alineacionLocal,
             AlineacionResponseDTO alineacionVisitante,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Card de partido para árbitros con estado de confirmación
-/// Usado en: ConfirmarAlineaciones
 class PartidoArbitroCard extends StatelessWidget {
   final Map<String, dynamic> partido;
   final VoidCallback onRevisar;
@@ -33,17 +31,15 @@ class PartidoArbitroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header del partido
+
           _buildHeader(confirmadas),
 
-          // Botón de revisar alineaciones
           _buildBotonRevisar(confirmadas),
         ],
       ),
     );
   }
 
-  /// Header del card con información del partido
   Widget _buildHeader(bool confirmadas) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -90,7 +86,6 @@ class PartidoArbitroCard extends StatelessWidget {
     );
   }
 
-  /// Badge de estado (Confirmadas / Pendiente)
   Widget _buildBadgeEstado(bool confirmadas) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -109,7 +104,6 @@ class PartidoArbitroCard extends StatelessWidget {
     );
   }
 
-  /// Botón de revisar alineaciones
   Widget _buildBotonRevisar(bool confirmadas) {
     return Padding(
       padding: const EdgeInsets.all(16),

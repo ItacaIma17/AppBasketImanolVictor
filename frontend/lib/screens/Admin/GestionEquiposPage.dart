@@ -1,5 +1,3 @@
-// lib/screens/Admin/GestionEquiposPage.dart - VERSIÓN MEJORADA
-
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import 'package:tfg_appfede/screens/equipos/DetalleEquipoPage.dart';
@@ -21,7 +19,6 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
   bool _cargando = true;
   String? _error;
 
-  // Filtros
   String _filtroNombre = '';
   String? _filtroLiga;
 
@@ -66,9 +63,6 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
     });
   }
 
-  // ============================================================
-  // EDITAR EQUIPO
-  // ============================================================
   Future<void> _editarEquipo(Equipo equipo) async {
     final formKey = GlobalKey<FormState>();
     final nombreCtrl = TextEditingController(text: equipo.nombre);
@@ -141,7 +135,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
         await _cargarEquipos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Equipo actualizado'), backgroundColor: Colors.green),
+            const SnackBar(content: Text(' Equipo actualizado'), backgroundColor: Colors.green),
           );
         }
       } catch (e) {
@@ -158,9 +152,6 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
     estadioCtrl.dispose();
   }
 
-  // ============================================================
-  // ELIMINAR EQUIPO
-  // ============================================================
   Future<void> _eliminarEquipo(Equipo equipo) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -189,7 +180,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
         await _cargarEquipos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Equipo eliminado'), backgroundColor: Colors.green),
+            const SnackBar(content: Text(' Equipo eliminado'), backgroundColor: Colors.green),
           );
         }
       } catch (e) {
@@ -204,7 +195,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener ligas únicas para el filtro
+
     final ligasUnicas = _equipos.map((e) => e.nombreLiga).where((l) => l != null).toSet().toList();
 
     return Scaffold(
@@ -215,7 +206,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Filtros
+
               Container(
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.all(12),
@@ -277,7 +268,6 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
                 ),
               ),
 
-              // Lista de equipos
               Expanded(
                 child: _cargando
                     ? const Center(child: CircularProgressIndicator())
@@ -317,7 +307,7 @@ class _GestionEquiposPageState extends State<GestionEquiposPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Navegar a detalle del equipo
+
             Navigator.push(
               context,
               MaterialPageRoute(

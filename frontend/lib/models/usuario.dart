@@ -1,4 +1,3 @@
-// lib/models/usuario.dart
 import 'package:tfg_appfede/models/role.dart';
 
 class Usuario {
@@ -26,10 +25,6 @@ class Usuario {
     this.bloqueado = false,
   });
 
-  // ============================================================
-  // GETTERS ADICIONALES
-  // ============================================================
-
   bool get isAdmin => role == Role.ADMIN;
   bool get isEntrenador => role == Role.ENTRENADOR;
   bool get isJugador => role == Role.JUGADOR;
@@ -45,12 +40,8 @@ class Usuario {
     return '$primeraLetra$segundaLetra'.toUpperCase();
   }
 
-  // ============================================================
-  // FROM JSON
-  // ============================================================
-
   factory Usuario.fromJson(Map<String, dynamic> json) {
-    // Obtener el rol (puede venir como 'role' o 'rol')
+
     String roleStr = '';
     if (json['role'] != null && json['role'] is String) {
       roleStr = json['role'];
@@ -76,10 +67,6 @@ class Usuario {
     );
   }
 
-  // ============================================================
-  // TO JSON
-  // ============================================================
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -94,10 +81,6 @@ class Usuario {
       'bloqueado': bloqueado,
     };
   }
-
-  // ============================================================
-  // COPY WITH (para actualizaciones parciales)
-  // ============================================================
 
   Usuario copyWith({
     int? id,
@@ -124,10 +107,6 @@ class Usuario {
       bloqueado: bloqueado ?? this.bloqueado,
     );
   }
-
-  // ============================================================
-  // EQUALS y HASHCODE
-  // ============================================================
 
   @override
   bool operator ==(Object other) {

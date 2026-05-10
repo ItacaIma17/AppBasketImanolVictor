@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
-/// Widget reutilizable para mostrar la alineación de un equipo
-/// Usado en: ConfirmarAlineaciones, PresentarAlineacion
 class AlineacionEquipoWidget extends StatelessWidget {
   final Map<String, dynamic>? alineacion;
   final bool esLocal;
@@ -19,7 +17,7 @@ class AlineacionEquipoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Si no hay alineación, mostrar mensaje
+
     if (alineacion == null) {
       return _buildAlineacionVacia();
     }
@@ -39,15 +37,13 @@ class AlineacionEquipoWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con nombre del equipo
+
           _buildHeaderEquipo(colorPrincipal),
 
           const SizedBox(height: 16),
 
-          // Lista de jugadores
           ..._buildListaJugadores(colorPrincipal),
 
-          // Total de jugadores
           const SizedBox(height: 12),
           _buildTotalJugadores(colorPrincipal),
         ],
@@ -55,7 +51,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
     );
   }
 
-  /// Widget cuando no hay alineación
   Widget _buildAlineacionVacia() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -77,7 +72,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
     );
   }
 
-  /// Header con el nombre del equipo
   Widget _buildHeaderEquipo(Color color) {
     return Row(
       children: [
@@ -100,7 +94,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
     );
   }
 
-  /// Lista de jugadores
   List<Widget> _buildListaJugadores(Color color) {
     final jugadores = alineacion!['jugadores'] as List;
 
@@ -113,7 +106,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
     );
   }
 
-  /// Card individual de jugador
   Widget _buildJugadorCard(
     Map<String, dynamic> jugador,
     int index,
@@ -135,7 +127,7 @@ class AlineacionEquipoWidget extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Número de orden (opcional)
+
           if (mostrarNumeroOrden) ...[
             Container(
               width: 28,
@@ -158,7 +150,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
             const SizedBox(width: 12),
           ],
 
-          // Dorsal
           Container(
             width: 36,
             height: 36,
@@ -179,7 +170,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Nombre y posición
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +198,6 @@ class AlineacionEquipoWidget extends StatelessWidget {
     );
   }
 
-  /// Footer con total de jugadores
   Widget _buildTotalJugadores(Color color) {
     final jugadores = alineacion!['jugadores'] as List;
 

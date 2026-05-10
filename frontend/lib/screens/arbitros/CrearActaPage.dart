@@ -1,4 +1,3 @@
-// lib/screens/Arbitro/CrearActaPage.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/EventoForm.dart';
@@ -28,17 +27,12 @@ class _CrearActaPageState extends State<CrearActaPage> {
   bool _isLoading = false;
   bool _cargandoAlineaciones = true;
 
-  // ✅ Estado de verificación de alineaciones confirmadas
   bool _alineacionesConfirmadas = false;
   bool _verificandoAlineaciones = true;
 
   Map<String, dynamic>? _alineaciones;
   List<Map<String, dynamic>> _jugadoresLocal = [];
   List<Map<String, dynamic>> _jugadoresVisitante = [];
-
-  // ─────────────────────────────────────────────────────────────
-  // LIFECYCLE
-  // ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -55,11 +49,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // CARGA DE DATOS
-  // ─────────────────────────────────────────────────────────────
-
-  /// Comprueba si el árbitro ya confirmó ambas alineaciones.
   Future<void> _verificarAlineaciones() async {
     final estado = await ArbitroService.estadoAlineaciones(widget.partido.id);
     if (mounted) {
@@ -70,7 +59,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
     }
   }
 
-  /// Carga los jugadores de cada equipo para el formulario de eventos.
   Future<void> _cargarAlineaciones() async {
     setState(() => _cargandoAlineaciones = true);
 
@@ -112,10 +100,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
       }
     }
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // ACCIONES
-  // ─────────────────────────────────────────────────────────────
 
   void _agregarEvento() {
     showModalBottomSheet(
@@ -189,7 +173,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Acta guardada exitosamente'),
+            content: Text(' Acta guardada exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -206,10 +190,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,14 +199,14 @@ class _CrearActaPageState extends State<CrearActaPage> {
         decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
         child: SafeArea(
           child: _verificandoAlineaciones
-          // Esperando verificación inicial
+
               ? const Center(
             child: CircularProgressIndicator(color: AppColors.amarilloAragon),
           )
-          // Alineaciones NO confirmadas por el árbitro → pantalla de bloqueo
+
               : !_alineacionesConfirmadas
               ? _buildActaBloqueada()
-          // Alineaciones OK → formulario del acta
+
               : _isLoading || _cargandoAlineaciones
               ? const Center(
             child: CircularProgressIndicator(
@@ -264,10 +244,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PANTALLA DE BLOQUEO
-  // ─────────────────────────────────────────────────────────────
-
   Widget _buildActaBloqueada() {
     return Center(
       child: Padding(
@@ -302,7 +278,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('1️⃣ ', style: TextStyle(fontSize: 16)),
+                      Text('1 ', style: TextStyle(fontSize: 16)),
                       Expanded(
                         child: Text(
                           'Ambos entrenadores deben haber subido sus alineaciones.',
@@ -316,7 +292,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('2️⃣ ', style: TextStyle(fontSize: 16)),
+                      Text('2 ', style: TextStyle(fontSize: 16)),
                       Expanded(
                         child: Text(
                           'Debes confirmar las alineaciones desde la pantalla "Confirmar Alineaciones".',
@@ -354,10 +330,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
       ),
     );
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // WIDGETS DEL FORMULARIO
-  // ─────────────────────────────────────────────────────────────
 
   Widget _buildInfoPartido() {
     return Card(
@@ -496,7 +468,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
     switch (evento.tipo) {
       case 'CANASTA':
         color = Colors.green;
-        icono = '🏀';
+        icono = '';
         break;
       case 'TIRO_LIBRE':
         color = Colors.green;
@@ -504,23 +476,23 @@ class _CrearActaPageState extends State<CrearActaPage> {
         break;
       case 'TIRO_3PUNTOS':
         color = Colors.green;
-        icono = '3️⃣';
+        icono = '3';
         break;
       case 'FALTA':
         color = Colors.orange;
-        icono = '⚠️';
+        icono = '';
         break;
       case 'TECNICA':
         color = Colors.orange;
-        icono = '📋';
+        icono = '';
         break;
       case 'EXPULSION':
         color = Colors.red;
-        icono = '🚫';
+        icono = '';
         break;
       default:
         color = Colors.blue;
-        icono = '📌';
+        icono = '';
     }
 
     return Card(

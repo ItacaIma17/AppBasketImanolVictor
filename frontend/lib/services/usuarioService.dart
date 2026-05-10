@@ -2,7 +2,7 @@ import '../config/api_config.dart';
 import 'loggerService.dart';
 
 class UsuarioService {
-  /// Obtener árbitros
+
   static Future<List<dynamic>> listarArbitros() async {
     try {
       final response = await AppConfig.get('/usuarios/arbitros');

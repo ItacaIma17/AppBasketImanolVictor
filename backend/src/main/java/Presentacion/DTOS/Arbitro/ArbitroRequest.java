@@ -19,7 +19,6 @@ public class ArbitroRequest {
 
     private String password;
 
-
     public ArbitroRequest() {
     }
 
@@ -30,3 +29,4 @@ public class ArbitroRequest {
         this.apellidos = apellidos;
     }
 }
+

@@ -1,4 +1,3 @@
-// lib/screens/Clasificacion.dart
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../data/gestorFavoritos.dart';
@@ -9,28 +8,27 @@ import '../services/partidoService.dart';
 import '../widgets/Header.dart';
 import '../widgets/MenuLateral.dart';
 import 'equipos/DetalleEquipoPage.dart';
-// ✅ FIX nav: para abrir el detalle del partido desde la pestaña Resultados
+
 import 'DetallesPartido.dart';
 
 class ClasificacionPage extends StatefulWidget {
   final int id_categoria;
   final String categoria;
 
-
   const ClasificacionPage({
     super.key,
     required this.id_categoria,
     required this.categoria,
-    
+
   });
 
   @override
   State<ClasificacionPage> createState() => _ClasificacionPageState();
 }
 
-class _ClasificacionPageState extends State<ClasificacionPage> 
+class _ClasificacionPageState extends State<ClasificacionPage>
   with SingleTickerProviderStateMixin{
-  
+
   late TabController _tabController;
   List<Equipo> _equipos = [];
   List<Partido> _partidos = [];
@@ -61,17 +59,14 @@ class _ClasificacionPageState extends State<ClasificacionPage>
       final todosEquipos = await EquipoService.listarEquipos();
       final todosPartidos = await PartidoService.listarPartidos();
 
-      // Filtrar equipos por liga
       final equiposFiltrados = todosEquipos.where((e) =>
       e.nombreLiga == widget.categoria
       ).toList();
 
-      // Filtrar partidos por liga
       final partidosFiltrados = todosPartidos
           .where((p) => p.ligaId == widget.id_categoria)
           .toList();
 
-      // Ordenar por puntos (descendente)
       equiposFiltrados.sort((a, b) => (b.puntos ?? 0).compareTo(a.puntos ?? 0));
 
       setState(() {
@@ -184,7 +179,6 @@ class _ClasificacionPageState extends State<ClasificacionPage>
       );
     }
 
-    // Agrupar partidos por jornada
     final jornadasMap = <int?, List<Partido>>{};
     for (var partido in _partidos) {
       final jornada = partido.jornada ?? 0;
@@ -194,7 +188,6 @@ class _ClasificacionPageState extends State<ClasificacionPage>
       jornadasMap[jornada]!.add(partido);
     }
 
-    // Ordenar jornadas de menor a mayor
     final jornadasOrdenadas = jornadasMap.keys.toList()..sort();
 
     return ListView.builder(
@@ -207,7 +200,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado de la jornada
+
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
@@ -219,7 +212,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
                 ),
               ),
             ),
-            // Partidos de la jornada
+
             ...partidos.map((partido) => _buildPartidoResultado(partido)),
             const SizedBox(height: 12),
           ],
@@ -236,7 +229,6 @@ class _ClasificacionPageState extends State<ClasificacionPage>
       resultado = '-';
     }
 
-    // ✅ FIX nav: la tarjeta del partido abre su detalle (DetallePartidoPage)
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -304,7 +296,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
           ],
         ),
       ),
-      ), // cierra InkWell del FIX nav
+      ),
     );
   }
 
@@ -375,11 +367,10 @@ class _ClasificacionPageState extends State<ClasificacionPage>
       itemCount: _equipos.length,
       itemBuilder: (context, index) {
         final equipo = _equipos[index];
-        return _buildEquipoRow(equipo, index + 1); // ← sin esFavorito
+        return _buildEquipoRow(equipo, index + 1);
       },
     );
   }
-
 
   Widget _buildEquipoRow(Equipo equipo, int posicion) {
     return GestureDetector(

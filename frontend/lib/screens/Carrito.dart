@@ -38,10 +38,9 @@ class _CarritoPageState extends State<CarritoPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+
               _buildHeader(),
 
-              // Lista de productos o estado vacío
               Expanded(
                 child: _carritoLocal.isEmpty
                     ? _buildEstadoVacio()
@@ -60,7 +59,6 @@ class _CarritoPageState extends State<CarritoPage> {
                       ),
               ),
 
-              // Footer con total y botón de pago
               if (_carritoLocal.isNotEmpty) _buildFooter(total),
             ],
           ),
@@ -69,7 +67,6 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
-  /// Header
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -88,7 +85,7 @@ class _CarritoPageState extends State<CarritoPage> {
           IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.blanco),
             onPressed: () {
-              // Actualizar el carrito en la pantalla padre
+
               widget.onCarritoActualizado(_carritoLocal);
               Navigator.pop(context);
             },
@@ -106,7 +103,6 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
-  /// Estado vacío
   Widget _buildEstadoVacio() {
     return Center(
       child: Column(
@@ -154,7 +150,6 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
-  /// Card de producto en el carrito
   Widget _buildProductoEnCarrito(Map<String, dynamic> producto, int cantidad) {
     double subtotal = producto['precio'] * cantidad;
 
@@ -174,7 +169,7 @@ class _CarritoPageState extends State<CarritoPage> {
       ),
       child: Row(
         children: [
-          // Imagen del producto (placeholder)
+
           Container(
             width: 80,
             height: 80,
@@ -191,7 +186,6 @@ class _CarritoPageState extends State<CarritoPage> {
 
           const SizedBox(width: 12),
 
-          // Info del producto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,10 +218,9 @@ class _CarritoPageState extends State<CarritoPage> {
             ),
           ),
 
-          // Controles de cantidad
           Column(
             children: [
-              // Botón eliminar
+
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                 iconSize: 20,
@@ -238,7 +231,6 @@ class _CarritoPageState extends State<CarritoPage> {
                 },
               ),
 
-              // Contador
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.grisClaro,
@@ -288,7 +280,6 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
-  /// Footer con total y botón de pago
   Widget _buildFooter(double total) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -304,7 +295,7 @@ class _CarritoPageState extends State<CarritoPage> {
       ),
       child: Column(
         children: [
-          // Total
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -328,7 +319,6 @@ class _CarritoPageState extends State<CarritoPage> {
 
           const SizedBox(height: 16),
 
-          // Botón de pago
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -340,7 +330,7 @@ class _CarritoPageState extends State<CarritoPage> {
                 ),
               ),
               onPressed: () {
-                // TODO: Navegar a pantalla de pago
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Procesando pago... (función pendiente)'),
@@ -362,7 +352,6 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
-  /// Calcular total del carrito
   double _calcularTotal() {
     double total = 0;
     _carritoLocal.forEach((productId, cantidad) {
