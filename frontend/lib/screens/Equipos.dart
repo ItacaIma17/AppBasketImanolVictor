@@ -9,6 +9,7 @@ import 'package:tfg_appfede/screens/Jugadores.dart';
 import 'package:tfg_appfede/services/PartidoService.dart';
 import 'package:tfg_appfede/services/equipoService.dart';
 import 'package:tfg_appfede/services/jugadorService.dart';
+import 'package:tfg_appfede/widgets/tarjetas/TarjetaEntidad.dart';
 
 class EquipoPage extends StatefulWidget {
   final int equipoId;
@@ -362,7 +363,18 @@ class _EquipoPageState extends State<EquipoPage> {
   }
 
   Widget _buildJugadorCard(Jugador jugador) {
-    return GestureDetector(
+    return TarjetaEntidad(
+      tipo: TipoEntidad.jugador,
+      titulo: '${jugador.nombre} ${jugador.apellido}',
+      subtitulo: _equipo?.nombre ?? '',
+      chips: [
+        TarjetaChip('${jugador.promedioPuntos ?? 0} PTS',
+            icono: Icons.sports_basketball),
+        TarjetaChip('${jugador.promedioRebotes ?? 0} REB',
+            icono: Icons.swap_vert),
+        TarjetaChip('${jugador.promedioAsistencias ?? 0} AST',
+            icono: Icons.handshake),
+      ],
       onTap: () {
         Navigator.push(
           context,
@@ -374,59 +386,6 @@ class _EquipoPageState extends State<EquipoPage> {
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.grisClaro.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                gradient: AppColors.gradienteNaranjaAmarillo,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  jugador.nombre[0],
-                  style: const TextStyle(color: AppColors.blanco, fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${jugador.nombre} ${jugador.apellido}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _buildMiniStat('${jugador.promedioPuntos ?? 0}', 'Pts'),
-                      const SizedBox(width: 12),
-                      _buildMiniStat('${jugador.promedioRebotes ?? 0}', 'Reb'),
-                      const SizedBox(width: 12),
-                      _buildMiniStat('${jugador.promedioAsistencias ?? 0}', 'Ast'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMiniStat(String value, String label) {
-    return Text(
-      '$value $label',
-      style: const TextStyle(fontSize: 12, color: Colors.grey),
     );
   }
 }

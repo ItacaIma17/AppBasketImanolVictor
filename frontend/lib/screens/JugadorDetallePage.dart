@@ -140,6 +140,8 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
         ],
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -186,10 +188,23 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
-              Chip(
-                label: Text(widget.jugador.posicion),
-                backgroundColor: Colors.white.withOpacity(0.3),
-                labelStyle: const TextStyle(color: Colors.white),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.rojoAragon,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Text(
+                  widget.jugador.posicion,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               Row(

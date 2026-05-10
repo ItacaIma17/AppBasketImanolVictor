@@ -420,10 +420,11 @@ class MenuLateral extends StatelessWidget {
   }
 
   void _mostrarAcercaDe(BuildContext context) {
-    Navigator.pop(context);
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    Navigator.pop(context); // cerrar drawer
     showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
+      context: rootNavigator.context,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Acerca de',
@@ -460,7 +461,7 @@ class MenuLateral extends StatelessWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cerrar',
                   style: TextStyle(color: AppColors.naranja))),
         ],
@@ -469,10 +470,15 @@ class MenuLateral extends StatelessWidget {
   }
 
   void _mostrarLogout(BuildContext context) {
-    Navigator.pop(context);
+    // Capturamos el Navigator raíz ANTES de cerrar el drawer,
+    // porque al hacer pop(context) el contexto del MenuLateral
+    // queda desactivado y los botones del diálogo dejan de responder.
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    Navigator.pop(context); // cerrar drawer
+
     showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
+      context: rootNavigator.context,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Cerrar Sesión',
@@ -482,19 +488,18 @@ class MenuLateral extends StatelessWidget {
             style: TextStyle(color: AppColors.grisClaro)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar',
                   style: TextStyle(color: AppColors.grisClaro))),
           ElevatedButton(
             onPressed: () async {
+              Navigator.of(dialogContext).pop(); // cerrar diálogo
               await AutenticacionService.cerrarSesion();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (_) => const InicioSesionPage()),
-                      (route) => false,
-                );
-              }
+              rootNavigator.pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (_) => const InicioSesionPage()),
+                    (route) => false,
+              );
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade700),
