@@ -6,6 +6,7 @@ import 'package:tfg_appfede/models/liga.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
+import 'package:tfg_appfede/widgets/tarjetas/TarjetaEntidad.dart';
 import 'Clasificacion.dart';
 import 'Liga/LigaService.dart';
 
@@ -235,7 +236,20 @@ class _LigasPageState extends State<LigasPage> {
   }
 
   Widget _buildLigaCard(Liga liga) {
-    return GestureDetector(
+    final infos = <TarjetaInfo>[
+      TarjetaInfo(icono: Icons.location_on, texto: liga.pais ?? 'España'),
+      TarjetaInfo(
+        icono: Icons.people,
+        texto: '${liga.numeroEquiposRegistrados} equipos',
+      ),
+      if (liga.temporada != null)
+        TarjetaInfo(icono: Icons.calendar_today, texto: liga.temporada!),
+    ];
+
+    return TarjetaEntidad(
+      tipo: TipoEntidad.liga,
+      titulo: liga.nombreLiga,
+      infos: infos,
       onTap: () {
         Navigator.push(
           context,
@@ -247,74 +261,6 @@ class _LigasPageState extends State<LigasPage> {
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: AppColors.gradienteNaranjaAmarillo,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.emoji_events, color: AppColors.blanco, size: 32),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    liga.nombreLiga,
-                    style: const TextStyle(
-                      color: AppColors.blanco,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 14, color: AppColors.blancoOpacidad70),
-                      const SizedBox(width: 4),
-                      Text(
-                        liga.pais ?? 'España',
-                        style: const TextStyle(color: AppColors.blancoOpacidad70, fontSize: 12),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.people, size: 14, color: AppColors.blancoOpacidad70),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${liga.numeroEquiposRegistrados} equipos',
-                        style: const TextStyle(color: AppColors.blancoOpacidad70, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  if (liga.temporada != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today, size: 14, color: AppColors.blancoOpacidad70),
-                        const SizedBox(width: 4),
-                        Text(
-                          liga.temporada!,
-                          style: const TextStyle(color: AppColors.blancoOpacidad70, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.blanco, size: 16),
-          ],
-        ),
-      ),
     );
   }
 
@@ -330,7 +276,11 @@ class _LigasPageState extends State<LigasPage> {
       ),
     );
 
-    return GestureDetector(
+    return TarjetaEntidad(
+      tipo: TipoEntidad.liga,
+      titulo: nombreLiga,
+      badge: '★',
+      iconoOverride: Icons.star,
       onTap: () {
         Navigator.push(
           context,
@@ -342,38 +292,6 @@ class _LigasPageState extends State<LigasPage> {
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: AppColors.gradienteNaranjaAmarillo,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.star, color: AppColors.amarilloAragon, size: 32),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                nombreLiga,
-                style: const TextStyle(
-                  color: AppColors.blanco,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.blanco, size: 16),
-          ],
-        ),
-      ),
     );
   }
 }

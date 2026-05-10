@@ -526,12 +526,15 @@ class AutenticacionService {
     _token = null;
     _refreshToken = null;
     _usuarioActual = null;
+    _entrenadorActual = null;
+    _jugadorActual = null;
+    _arbitroActual = null;
 
     // Limpiar almacenamiento persistente
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    await prefs.remove('refreshToken');
-    await prefs.remove('usuario');
+    await prefs.remove('auth_token');
+    await prefs.remove('refresh_token');
+    await prefs.remove('usuario_actual');
 
     LoggerService.info('Datos de sesión eliminados');
   }
