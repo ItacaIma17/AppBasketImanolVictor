@@ -4,7 +4,7 @@ import 'package:tfg_appfede/config/common/resources/colores.dart';
 class TarjetaCategoria extends StatelessWidget {
   final String nombre;
   final VoidCallback onTap;
-
+  ///tarejta categoria
   const TarjetaCategoria({
     super.key,
     required this.nombre,
