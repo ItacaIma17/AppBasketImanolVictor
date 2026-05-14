@@ -186,6 +186,7 @@ class _InicioPageState extends State<InicioPage> {
     return Scaffold(
       drawer: const MenuLateral(),
       bottomNavigationBar: const BarraInferior(selectedIndex: 2),
+      backgroundColor: AppColors.negro,
       body: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
@@ -193,10 +194,8 @@ class _InicioPageState extends State<InicioPage> {
             setState(() { _buscando = false; _resultados = []; });
           }
         },
-        child: Container(
-          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-          child: SafeArea(
-            child: Stack(
+        child: SafeArea(
+          child: Stack(
               children: [
                 _cargando
                     ? const Center(child: CircularProgressIndicator(
@@ -241,7 +240,6 @@ class _InicioPageState extends State<InicioPage> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -386,7 +384,7 @@ class _InicioPageState extends State<InicioPage> {
     switch (tipo) {
       case 'Liga': return AppColors.amarilloAragon;
       case 'Equipo': return AppColors.rojoAragon;
-      case 'Jugador': return Colors.blue.shade400;
+      case 'Jugador': return AppColors.grisClaro;
       default: return AppColors.naranja;
     }
   }
@@ -637,7 +635,7 @@ class _InicioPageState extends State<InicioPage> {
           _AccesoRapido(
             Icons.person_search,
             'Jugadores',
-            Colors.blue.shade600,
+            AppColors.amarilloAragon,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionJugadoresPage())),
           ),
           ...base,
@@ -678,7 +676,7 @@ class _InicioPageState extends State<InicioPage> {
             _AccesoRapido(
               Icons.history,
               'Mis Partidos',
-              Colors.blue.shade600,
+              AppColors.amarilloAragon,
                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MisPartidosEntrenadorPage())),
             ),
           ...base,
@@ -716,7 +714,7 @@ class _InicioPageState extends State<InicioPage> {
           _AccesoRapido(
             Icons.person_search,
             'Jugadores',
-            Colors.blue.shade600,
+            AppColors.amarilloAragon,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionJugadoresPage())),
           ),
           _AccesoRapido(
@@ -976,11 +974,11 @@ class _InicioPageState extends State<InicioPage> {
             children: [
               _buildStatMini('$total', 'Partidos', AppColors.blanco),
               _buildDivider(),
-              _buildStatMini('$finalizados', 'Jugados', Colors.green.shade400),
+              _buildStatMini('$finalizados', 'Jugados', AppColors.naranja),
               _buildDivider(),
-              _buildStatMini('$enCurso', 'En Curso', AppColors.naranja),
+              _buildStatMini('$enCurso', 'En Curso', AppColors.amarilloAragon),
               _buildDivider(),
-              _buildStatMini('${_proximos.length}', 'Próximos', Colors.blue.shade400),
+              _buildStatMini('${_proximos.length}', 'Próximos', AppColors.grisClaro),
               _buildDivider(),
               _buildStatMini('${_equipos.length}', 'Equipos', AppColors.amarilloAragon),
             ],

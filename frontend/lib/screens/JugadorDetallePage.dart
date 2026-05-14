@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../models/jugador.dart';
 import '../services/FavoritosPage.dart';
-import '../widgets/Header.dart';
 import '../widgets/MenuLateral.dart';
 
 class JugadorDetallePage extends StatefulWidget {
@@ -19,6 +18,8 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
   bool _esFavorito = false;
   bool _cargandoFavorito = true;
 
+  static const _acento = AppColors.naranja;
+
   @override
   void initState() {
     super.initState();
@@ -28,280 +29,288 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
   Future<void> _verificarFavorito() async {
     try {
       final esFav = await FavoritosService.esJugadorFavorito(widget.jugador.id);
-      if (mounted) {
-        setState(() {
-          _esFavorito = esFav;
-          _cargandoFavorito = false;
-        });
-      }
-    } catch (e) {
-      print('Error verificando favorito: $e');
-      if (mounted) {
-        setState(() {
-          _cargandoFavorito = false;
-        });
-      }
+      if (mounted) setState(() { _esFavorito = esFav; _cargandoFavorito = false; });
+    } catch (_) {
+      if (mounted) setState(() => _cargandoFavorito = false);
     }
   }
 
   Future<void> _toggleFavorito() async {
     if (widget.jugador.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se puede guardar favorito: ID inválido'),
-          backgroundColor: Colors.red,
-        ),
-      );
+        const SnackBar(content: Text('ID inválido'), backgroundColor: AppColors.rojoAragon));
       return;
     }
-
     setState(() => _cargandoFavorito = true);
-
     try {
       if (_esFavorito) {
         await FavoritosService.eliminarJugadorFavorito(widget.jugador.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(' Eliminado de favoritos'),
-              backgroundColor: Colors.grey,
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Eliminado de favoritos'),
+              backgroundColor: AppColors.superficie1, duration: Duration(seconds: 1)));
       } else {
         await FavoritosService.agregarJugadorFavorito(
           widget.jugador.id,
           widget.jugador.nombreCompleto,
           equipoNombre: widget.equipoNombre ?? widget.jugador.nombreEquipo,
         );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('⭐ Añadido a favoritos'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Añadido a favoritos'),
+              backgroundColor: AppColors.naranja, duration: Duration(seconds: 1)));
       }
-
-      if (mounted) {
-        setState(() {
-          _esFavorito = !_esFavorito;
-        });
-      }
+      if (mounted) setState(() { _esFavorito = !_esFavorito; _cargandoFavorito = false; });
     } catch (e) {
-      print('Error toggling favorito: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar favorito: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _cargandoFavorito = false;
-        });
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.rojoAragon));
+        setState(() => _cargandoFavorito = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final j = widget.jugador;
     return Scaffold(
-      backgroundColor: AppColors.gradienteAragon.colors.last,
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
-      appBar: HeaderApp(
-        titulo: widget.jugador.nombreCompleto,
-        actions: [
-          if (!_cargandoFavorito && widget.jugador.id != null)
-            IconButton(
-              icon: Icon(
-                _esFavorito ? Icons.star : Icons.star_border,
-                color: _esFavorito ? Colors.amber : Colors.white,
-                size: 28,
-              ),
-              onPressed: _toggleFavorito,
-              tooltip: _esFavorito ? 'Eliminar de favoritos' : 'Añadir a favoritos',
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverHeader(j),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildEstadisticas(j),
+                const SizedBox(height: 16),
+                _buildDatosFisicos(j),
+                if ((widget.equipoNombre ?? j.nombreEquipo) != null) ...[
+                  const SizedBox(height: 16),
+                  _buildInfoEquipo(widget.equipoNombre ?? j.nombreEquipo!),
+                ],
+              ]),
             ),
-          if (_cargandoFavorito)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              ),
-            ),
+          ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildInfoJugador(),
-                const SizedBox(height: 16),
-                _buildEstadisticas(),
-                const SizedBox(height: 16),
-                if ((widget.equipoNombre ?? widget.jugador.nombreEquipo) != null)
-                  _buildInfoEquipo(),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildInfoJugador() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.gradienteNaranjaAmarillo,
-          borderRadius: BorderRadius.circular(16),
+  Widget _buildSliverHeader(Jugador j) {
+    return SliverAppBar(
+      expandedHeight: 220,
+      pinned: true,
+      backgroundColor: AppColors.rojoAragon,
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.blanco),
+          onPressed: () => Navigator.pop(ctx),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                child: Text(
-                  widget.jugador.iniciales,
-                  style: const TextStyle(fontSize: 32, color: Colors.white),
+      ),
+      actions: [
+        if (j.id != null)
+          _cargandoFavorito
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(width: 20, height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.blanco)))
+              : IconButton(
+                  icon: Icon(
+                    _esFavorito ? Icons.star : Icons.star_border,
+                    color: _esFavorito ? AppColors.amarilloAragon : AppColors.blanco,
+                  ),
+                  onPressed: _toggleFavorito,
                 ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteJugador),
+          child: SafeArea(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const SizedBox(height: 48),
+              Stack(alignment: Alignment.bottomRight, children: [
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 2.5),
+                  ),
+                  child: Center(
+                    child: Text(j.iniciales,
+                        style: const TextStyle(color: AppColors.blanco, fontSize: 30,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.amarilloAragon,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.negro, width: 2),
+                  ),
+                  child: Center(
+                    child: Text('#${j.dorsal}',
+                        style: const TextStyle(color: AppColors.negro, fontSize: 9,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 10),
+              Text(j.nombreCompleto,
+                  style: const TextStyle(color: AppColors.blanco, fontSize: 20,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Text('JUGADOR', style: TextStyle(color: AppColors.blanco, fontSize: 11,
+                      letterSpacing: 1.2, fontWeight: FontWeight.w600)),
+                  const SizedBox(width: 6),
+                  const Text('·', style: TextStyle(color: AppColors.blancoOpacidad70)),
+                  const SizedBox(width: 6),
+                  Text(j.posicion.toUpperCase(),
+                      style: const TextStyle(color: AppColors.blanco, fontSize: 11,
+                          fontWeight: FontWeight.w600)),
+                ]),
               ),
-              const SizedBox(height: 16),
-              Text(
-                widget.jugador.nombreCompleto,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              const SizedBox(height: 8),
-              Chip(
-                label: Text(widget.jugador.posicion),
-                backgroundColor: Colors.white.withOpacity(0.3),
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildInfoItem('Dorsal', widget.jugador.dorsal.toString()),
-                  _buildInfoItem('Altura', widget.jugador.alturaFormateada),
-                  _buildInfoItem('Peso', widget.jugador.pesoFormateado),
-                ],
-              ),
-            ],
+            ]),
           ),
         ),
+        title: Text(j.nombreCompleto,
+            style: const TextStyle(color: AppColors.blanco, fontSize: 16,
+                fontWeight: FontWeight.bold)),
+        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-      ],
+  Widget _buildEstadisticas(Jugador j) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.superficie1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.bar_chart, color: _acento, size: 18),
+          SizedBox(width: 8),
+          Text('Estadísticas de la Temporada',
+              style: TextStyle(color: AppColors.blanco, fontSize: 15,
+                  fontWeight: FontWeight.bold)),
+        ]),
+        const SizedBox(height: 16),
+        Row(children: [
+          _buildStat(j.promedioPuntos.toStringAsFixed(1), 'PTS', AppColors.rojoAragon),
+          _buildSep(),
+          _buildStat(j.promedioRebotes.toStringAsFixed(1), 'REB', _acento),
+          _buildSep(),
+          _buildStat(j.promedioAsistencias.toStringAsFixed(1), 'AST', AppColors.amarilloAragon),
+          _buildSep(),
+          _buildStat(j.promedioRobos.toStringAsFixed(1), 'ROB', AppColors.rojoAragon),
+        ]),
+        const SizedBox(height: 12),
+        Divider(color: Colors.white.withOpacity(0.08)),
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          _buildInfoSmall('Partidos Jugados', j.partidosJugados.toString()),
+          _buildInfoSmall('Puntos Totales', j.puntosTotales.toString()),
+        ]),
+      ]),
     );
   }
 
-  Widget _buildEstadisticas() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Estadísticas de la temporada',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildEstadisticaItem('Puntos', widget.jugador.promedioPuntos.toStringAsFixed(1)),
-                _buildEstadisticaItem('Rebotes', widget.jugador.promedioRebotes.toStringAsFixed(1)),
-                _buildEstadisticaItem('Asistencias', widget.jugador.promedioAsistencias.toStringAsFixed(1)),
-                _buildEstadisticaItem('Robos', widget.jugador.promedioRobos.toStringAsFixed(1)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildInfoSmall('Partidos', widget.jugador.partidosJugados.toString()),
-                _buildInfoSmall('Puntos Totales', widget.jugador.puntosTotales.toString()),
-              ],
-            ),
-          ],
-        ),
-      ),
+  Widget _buildStat(String valor, String label, Color color) {
+    return Expanded(
+      child: Column(children: [
+        Text(valor, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: AppColors.grisClaro, fontSize: 10,
+            letterSpacing: 0.5)),
+      ]),
     );
   }
+
+  Widget _buildSep() =>
+      Container(width: 1, height: 36, color: Colors.white.withOpacity(0.1));
 
   Widget _buildInfoSmall(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.naranja),
-        ),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-      ],
+    return Column(children: [
+      Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+          color: _acento)),
+      Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grisClaro)),
+    ]);
+  }
+
+  Widget _buildDatosFisicos(Jugador j) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.superficie1,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.straighten, color: _acento, size: 17),
+          SizedBox(width: 8),
+          Text('Datos Físicos', style: TextStyle(color: AppColors.blanco,
+              fontSize: 14, fontWeight: FontWeight.bold)),
+        ]),
+        const SizedBox(height: 14),
+        Row(children: [
+          _buildDatoFisico('Dorsal', '#${j.dorsal}'),
+          _buildDatoFisico('Altura', j.alturaFormateada),
+          _buildDatoFisico('Peso', j.pesoFormateado),
+          _buildDatoFisico('Posición', j.posicion),
+        ]),
+      ]),
     );
   }
 
-  Widget _buildEstadisticaItem(String label, String value) {
+  Widget _buildDatoFisico(String label, String valor) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.naranja),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
-      ),
+      child: Column(children: [
+        Text(valor, style: const TextStyle(color: AppColors.blanco, fontSize: 15,
+            fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: AppColors.grisClaro, fontSize: 10)),
+      ]),
     );
   }
 
-  Widget _buildInfoEquipo() {
-    final equipo = widget.equipoNombre ?? widget.jugador.nombreEquipo;
-    if (equipo == null) return const SizedBox.shrink();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.sports_basketball, size: 40, color: AppColors.naranja),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Equipo Actual', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(equipo, style: const TextStyle(fontSize: 16)),
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget _buildInfoEquipo(String equipo) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _acento.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _acento.withOpacity(0.3)),
       ),
+      child: Row(children: [
+        Container(
+          width: 46, height: 46,
+          decoration: BoxDecoration(
+            gradient: AppColors.gradienteJugador,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.sports_basketball, color: AppColors.blanco, size: 24),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Equipo Actual',
+              style: TextStyle(color: AppColors.grisClaro, fontSize: 11)),
+          const SizedBox(height: 2),
+          Text(equipo, style: const TextStyle(color: AppColors.blanco,
+              fontSize: 16, fontWeight: FontWeight.bold)),
+        ])),
+      ]),
     );
   }
 }

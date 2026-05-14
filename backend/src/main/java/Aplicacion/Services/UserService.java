@@ -242,6 +242,18 @@ public class UserService {
             log.info("Username actualizado de {} a {}", username, dto.getUsername());
         }
 
+        if (dto.getNombre() != null && !dto.getNombre().isBlank()) {
+            usuario.setNombre(dto.getNombre());
+        }
+
+        if (dto.getApellido() != null && !dto.getApellido().isBlank()) {
+            usuario.setApellido(dto.getApellido());
+        }
+
+        if (dto.getEdad() != null && dto.getEdad() > 0) {
+            usuario.setEdad(dto.getEdad());
+        }
+
         if (dto.getOldPassword() != null && !dto.getOldPassword().isEmpty() &&
                 dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
 
@@ -510,6 +522,61 @@ public class UserService {
                 log.info("Rol {} no requiere actualizar contraseña en entidad específica", usuario.getRole());
                 break;
         }
+    }
+
+    @Transactional
+    public void solicitarRecuperacionContrasena(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email);
+        if (usuario == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe ninguna cuenta con ese email");
+
+        emailVerificationRepository.findByEmail("reset_" + email)
+                .ifPresent(emailVerificationRepository::delete);
+
+        String codigo = generarCodigo();
+        EmailVerification reset = new EmailVerification();
+        reset.setEmail("reset_" + email);
+        reset.setCodigo(codigo);
+        reset.setExpirationTime(LocalDateTime.now().plusMinutes(15));
+        reset.setVerified(false);
+        emailVerificationRepository.save(reset);
+
+        try {
+            emailService.enviarRecuperacionContrasena(email, usuario.getNombre(), codigo);
+        } catch (Exception e) {
+            log.error("Error enviando email de recuperación a {}: {}", email, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No se pudo enviar el email de recuperación");
+        }
+        log.info("Código de recuperación enviado a: {}", email);
+    }
+
+    @Transactional
+    public void restablecerContrasena(String email, String codigo, String nuevaPassword) {
+        EmailVerification reset = emailVerificationRepository
+                .findByEmail("reset_" + email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "No hay ninguna solicitud de recuperación para este email"));
+
+        if (reset.getExpirationTime().isBefore(LocalDateTime.now()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ha expirado");
+
+        if (!reset.getCodigo().equals(codigo))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Código incorrecto");
+
+        if (nuevaPassword == null || nuevaPassword.length() < 6)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La contraseña debe tener al menos 6 caracteres");
+
+        Usuario usuario = usuarioRepository.findByEmail(email);
+        if (usuario == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+
+        usuario.setPassword(passwordEncoder.encode(nuevaPassword));
+        usuarioRepository.save(usuario);
+        actualizarPasswordEnEntidad(usuario);
+        emailVerificationRepository.delete(reset);
+        log.info("Contraseña restablecida para: {}", email);
     }
 
     public Usuario findByUsername(String username) {

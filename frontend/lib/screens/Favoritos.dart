@@ -77,19 +77,16 @@ void initState() {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const MenuLateral(),
+      backgroundColor: AppColors.negro,
       appBar: const HeaderApp(titulo: "Favoritos"),
       bottomNavigationBar: const BarraInferior(selectedIndex: 3),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
-        child: SafeArea(
+      body: SafeArea(
           child: Column(
             children: [
               _buildTabs(),
               Expanded(
                 child: _cargando
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.naranja))
                     : TabBarView(
                         controller: _tabController,
                         children: [
@@ -101,7 +98,6 @@ void initState() {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -118,7 +114,7 @@ void initState() {
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
           borderRadius: BorderRadius.circular(25),
-          gradient: AppColors.gradienteNaranjaAmarillo,
+          gradient: AppColors.gradienteRojoNaranja,
         ),
         labelColor: AppColors.blanco,
         unselectedLabelColor: AppColors.blancoOpacidad70,
@@ -302,7 +298,7 @@ Widget _buildEquiposTab() {
     return Center(
       child: Text(
         mensaje,
-        style: const TextStyle(color: Colors.white70, fontSize: 16),
+        style: const TextStyle(color: AppColors.grisClaro, fontSize: 16),
       ),
     );
   }

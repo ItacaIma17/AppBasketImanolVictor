@@ -16,6 +16,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _apellidoController = TextEditingController();
+  final TextEditingController _edadController = TextEditingController();
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -37,6 +40,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
   @override
   void dispose() {
     _usernameController.dispose();
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _edadController.dispose();
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -49,6 +55,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
       _usuarioActual = usuario;
       if (usuario != null) {
         _usernameController.text = usuario.username;
+        _nombreController.text = usuario.nombre;
+        _apellidoController.text = usuario.apellido ?? '';
+        _edadController.text = usuario.edad > 0 ? usuario.edad.toString() : '';
       }
     });
   }
@@ -60,13 +69,28 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
 
     try {
       String? nuevoUsername;
+      String? nuevoNombre;
+      String? nuevoApellido;
+      int? nuevaEdad;
       String? oldPassword;
       String? newPassword;
 
       if (_usernameController.text != _usuarioActual?.username) {
         nuevoUsername = _usernameController.text;
       }
-
+      if (_nombreController.text.isNotEmpty &&
+          _nombreController.text != _usuarioActual?.nombre) {
+        nuevoNombre = _nombreController.text;
+      }
+      if (_apellidoController.text != (_usuarioActual?.apellido ?? '')) {
+        nuevoApellido = _apellidoController.text;
+      }
+      if (_edadController.text.isNotEmpty) {
+        final edadParsed = int.tryParse(_edadController.text);
+        if (edadParsed != null && edadParsed != _usuarioActual?.edad) {
+          nuevaEdad = edadParsed;
+        }
+      }
       if (_cambiarPassword) {
         oldPassword = _oldPasswordController.text;
         newPassword = _newPasswordController.text;
@@ -74,6 +98,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
 
       await AutenticacionService.actualizarPerfil(
         username: nuevoUsername,
+        nombre: nuevoNombre,
+        apellido: nuevoApellido,
+        edad: nuevaEdad,
         oldPassword: oldPassword,
         newPassword: newPassword,
       );
@@ -135,6 +162,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                 children: [
 
                   _buildInfoCard(),
+                  const SizedBox(height: 20),
+
+                  _buildDatosPersonalesSection(),
                   const SizedBox(height: 20),
 
                   _buildUsernameSection(),
@@ -204,6 +234,70 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
           ),
           Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDatosPersonalesSection() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.edit, color: AppColors.naranja),
+                SizedBox(width: 8),
+                Text(
+                  'Datos Personales',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _nombreController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'El nombre no puede estar vacío';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _apellidoController,
+              decoration: const InputDecoration(
+                labelText: 'Apellido',
+                prefixIcon: Icon(Icons.person_outline),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _edadController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Edad',
+                prefixIcon: Icon(Icons.cake_outlined),
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) {
+                if (v != null && v.isNotEmpty) {
+                  final n = int.tryParse(v);
+                  if (n == null || n < 1 || n > 120) return 'Edad no válida';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -382,7 +476,11 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
 
   Widget _buildSaveButton() {
 
-    final hasChanges = _usernameController.text != _usuarioActual?.username || _cambiarPassword;
+    final hasChanges = _usernameController.text != _usuarioActual?.username ||
+        _nombreController.text != (_usuarioActual?.nombre ?? '') ||
+        _apellidoController.text != (_usuarioActual?.apellido ?? '') ||
+        _edadController.text != (_usuarioActual?.edad.toString() ?? '') ||
+        _cambiarPassword;
 
     return SizedBox(
       width: double.infinity,

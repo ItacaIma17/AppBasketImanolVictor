@@ -118,32 +118,30 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
     final arbitro = AutenticacionService.arbitroActual;
 
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(arbitro?.nombreCompleto ?? 'Árbitro'),
-              _buildTabs(),
-              Expanded(
-                child: _cargando
-                    ? const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.amarilloAragon))
-                    : _error != null
-                    ? _buildError()
-                    : TabBarView(
-                  controller: _tabs,
-                  children: [
-                    _buildLista(_proximos, esProximo: true),
-                    _buildLista(_finalizados, esProximo: false),
-                    _buildLista(_todosPartidos, esProximo: null),
-                  ],
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(arbitro?.nombreCompleto ?? 'Árbitro'),
+            _buildTabs(),
+            Expanded(
+              child: _cargando
+                  ? const Center(
+                  child: CircularProgressIndicator(
+                      color: AppColors.amarilloAragon))
+                  : _error != null
+                  ? _buildError()
+                  : TabBarView(
+                controller: _tabs,
+                children: [
+                  _buildLista(_proximos, esProximo: true),
+                  _buildLista(_finalizados, esProximo: false),
+                  _buildLista(_todosPartidos, esProximo: null),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const BarraInferior(selectedIndex: 4),
@@ -254,15 +252,15 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
     final finalizado = partido.estado == 'FINALIZADO';
 
     Color estadoColor = esProximo
-        ? Colors.blue.shade600
+        ? AppColors.amarilloAragon
         : enCurso
         ? AppColors.naranja
-        : Colors.green.shade700;
+        : AppColors.naranja;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.07),
+        color: AppColors.superficie1,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: estadoColor.withOpacity(0.3),
@@ -427,7 +425,7 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
           _buildBotonAccion(
             icono: Icons.checklist,
             label: 'Confirmar Alineaciones',
-            color: Colors.blue.shade600,
+            color: AppColors.amarilloAragon,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -488,7 +486,7 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+          const Icon(Icons.error_outline, color: AppColors.rojoAragon, size: 48),
           const SizedBox(height: 16),
           const Text('Error cargando partidos',
               style: TextStyle(color: AppColors.blanco, fontSize: 16)),

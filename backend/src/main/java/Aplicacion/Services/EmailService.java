@@ -206,6 +206,20 @@ public class EmailService {
         sendHtmlMail(dto.getSendto(), subject, content);
     }
 
+    public void enviarRecuperacionContrasena(String to, String nombre, String codigo) throws MessagingException {
+        String subject = "Recuperación de contraseña - Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>Hola, %s</h2>
+            <p>Has solicitado restablecer tu contraseña.</p>
+            <p>Tu código de recuperación es: <strong style="font-size: 24px;">%s</strong></p>
+            <p>Este código expirará en 15 minutos.</p>
+            <p>Si no has solicitado este cambio, ignora este mensaje. Tu contraseña no será modificada.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, codigo);
+        sendHtmlMail(to, subject, content);
+    }
+
     public void enviarComunicado(String to, String asunto, String mensaje) throws MessagingException {
         String subject = asunto != null ? asunto : "Comunicado oficial - Federación Aragonesa de Baloncesto";
         String content = String.format("""

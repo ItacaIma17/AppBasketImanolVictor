@@ -352,6 +352,36 @@ public class UserController {
         return ResponseEntity.ok(perfil);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("error", "Email requerido"));
+        try {
+            userService.solicitarRecuperacionContrasena(email);
+            return ResponseEntity.ok(Map.of("message", "Código de recuperación enviado a tu email"));
+        } catch (Exception e) {
+            log.error("Error en forgot-password: {}", e.getMessage());
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String codigo = request.get("codigo");
+        String nuevaPassword = request.get("nuevaPassword");
+        if (email == null || codigo == null || nuevaPassword == null)
+            return ResponseEntity.badRequest().body(Map.of("error", "Email, código y nueva contraseña son obligatorios"));
+        try {
+            userService.restablecerContrasena(email, codigo, nuevaPassword);
+            return ResponseEntity.ok(Map.of("message", "Contraseña restablecida correctamente"));
+        } catch (Exception e) {
+            log.error("Error en reset-password: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/test-auth")
     public ResponseEntity<?> testAuth(@AuthenticationPrincipal UserDetails userDetails) {
         log.info(" Test de autenticación - Usuario: {}", userDetails != null ? userDetails.getUsername() : "none");

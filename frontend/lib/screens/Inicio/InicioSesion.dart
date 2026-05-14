@@ -4,6 +4,7 @@ import 'package:tfg_appfede/screens/Admin/PanelAdminPage.dart';
 import 'package:tfg_appfede/screens/Entrenador/PanelEntrenadorPage.dart';
 import 'package:tfg_appfede/screens/InicioApp.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
+import 'OlvidarContrasenaPage.dart';
 import 'Registro.dart';
 
 class InicioSesionPage extends StatefulWidget {
@@ -132,7 +133,10 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                     cursor: SystemMouseCursors.click,
                     child: TextButton(
                       onPressed: () {
-
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OlvidarContrasenaPage()),
+                        );
                       },
                       child: const Text(
                         "¿Olvidaste tu contraseña?",

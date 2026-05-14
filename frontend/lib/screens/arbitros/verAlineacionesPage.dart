@@ -66,20 +66,14 @@ class _VerAlineacionesPageState extends State<VerAlineacionesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Alineaciones"),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.amarilloAragon))
+          : _error != null
               ? _buildErrorWidget()
               : _buildContent(),
-        ),
-      ),
     );
   }
 

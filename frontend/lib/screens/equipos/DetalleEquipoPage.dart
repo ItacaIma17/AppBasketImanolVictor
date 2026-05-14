@@ -82,7 +82,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
     if (_cargando) {
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          decoration: const BoxDecoration(color: AppColors.negro),
           child: const Center(
             child: CircularProgressIndicator(color: AppColors.blanco),
           ),
@@ -93,7 +93,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
     if (_equipo == null) {
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+          decoration: const BoxDecoration(color: AppColors.negro),
           child: const Center(
             child: Text(
               'Equipo no encontrado',
@@ -134,7 +134,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
                   ],
                 ),
                 body: Container(
-                  decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
+                  decoration: const BoxDecoration(color: AppColors.negro),
                   child: SafeArea(
                     child: Column(
                       children: [

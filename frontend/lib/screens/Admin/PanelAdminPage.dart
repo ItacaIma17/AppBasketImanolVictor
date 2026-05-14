@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../services/EstadisticasService.dart';
-import '../../widgets/Header.dart';
 import '../../widgets/MenuLateral.dart';
 import 'GestionPartidos.dart';
-
 import 'GestionPartidosPage.dart' hide GestionPartidosPage;
 import 'GestionUsuariosPage.dart';
 import 'GestionEntrenadoresPage.dart';
 import 'GestionEquiposPage.dart';
 import 'GestionLigaPage.dart';
+import 'GestionArbitrosPage.dart';
+import 'GestionJugadoresPage.dart';
 
 class PanelAdminPage extends StatefulWidget {
   const PanelAdminPage({super.key});
@@ -30,10 +29,8 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
   void initState() {
     super.initState();
     _cargarEstadisticas();
-    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (mounted) {
-        _cargarEstadisticas(refresh: true);
-      }
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) _cargarEstadisticas(refresh: true);
     });
   }
 
@@ -44,223 +41,256 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
   }
 
   Future<void> _cargarEstadisticas({bool refresh = false}) async {
-    if (!refresh) {
-      setState(() => _isLoading = true);
-    }
-
+    if (!refresh) setState(() => _isLoading = true);
     try {
       final stats = await EstadisticasService.getEstadisticasGenerales();
-      if (mounted) {
-        setState(() {
-          _stats = stats;
-          _isLoading = false;
-          _error = null;
-        });
-      }
+      if (mounted) setState(() { _stats = stats; _isLoading = false; _error = null; });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() { _error = e.toString(); _isLoading = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
-      appBar: const HeaderApp(titulo: "Panel de Administración"),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorWidget()
+      body: _isLoading
+          ? _buildLoading()
+          : _error != null
+              ? _buildError()
               : RefreshIndicator(
-            onRefresh: () => _cargarEstadisticas(),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildBotonCrearPartido(),
-                  const SizedBox(height: 16),
-                  _buildHeaderStats(),
-                  const SizedBox(height: 16),
-                  _buildMenuGestion(),
-                  const SizedBox(height: 16),
-                  _buildPartidosStats(),
-                  const SizedBox(height: 16),
-                  _buildUltimosPartidos(),
-                ],
-              ),
+                  onRefresh: _cargarEstadisticas,
+                  color: AppColors.rojoAragon,
+                  child: CustomScrollView(
+                    slivers: [
+                      _buildSliverHeader(),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildKpiRow(),
+                            const SizedBox(height: 24),
+                            _buildBotonCrearPartido(),
+                            const SizedBox(height: 24),
+                            _buildSeccionTitulo('Gestión del Sistema', Icons.settings),
+                            const SizedBox(height: 12),
+                            _buildMenuGestion(),
+                            const SizedBox(height: 24),
+                            _buildSeccionTitulo('Estado de Partidos', Icons.sports_basketball),
+                            const SizedBox(height: 12),
+                            _buildPartidosStats(),
+                            const SizedBox(height: 24),
+                            _buildUltimosPartidos(),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildLoading() => const Scaffold(
+    backgroundColor: AppColors.negro,
+    body: Center(child: CircularProgressIndicator(color: AppColors.rojoAragon)),
+  );
+
+  Widget _buildError() => Scaffold(
+    backgroundColor: AppColors.negro,
+    body: Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const Icon(Icons.error_outline, size: 64, color: AppColors.rojoAragon),
+        const SizedBox(height: 16),
+        Text(_error!, style: const TextStyle(color: AppColors.blanco)),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _cargarEstadisticas,
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.rojoAragon),
+          child: const Text('Reintentar'),
+        ),
+      ]),
+    ),
+  );
+
+  Widget _buildSliverHeader() {
+    return SliverAppBar(
+      expandedHeight: 200,
+      pinned: true,
+      backgroundColor: AppColors.rojoAragon,
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Icons.menu, color: AppColors.blanco),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppColors.gradienteAdmin),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 48),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                  ),
+                  child: const Icon(Icons.admin_panel_settings, size: 38, color: AppColors.blanco),
+                ),
+                const SizedBox(height: 12),
+                const Text('Panel de Administración',
+                    style: TextStyle(color: AppColors.blanco, fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('ADMINISTRADOR FAB',
+                      style: TextStyle(color: AppColors.blanco, fontSize: 11, letterSpacing: 1.2,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
             ),
           ),
         ),
+        title: const Text('Admin', style: TextStyle(color: AppColors.blanco, fontSize: 16,
+            fontWeight: FontWeight.bold)),
+        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+      ),
+    );
+  }
+
+  Widget _buildKpiRow() {
+    final kpis = [
+      _KpiData('Usuarios', _stats['totalUsuarios']?.toString() ?? '0', Icons.people, AppColors.rojoAragon),
+      _KpiData('Equipos', _stats['totalEquipos']?.toString() ?? '0', Icons.shield, AppColors.naranja),
+      _KpiData('Ligas', _stats['totalLigas']?.toString() ?? '0', Icons.emoji_events, AppColors.amarilloAragon),
+      _KpiData('Partidos', _stats['totalPartidos']?.toString() ?? '0', Icons.calendar_today, AppColors.grisClaro),
+    ];
+    return Row(
+      children: kpis.map((k) => Expanded(child: _buildKpiCard(k))).toList(),
+    );
+  }
+
+  Widget _buildKpiCard(_KpiData k) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: k.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: k.color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(k.icon, color: k.color, size: 22),
+          const SizedBox(height: 6),
+          Text(k.valor,
+              style: TextStyle(color: k.color, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(k.label,
+              style: const TextStyle(color: AppColors.grisClaro, fontSize: 9),
+              textAlign: TextAlign.center),
+        ],
       ),
     );
   }
 
   Widget _buildBotonCrearPartido() {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: AppColors.gradienteNaranjaAmarillo,
-        borderRadius: BorderRadius.circular(20),
+        gradient: AppColors.gradienteAdmin,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.naranja.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: AppColors.rojoAragon.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
-      child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const GestionPartidosPage(),
-            ),
-          );
-        },
-        icon: const Icon(Icons.add_circle_outline, size: 32),
-        label: const Text(
-          'Crear Nuevo Partido',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
-          const SizedBox(height: 16),
-          Text('Error: $_error', style: const TextStyle(color: Colors.white)),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _cargarEstadisticas,
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
-            child: const Text('Reintentar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderStats() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () => _nav(const GestionPartidosPage()),
+          borderRadius: BorderRadius.circular(14),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Resumen General', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade600,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('EN VIVO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
+                Icon(Icons.add_circle_outline, size: 28, color: AppColors.blanco),
+                SizedBox(width: 12),
+                Text('Crear Nuevo Partido',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.blanco)),
+                Spacer(),
+                Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.blancoOpacidad70),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildStatItem('Usuarios', _stats['totalUsuarios']?.toString() ?? '0', Icons.people, Colors.blue),
-                _buildStatItem('Equipos', _stats['totalEquipos']?.toString() ?? '0', Icons.sports_basketball, Colors.green),
-                _buildStatItem('Ligas', _stats['totalLigas']?.toString() ?? '0', Icons.emoji_events, Colors.orange),
-                _buildStatItem('Partidos', _stats['totalPartidos']?.toString() ?? '0', Icons.calendar_today, Colors.purple),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String titulo, String valor, IconData icono, Color color) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icono, size: 28, color: color),
-          const SizedBox(height: 4),
-          Text(valor, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(titulo, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        ],
       ),
     );
   }
 
   Widget _buildMenuGestion() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('GESTIÓN RÁPIDA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.3,
-              children: [
-                _buildMenuCard('Usuarios', Icons.people, Colors.blue, () => _navigateTo(const GestionUsuariosPage())),
-                _buildMenuCard('Entrenadores', Icons.person_outline, Colors.orange, () => _navigateTo(const GestionEntrenadoresPage())),
-                _buildMenuCard('Equipos', Icons.shield, Colors.teal, () => _navigateTo(const GestionEquiposPage())),
-                _buildMenuCard('Ligas', Icons.emoji_events, Colors.red, () => _navigateTo(const GestionLigasPage())),
-                _buildMenuCard('Partidos', Icons.calendar_today, Colors.indigo, () => _navigateTo(const GestionPartidosPage())),
-              ],
-            ),
-          ],
-        ),
-      ),
+    final items = [
+      _MenuItemData('Usuarios', Icons.people, AppColors.rojoAragon, () => _nav(const GestionUsuariosPage())),
+      _MenuItemData('Equipos', Icons.shield, AppColors.naranja, () => _nav(const GestionEquiposPage())),
+      _MenuItemData('Ligas', Icons.emoji_events, AppColors.amarilloAragon, () => _nav(const GestionLigasPage())),
+      _MenuItemData('Partidos', Icons.calendar_today, AppColors.rojoAragon, () => _nav(const GestionPartidosPage())),
+      _MenuItemData('Entrenadores', Icons.sports, AppColors.naranja, () => _nav(const GestionEntrenadoresPage())),
+      _MenuItemData('Árbitros', Icons.gavel, AppColors.amarilloAragon, () => _nav(const GestionArbitrosPage())),
+      _MenuItemData('Jugadores', Icons.sports_basketball, AppColors.rojoAragon, () => _nav(const GestionJugadoresPage())),
+    ];
+
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 2.6,
+      children: items.map(_buildMenuItemCard).toList(),
     );
   }
 
-  Widget _buildMenuCard(String titulo, IconData icono, Color color, VoidCallback onTap) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildMenuItemCard(_MenuItemData item) {
+    return Material(
+      color: item.color.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: onTap,
+        onTap: item.onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: item.color.withOpacity(0.3)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
             children: [
-              Icon(icono, size: 36, color: color),
-              const SizedBox(height: 8),
-              Text(titulo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: item.color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(item.icon, size: 20, color: item.color),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(item.label,
+                    style: const TextStyle(color: AppColors.blanco, fontSize: 13,
+                        fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Icon(Icons.chevron_right, size: 16, color: item.color.withOpacity(0.7)),
             ],
           ),
         ),
@@ -269,93 +299,136 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
   }
 
   Widget _buildPartidosStats() {
-    final partidosHoy = _stats['partidosHoy'] ?? 0;
-    final partidosProgramados = _stats['partidosProgramados'] ?? 0;
-    final partidosFinalizados = _stats['partidosFinalizados'] ?? 0;
+    final hoy = _stats['partidosHoy'] ?? 0;
+    final prog = _stats['partidosProgramados'] ?? 0;
+    final fin = _stats['partidosFinalizados'] ?? 0;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('ESTADO DE PARTIDOS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildEstadoItem('HOY', partidosHoy.toString(), Colors.orange),
-                _buildEstadoItem('PROGRAMADOS', partidosProgramados.toString(), Colors.blue),
-                _buildEstadoItem('FINALIZADOS', partidosFinalizados.toString(), Colors.green),
-              ],
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.superficie1,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
-    );
-  }
-
-  Widget _buildEstadoItem(String label, String valor, Color color) {
-    return Expanded(
-      child: Column(
+      child: Row(
         children: [
-          Text(valor, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          _buildEstadoStat('HOY', hoy.toString(), AppColors.naranja),
+          _buildSep(),
+          _buildEstadoStat('PROGRAMADOS', prog.toString(), AppColors.amarilloAragon),
+          _buildSep(),
+          _buildEstadoStat('FINALIZADOS', fin.toString(), AppColors.rojoAragon),
         ],
       ),
     );
   }
 
+  Widget _buildEstadoStat(String label, String valor, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(valor, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: color)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.grisClaro)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSep() => Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1));
+
   Widget _buildUltimosPartidos() {
-    final ultimosPartidos = _stats['ultimosPartidos'] as List? ?? [];
+    final lista = _stats['ultimosPartidos'] as List? ?? [];
+    if (lista.isEmpty) return const SizedBox.shrink();
 
-    if (ultimosPartidos.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSeccionTitulo('Últimos Partidos', Icons.history),
+        const SizedBox(height: 12),
+        ...lista.take(4).map((p) => _buildPartidoItem(p)),
+      ],
+    );
+  }
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('ÚLTIMOS PARTIDOS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            ...ultimosPartidos.take(3).map((partido) => _buildUltimoPartidoItem(partido)),
-          ],
-        ),
+  Widget _buildPartidoItem(dynamic p) {
+    final estado = p['estado'] ?? 'PROGRAMADO';
+    final color = estado == 'FINALIZADO' ? AppColors.naranja : AppColors.rojoAragon;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.superficie1,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.rojoAragon.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.sports_basketball, color: AppColors.rojoAragon, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${p['nombreLocal']} vs ${p['nombreVisitante']}',
+                  style: const TextStyle(color: AppColors.blanco, fontSize: 13, fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis),
+              Text(p['fecha'] ?? '', style: const TextStyle(color: AppColors.grisClaro, fontSize: 11)),
+            ]),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.4)),
+            ),
+            child: Text(estado,
+                style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildUltimoPartidoItem(dynamic partido) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.naranja.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+  Widget _buildSeccionTitulo(String titulo, IconData icono) {
+    return Row(
+      children: [
+        Container(
+          width: 4, height: 20,
+          decoration: BoxDecoration(
+            color: AppColors.rojoAragon,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-        child: const Icon(Icons.sports_basketball, color: AppColors.naranja),
-      ),
-      title: Text(
-        '${partido['nombreLocal']} vs ${partido['nombreVisitante']}',
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(partido['fecha'] ?? 'Fecha por confirmar'),
-      trailing: Chip(
-        label: Text(partido['estado'] ?? 'PROGRAMADO'),
-        backgroundColor: partido['estado'] == 'FINALIZADO' ? Colors.green : Colors.orange,
-        labelStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-      onTap: () {
-        _navigateTo(const GestionPartidosPage());
-      },
+        const SizedBox(width: 10),
+        Icon(icono, color: AppColors.rojoAragon, size: 17),
+        const SizedBox(width: 8),
+        Text(titulo,
+            style: const TextStyle(color: AppColors.blanco, fontSize: 16, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 
-  void _navigateTo(Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
+  void _nav(Widget p) => Navigator.push(context, MaterialPageRoute(builder: (_) => p));
+}
+
+class _KpiData {
+  final String label, valor;
+  final IconData icon;
+  final Color color;
+  _KpiData(this.label, this.valor, this.icon, this.color);
+}
+
+class _MenuItemData {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  _MenuItemData(this.label, this.icon, this.color, this.onTap);
 }

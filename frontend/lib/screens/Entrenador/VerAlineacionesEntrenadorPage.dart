@@ -57,22 +57,16 @@ class _VerAlineacionEntrenadorPageState extends State<VerAlineacionEntrenadorPag
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Mi Alineación"),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.naranja))
+          : _error != null
               ? _buildErrorWidget()
               : _alineacion == null
-              ? _buildSinAlineacionWidget()
-              : _buildAlineacionContent(),
-        ),
-      ),
+                  ? _buildSinAlineacionWidget()
+                  : _buildAlineacionContent(),
     );
   }
 

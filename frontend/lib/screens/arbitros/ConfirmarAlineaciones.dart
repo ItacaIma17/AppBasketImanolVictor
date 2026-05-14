@@ -110,25 +110,24 @@ class _ConfirmarAlineacionesDetallePageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              if (!_cargando) _buildResumenEstado(),
-              _buildTabs(),
-              Expanded(
-                child: _cargando
-                    ? const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.amarilloAragon))
-                    : _error != null
-                    ? _buildError()
-                    : TabBarView(
-                  controller: _tabs,
-                  children: [
-                    _buildAlineacionTab(
+      backgroundColor: AppColors.negro,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            if (!_cargando) _buildResumenEstado(),
+            _buildTabs(),
+            Expanded(
+              child: _cargando
+                  ? const Center(
+                  child: CircularProgressIndicator(
+                      color: AppColors.amarilloAragon))
+                  : _error != null
+                  ? _buildError()
+                  : TabBarView(
+                controller: _tabs,
+                children: [
+                  _buildAlineacionTab(
                       esLocal: true,
                       alineacion: _alineacionLocal,
                       nombreEquipo:
@@ -150,7 +149,6 @@ class _ConfirmarAlineacionesDetallePageState
             ],
           ),
         ),
-      ),
     );
   }
 

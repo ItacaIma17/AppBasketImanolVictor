@@ -170,8 +170,35 @@ class AutenticacionService {
     }
   }
 
+  static Future<void> olvidarContrasena(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/usuarios/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    ).timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body);
+      throw Exception(error['error'] ?? 'Error al solicitar recuperación');
+    }
+  }
+
+  static Future<void> restablecerContrasena(String email, String codigo, String nuevaPassword) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/usuarios/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email, 'codigo': codigo, 'nuevaPassword': nuevaPassword}),
+    ).timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body);
+      throw Exception(error['error'] ?? 'Error al restablecer contraseña');
+    }
+  }
+
   static Future<Map<String, dynamic>> actualizarPerfil({
     String? username,
+    String? nombre,
+    String? apellido,
+    int? edad,
     String? oldPassword,
     String? newPassword,
   }) async {
@@ -182,6 +209,9 @@ class AutenticacionService {
     try {
       final body = ActualizarUsuarioDTO(
         username: username,
+        nombre: nombre,
+        apellido: apellido,
+        edad: edad,
         oldPassword: oldPassword,
         newPassword: newPassword,
       ).toJson();
@@ -203,8 +233,13 @@ class AutenticacionService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        if (_usuarioActual != null && username != null && username.isNotEmpty) {
-          _usuarioActual = _usuarioActual!.copyWith(username: username);
+        if (_usuarioActual != null) {
+          _usuarioActual = _usuarioActual!.copyWith(
+            username: (username != null && username.isNotEmpty) ? username : null,
+            nombre: (nombre != null && nombre.isNotEmpty) ? nombre : null,
+            apellido: (apellido != null && apellido.isNotEmpty) ? apellido : null,
+            edad: edad,
+          );
           await _guardarSesion();
         }
 

@@ -65,13 +65,18 @@ public class SecurityConfig {
                                 "/api/usuarios/reenviar-codigo",
                                 "/api/usuarios/login",
                                 "/api/usuarios/refresh",
+                                "/api/usuarios/forgot-password",
+                                "/api/usuarios/reset-password",
+                                "/api/usuarios/logout",
                                 "/api/ligas/listar",
+                                "/api/ligas/{id}",
                                 "/api/equipos/listar",
                                 "/api/equipos/{id}",
                                 "/api/equipos/codigo/{codigo}",
                                 "/api/partidos/listar",
-                                "/api/usuarios/refresh",
-                                "/api/usuarios/logout"
+                                "/api/partidos/{id}",
+                                "/api/jugadores/{id}",
+                                "/api/estadisticas/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

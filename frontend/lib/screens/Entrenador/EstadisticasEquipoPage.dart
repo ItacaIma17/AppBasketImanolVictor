@@ -85,30 +85,26 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Estadísticas del Equipo"),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _miEquipo == null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.naranja))
+          : _miEquipo == null
               ? _buildSinEquipo()
               : Column(
-            children: [
-              _buildHeader(),
-              _buildTabs(),
-              Expanded(
-                child: _selectedTab == 0
-                    ? _buildEstadisticasGenerales()
-                    : _selectedTab == 1
-                    ? _buildRankingJugadores()
-                    : _buildPartidosEstadisticas(),
-              ),
-            ],
-          ),
-        ),
-      ),
+                  children: [
+                    _buildHeader(),
+                    _buildTabs(),
+                    Expanded(
+                      child: _selectedTab == 0
+                          ? _buildEstadisticasGenerales()
+                          : _selectedTab == 1
+                              ? _buildRankingJugadores()
+                              : _buildPartidosEstadisticas(),
+                    ),
+                  ],
+                ),
     );
   }
 
@@ -117,9 +113,9 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.sports_basketball, size: 80, color: Colors.white54),
+          Icon(Icons.sports_basketball, size: 80, color: AppColors.grisClaro),
           SizedBox(height: 16),
-          Text('No tienes un equipo asignado', style: TextStyle(color: Colors.white54)),
+          Text('No tienes un equipo asignado', style: TextStyle(color: AppColors.grisClaro)),
         ],
       ),
     );
@@ -130,19 +126,20 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.gradienteNaranjaAmarillo,
+        gradient: AppColors.gradienteEntrenador,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           Text(
             _miEquipo!.nombreEquipo,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold,
+                color: AppColors.blanco),
           ),
           const SizedBox(height: 8),
           Text(
-            _miEquipo!.nombreLiga ?? "Liga no especificada",
-            style: const TextStyle(color: Colors.white70),
+            _miEquipo!.nombreLiga ?? 'Liga no especificada',
+            style: const TextStyle(color: AppColors.blancoOpacidad70),
           ),
         ],
       ),
@@ -178,12 +175,12 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? Colors.white : Colors.white70, size: 20),
+              Icon(icon, color: isSelected ? AppColors.negro : AppColors.grisClaro, size: 20),
               const SizedBox(height: 4),
               Text(
                 title,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.white70,
+                  color: isSelected ? AppColors.negro : AppColors.grisClaro,
                   fontSize: 12,
                 ),
               ),
@@ -199,43 +196,53 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Rendimiento General', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildEstadisticaItem('PJ', partidosJugados.toString(), Colors.blue),
-                      _buildEstadisticaItem('PG', partidosGanados.toString(), Colors.green),
-                      _buildEstadisticaItem('PP', partidosPerdidos.toString(), Colors.red),
-                      _buildEstadisticaItem('%', '${porcentajeVictorias.toStringAsFixed(1)}%', Colors.orange),
-                    ],
-                  ),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.superficie1,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+            ),
+            child: Column(
+              children: [
+                const Text('Rendimiento General',
+                    style: TextStyle(color: AppColors.blanco, fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildEstadisticaItem('PJ', partidosJugados.toString(), AppColors.naranja),
+                    _buildEstadisticaItem('PG', partidosGanados.toString(), AppColors.amarilloAragon),
+                    _buildEstadisticaItem('PP', partidosPerdidos.toString(), AppColors.rojoAragon),
+                    _buildEstadisticaItem('%', '${porcentajeVictorias.toStringAsFixed(1)}%', AppColors.naranja),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Promedios del Equipo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  _buildPromedioItem('Puntos por partido', _calcularPromedioPuntosEquipo().toStringAsFixed(1)),
-                  const Divider(),
-                  _buildPromedioItem('Rebotes por partido', _calcularPromedioRebotesEquipo().toStringAsFixed(1)),
-                  const Divider(),
-                  _buildPromedioItem('Asistencias por partido', _calcularPromedioAsistenciasEquipo().toStringAsFixed(1)),
-                  const Divider(),
-                  _buildPromedioItem('Robos por partido', _calcularPromedioRobosEquipo().toStringAsFixed(1)),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.superficie1,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+            ),
+            child: Column(
+              children: [
+                const Text('Promedios del Equipo',
+                    style: TextStyle(color: AppColors.blanco, fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                _buildPromedioItem('Puntos por partido', _calcularPromedioPuntosEquipo().toStringAsFixed(1)),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildPromedioItem('Rebotes por partido', _calcularPromedioRebotesEquipo().toStringAsFixed(1)),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildPromedioItem('Asistencias por partido', _calcularPromedioAsistenciasEquipo().toStringAsFixed(1)),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildPromedioItem('Robos por partido', _calcularPromedioRobosEquipo().toStringAsFixed(1)),
+              ],
             ),
           ),
         ],
@@ -247,7 +254,7 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
     return Column(
       children: [
         Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.grisClaro)),
       ],
     );
   }
@@ -256,8 +263,9 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.naranja)),
+        Text(label, style: const TextStyle(fontSize: 15, color: AppColors.blanco)),
+        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+            color: AppColors.naranja)),
       ],
     );
   }
@@ -301,7 +309,8 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
   Widget _buildRankingJugadores() {
     if (_jugadores.isEmpty) {
       return const Center(
-        child: Text('No hay jugadores en el equipo', style: TextStyle(color: Colors.white54)),
+        child: Text('No hay jugadores en el equipo',
+            style: TextStyle(color: AppColors.grisClaro)),
       );
     }
 
@@ -328,51 +337,54 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
           ),
         );
       },
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: posicion <= 3 ? AppColors.naranja : Colors.grey,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$posicion',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.superficie1,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: posicion <= 3 ? AppColors.naranja.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(jugador.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(jugador.posicion, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
+              child: Center(
+                child: Text('$posicion',
+                    style: TextStyle(
+                      color: posicion <= 3 ? AppColors.naranja : AppColors.grisClaro,
+                      fontWeight: FontWeight.bold)),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${jugador.promedioPuntos.toStringAsFixed(1)} pts',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.naranja),
-                  ),
-                  Text(
-                    '${jugador.promedioRebotes.toStringAsFixed(1)} reb',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  Text(jugador.nombreCompleto,
+                      style: const TextStyle(color: AppColors.blanco,
+                          fontWeight: FontWeight.bold)),
+                  Text(jugador.posicion,
+                      style: const TextStyle(fontSize: 12, color: AppColors.grisClaro)),
                 ],
               ),
-            ],
-          ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('${jugador.promedioPuntos.toStringAsFixed(1)} pts',
+                    style: const TextStyle(fontWeight: FontWeight.bold,
+                        color: AppColors.naranja)),
+                Text('${jugador.promedioRebotes.toStringAsFixed(1)} reb',
+                    style: const TextStyle(fontSize: 12, color: AppColors.grisClaro)),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -383,7 +395,8 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
 
     if (partidosFinalizados.isEmpty) {
       return const Center(
-        child: Text('No hay partidos finalizados', style: TextStyle(color: Colors.white54)),
+        child: Text('No hay partidos finalizados',
+            style: TextStyle(color: AppColors.grisClaro)),
       );
     }
 
@@ -397,59 +410,65 @@ class _EstadisticasEquipoPageState extends State<EstadisticasEquipoPage> {
         final puntosContra = esLocal ? partido.puntosVisitante : partido.puntosLocal;
         final esVictoria = (puntosFavor ?? 0) > (puntosContra ?? 0);
 
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${partido.nombreLocal} vs ${partido.nombreVisitante}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.superficie1,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.07)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${partido.nombreLocal} vs ${partido.nombreVisitante}',
+                      style: const TextStyle(color: AppColors.blanco,
+                          fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: esVictoria ? Colors.green : Colors.red,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        esVictoria ? 'Victoria' : 'Derrota',
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (esVictoria ? AppColors.naranja : AppColors.rojoAragon)
+                          .withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: (esVictoria ? AppColors.naranja : AppColors.rojoAragon)
+                            .withOpacity(0.4)),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${puntosFavor ?? 0}',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    child: Text(
+                      esVictoria ? 'Victoria' : 'Derrota',
+                      style: TextStyle(
+                          color: esVictoria ? AppColors.naranja : AppColors.rojoAragon,
+                          fontSize: 11, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 16),
-                    const Text('-', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 16),
-                    Text(
-                      '${puntosContra ?? 0}',
-                      style: TextStyle(fontSize: 24, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-
-                  _formatearFechaSegura(partido.fecha),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('${puntosFavor ?? 0}',
+                      style: const TextStyle(color: AppColors.blanco,
+                          fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 16),
+                  const Text('-',
+                      style: TextStyle(color: AppColors.grisClaro, fontSize: 24)),
+                  const SizedBox(width: 16),
+                  Text('${puntosContra ?? 0}',
+                      style: const TextStyle(color: AppColors.grisClaro, fontSize: 24)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(_formatearFechaSegura(partido.fecha),
+                  style: const TextStyle(fontSize: 12, color: AppColors.grisClaro)),
+            ],
           ),
         );
       },

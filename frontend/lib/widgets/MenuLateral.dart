@@ -45,14 +45,12 @@ class MenuLateral extends StatelessWidget {
 
     return Drawer(
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
+        color: AppColors.negro,
         child: Column(
           children: [
 
             _buildDrawerHeader(inicialAvatar, nombreMostrar, emailMostrar, rol),
-            const Divider(color: AppColors.blancoOpacidad70),
+            const Divider(color: Color(0x33FFFFFF)),
 
             Expanded(
               child: ListView(
@@ -151,7 +149,7 @@ class MenuLateral extends StatelessWidget {
                         icono: Icons.checklist_outlined,
                         iconoActivo: Icons.checklist,
                         titulo: 'Confirmar Alineaciones',
-                        accentColor: Colors.blue.shade400,
+                        accentColor: AppColors.amarilloAragon,
                         onTap: () =>
                             _navegar(context, const MisPartidosArbitroPage())),
                     _buildDrawerItem(context,
@@ -189,7 +187,7 @@ class MenuLateral extends StatelessWidget {
                           enabled: false,
                           onTap: () {}),
                   ],
-                  const Divider(color: AppColors.blancoOpacidad70),
+                  const Divider(color: Color(0x33FFFFFF)),
 
                   if (rol == Role.ADMIN) ...[
                     _buildSeparador('ADMINISTRACIÓN'),
@@ -206,7 +204,7 @@ class MenuLateral extends StatelessWidget {
                         onTap: () =>
                             _navegar(context, const ListadoEquiposPage())),
                   ],
-                  const Divider(color: AppColors.blancoOpacidad70),
+                  const Divider(color: Color(0x33FFFFFF)),
 
                   _buildSeparador('AJUSTES'),
                   _buildDrawerItem(context,
@@ -222,7 +220,7 @@ class MenuLateral extends StatelessWidget {
                       onTap: () => _mostrarAcercaDe(context)),
 
                   const SizedBox(height: 8),
-                  const Divider(color: AppColors.blancoOpacidad70),
+                  const Divider(color: Color(0x33FFFFFF)),
                   const SizedBox(height: 4),
                   _buildDrawerItem(
                     context,
@@ -257,9 +255,9 @@ class MenuLateral extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              gradient: AppColors.gradienteRojoNaranja,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: AppColors.naranja.withOpacity(0.6), width: 2),
             ),
             child: Center(
               child: Text(inicial,
@@ -277,21 +275,22 @@ class MenuLateral extends StatelessWidget {
                   fontWeight: FontWeight.bold)),
           if (email.isNotEmpty)
             Text(email,
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.8), fontSize: 12)),
+                style: const TextStyle(
+                    color: AppColors.grisClaro, fontSize: 12)),
           if (rol != null) ...[
             const SizedBox(height: 8),
             Container(
               padding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: AppColors.naranja.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.naranja.withOpacity(0.4)),
               ),
               child: Text(
                 _etiquetaRol(rol),
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.naranja,
                     fontSize: 11,
                     fontWeight: FontWeight.w600),
               ),
@@ -363,7 +362,7 @@ class MenuLateral extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 16, 16, 4),
       child: Text(titulo,
           style: TextStyle(
-              color: const Color.fromARGB(255, 0, 0, 0),
+              color: AppColors.grisClaro.withOpacity(0.45),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2)),

@@ -193,11 +193,10 @@ class _CrearActaPageState extends State<CrearActaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.negro,
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Crear Acta"),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
+      body: SafeArea(
           child: _verificandoAlineaciones
 
               ? const Center(
@@ -240,7 +239,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
             ),
           ),
         ),
-      ),
     );
   }
 

@@ -221,23 +221,21 @@ class _PresentarAlineacionPageState extends State<PresentarAlineacionPage> {
     final rival = widget.esLocal ? widget.partido.nombreVisitante : widget.partido.nombreLocal;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.gradienteAragon),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(miEquipo, rival),
-              if (_alineacionFija && !_alineacionEnviada) _buildAvisoAlineacionFija(),
-              Expanded(
-                child: _cargando
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.amarilloAragon))
-                    : _alineacionEnviada
-                    ? _buildAlineacionEnviadaView()
-                    : _buildFormularioAlineacion(),
-              ),
-              if (!_alineacionEnviada) _buildFooter(),
-            ],
-          ),
+      backgroundColor: AppColors.negro,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(miEquipo, rival),
+            if (_alineacionFija && !_alineacionEnviada) _buildAvisoAlineacionFija(),
+            Expanded(
+              child: _cargando
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.naranja))
+                  : _alineacionEnviada
+                  ? _buildAlineacionEnviadaView()
+                  : _buildFormularioAlineacion(),
+            ),
+            if (!_alineacionEnviada) _buildFooter(),
+          ],
         ),
       ),
     );

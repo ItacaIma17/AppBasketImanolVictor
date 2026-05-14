@@ -12,6 +12,7 @@ class EquipoEntrenador {
   final String? nombreEstadio;
   final bool tieneEquipo;
   final int? numeroJugadores;
+  final int? victorias;
   final List<Jugador>? jugadores;
 
   EquipoEntrenador({
@@ -26,6 +27,7 @@ class EquipoEntrenador {
     this.nombreEstadio,
     required this.tieneEquipo,
     this.numeroJugadores,
+    this.victorias,
     this.jugadores,
   });
 
@@ -56,6 +58,7 @@ class EquipoEntrenador {
       nombreEstadio: json['nombreEstadio'],
       tieneEquipo: json['tieneEquipo'] ?? false,
       numeroJugadores: _parseIntNullable(json['numeroJugadores']),
+      victorias: _parseIntNullable(json['victorias']),
       jugadores: json['jugadores'] != null
           ? (json['jugadores'] as List)
           .map((j) => Jugador.fromJson(j))

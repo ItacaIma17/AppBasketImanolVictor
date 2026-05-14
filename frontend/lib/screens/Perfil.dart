@@ -38,13 +38,10 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const MenuLateral(),
+      backgroundColor: AppColors.negro,
       appBar: const HeaderApp(titulo: "Mi Perfil"),
       bottomNavigationBar: const BarraInferior(selectedIndex: 4),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.gradienteAragon,
-        ),
-        child: SafeArea(
+      body: SafeArea(
           child: FutureBuilder<Usuario?>(
             key: ValueKey(_refreshKey),
             future: AutenticacionService.obtenerUsuarioActual(),
@@ -65,7 +62,6 @@ class _PerfilPageState extends State<PerfilPage> {
               return _buildPerfil(usuario);
             },
           ),
-        ),
       ),
     );
   }
@@ -238,9 +234,9 @@ class _PerfilPageState extends State<PerfilPage> {
                 leading: const Icon(Icons.edit, color: AppColors.naranja),
                 title: const Text(
                   'Editar Perfil',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.blanco),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                trailing: Icon(Icons.chevron_right, color: AppColors.grisClaro.withOpacity(0.5)),
                 onTap: () async {
                   final result = await Navigator.push(
                     context,
@@ -251,14 +247,14 @@ class _PerfilPageState extends State<PerfilPage> {
                   }
                 },
               ),
-              const Divider(),
+              Divider(color: Colors.white.withOpacity(0.08)),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
+                leading: const Icon(Icons.logout, color: AppColors.rojoAragon),
                 title: const Text(
                   'Cerrar Sesión',
-                  style: TextStyle(fontWeight: FontWeight.w500, color: Colors.red),
+                  style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.rojoAragon),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.rojoAragon),
                 onTap: () => _mostrarConfirmacionCerrarSesion(),
               ),
             ],
@@ -273,13 +269,13 @@ class _PerfilPageState extends State<PerfilPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: AppColors.gradienteNaranjaAmarillo,
+        gradient: AppColors.gradienteRojoNaranja,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -348,15 +344,9 @@ class _PerfilPageState extends State<PerfilPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.blanco,
+            color: AppColors.superficie1,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: Colors.white.withOpacity(0.07)),
           ),
           child: Column(
             children: children,
@@ -381,8 +371,8 @@ class _PerfilPageState extends State<PerfilPage> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: AppColors.grisClaro.withOpacity(0.6),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -391,7 +381,7 @@ class _PerfilPageState extends State<PerfilPage> {
               Text(
                 valor,
                 style: const TextStyle(
-                  color: AppColors.negro,
+                  color: AppColors.blanco,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -410,8 +400,9 @@ class _PerfilPageState extends State<PerfilPage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.superficie2,
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
         ),
         child: Column(
           children: [
@@ -420,7 +411,7 @@ class _PerfilPageState extends State<PerfilPage> {
             Text(
               valor,
               style: const TextStyle(
-                color: AppColors.negro,
+                color: AppColors.blanco,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -429,8 +420,8 @@ class _PerfilPageState extends State<PerfilPage> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.grey,
+              style: TextStyle(
+                color: AppColors.grisClaro.withOpacity(0.7),
                 fontSize: 12,
               ),
             ),
