@@ -1,5 +1,6 @@
 package Aplicacion.Services;
 
+import Dominio.Entity.Alineacion;
 import Dominio.Entity.Partido;
 import Dominio.Entity.Usuario;
 import Dominio.Repositorys.UserRepository;
@@ -8,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -96,6 +99,7 @@ public class NotificacionService {
                 "Consulta las estadísticas detalladas en la aplicación FAB.";
 
         notificarEquipo(partido, asunto, cuerpo);
+        notificarSeguidoresEquipos(partido, asunto, cuerpo);
 
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has registrado el resultado del partido entre <strong>" +
@@ -130,6 +134,47 @@ public class NotificacionService {
                 "Recuerda validar las alineaciones antes del partido.";
 
         enviarNotificacion(partido.getArbitro().getEmail(), asunto, cuerpo);
+
+        String asuntoSeguidores = "Árbitro designado para el partido de tu equipo";
+        String cuerpoSeguidores = "Se ha designado árbitro para el partido:<br><br>" +
+                "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
+                "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                " <strong>Árbitro:</strong> " + partido.getArbitro().getNombre() + " " + partido.getArbitro().getApellidos() + "<br>" +
+                " <strong>Fecha:</strong> " + fecha + "<br>" +
+                " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar");
+
+        notificarSeguidoresEquipos(partido, asuntoSeguidores, cuerpoSeguidores);
+    }
+
+    public void notificarAlineacionPresentada(Alineacion alineacion) {
+        if (alineacion == null) return;
+        Partido partido = alineacion.getPartido();
+        if (partido == null) return;
+
+        String fecha = partido.getFecha() != null
+                ? partido.getFecha().format(FORMATO_FECHA)
+                : "fecha por confirmar";
+
+        String nombreEquipo = alineacion.getEquipo().getNombre();
+
+        if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
+            String asuntoArbitro = "Nueva alineación presentada - " + nombreEquipo;
+            String cuerpoArbitro = "El equipo <strong>" + nombreEquipo + "</strong> ha presentado su alineación " +
+                    "para el partido del " + fecha + ".<br><br>" +
+                    "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
+                    "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                    "Revisa y confirma la alineación desde la aplicación.";
+            enviarNotificacion(partido.getArbitro().getEmail(), asuntoArbitro, cuerpoArbitro);
+        }
+
+        String asuntoSeguidores = "Alineación presentada - " + nombreEquipo;
+        String cuerpoSeguidores = "El equipo <strong>" + nombreEquipo + "</strong> ha enviado su alineación " +
+                "para el partido del " + fecha + " frente a <strong>" +
+                (partido.getEquipoLocal().getId().equals(alineacion.getEquipo().getId())
+                        ? partido.getEquipoVisitante().getNombre()
+                        : partido.getEquipoLocal().getNombre()) +
+                "</strong>.<br><br>Consulta los detalles en la aplicación FAB.";
+        notificarSeguidoresEquipo(alineacion.getEquipo().getId(), asuntoSeguidores, cuerpoSeguidores);
     }
 
     public void notificarAlineacionConfirmada(Partido partido, String emailEntrenador, String nombreEquipo) {
@@ -169,6 +214,7 @@ public class NotificacionService {
                 "Puedes consultarla desde la aplicación en la sección de Actas y Estadísticas.";
 
         notificarEquipo(partido, asunto, cuerpo);
+        notificarSeguidoresEquipos(partido, asunto, cuerpo);
 
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has subido el acta del partido entre <strong>" +
@@ -240,6 +286,33 @@ public class NotificacionService {
         if (partido.getEquipoVisitante() != null && partido.getEquipoVisitante().getEntrenador() != null) {
             String email = partido.getEquipoVisitante().getEntrenador().getEmail();
             if (email != null && !email.isEmpty()) {
+                enviarNotificacion(email, asunto, cuerpo);
+            }
+        }
+    }
+
+    public void notificarSeguidoresEquipos(Partido partido, String asunto, String cuerpo) {
+        if (partido == null) return;
+        Set<String> emailsNotificados = new HashSet<>();
+
+        if (partido.getEquipoLocal() != null) {
+            notificarSeguidoresEquipoInterno(partido.getEquipoLocal().getId(), asunto, cuerpo, emailsNotificados);
+        }
+        if (partido.getEquipoVisitante() != null) {
+            notificarSeguidoresEquipoInterno(partido.getEquipoVisitante().getId(), asunto, cuerpo, emailsNotificados);
+        }
+    }
+
+    public void notificarSeguidoresEquipo(Long equipoId, String asunto, String cuerpo) {
+        notificarSeguidoresEquipoInterno(equipoId, asunto, cuerpo, new HashSet<>());
+    }
+
+    private void notificarSeguidoresEquipoInterno(Long equipoId, String asunto, String cuerpo, Set<String> yaNotificados) {
+        List<Usuario> seguidores = userRepository.findSeguidoresByEquipoId(equipoId);
+        for (Usuario seguidor : seguidores) {
+            String email = seguidor.getEmail();
+            if (email != null && !email.isEmpty() && !yaNotificados.contains(email)) {
+                yaNotificados.add(email);
                 enviarNotificacion(email, asunto, cuerpo);
             }
         }

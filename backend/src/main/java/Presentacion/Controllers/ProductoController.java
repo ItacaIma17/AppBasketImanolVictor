@@ -5,6 +5,7 @@ import Presentacion.DTOS.Producto.ProductoRequest;
 import Presentacion.DTOS.Producto.ProductoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,30 +17,32 @@ public class ProductoController {
 
     private final ProductoService productoService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/crear")
-    public ResponseEntity<ProductoResponse> crearProducto(@RequestBody ProductoRequest dto){
+    public ResponseEntity<ProductoResponse> crearProducto(@RequestBody ProductoRequest dto) {
         return ResponseEntity.ok(productoService.crearProducto(dto));
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<List<ProductoResponse>> listarProductos(){
+    public ResponseEntity<List<ProductoResponse>> listarProductos() {
         return ResponseEntity.ok(productoService.listarProductos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductoResponse> obtenerProducto(@PathVariable Long id){
+    public ResponseEntity<ProductoResponse> obtenerProducto(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.obtenerProducto(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ProductoResponse> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest dto){
+    public ResponseEntity<ProductoResponse> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest dto) {
         return ResponseEntity.ok(productoService.actualizarProducto(id, dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id){
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
     }
 }
-

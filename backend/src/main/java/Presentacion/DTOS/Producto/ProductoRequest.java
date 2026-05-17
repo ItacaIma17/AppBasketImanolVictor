@@ -5,15 +5,10 @@ import lombok.Data;
 @Data
 public class ProductoRequest {
     private String nombreProducto;
+    private String descripcion;
     private int stock;
     private double precio;
-
-    public ProductoRequest(){}
-
-    public ProductoRequest(String nombreProducto, int stock, double precio) {
-        this.nombreProducto = nombreProducto;
-        this.stock = stock;
-        this.precio = precio;
-    }
+    private String categoria;
+    private String imagenUrl;
 }
 

@@ -39,6 +39,9 @@ public class AlineacionService {
     @Autowired
     private ArbitroRepository arbitroRepository;
 
+    @Autowired
+    private NotificacionService notificacionService;
+
     private static final int MAX_TITULARES = 5;
     private static final int MAX_SUPLENTES = 7;
 
@@ -143,6 +146,7 @@ public class AlineacionService {
         }
 
         Alineacion saved = alineacionRepository.save(alineacion);
+        notificacionService.notificarAlineacionPresentada(saved);
         return AlineacionResponseDTO.fromEntity(saved);
     }
 
@@ -257,6 +261,11 @@ public class AlineacionService {
         alineacion.setBloqueada(true);
 
         Alineacion saved = alineacionRepository.save(alineacion);
+
+        String emailEntrenador = alineacion.getEntrenador() != null ? alineacion.getEntrenador().getEmail() : null;
+        String nombreEquipo = alineacion.getEquipo() != null ? alineacion.getEquipo().getNombre() : "tu equipo";
+        notificacionService.notificarAlineacionConfirmada(partido, emailEntrenador, nombreEquipo);
+
         return AlineacionResponseDTO.fromEntity(saved);
     }
 

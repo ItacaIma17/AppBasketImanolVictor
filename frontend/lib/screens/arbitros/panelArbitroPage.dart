@@ -23,7 +23,7 @@ class _PanelArbitroPageState extends State<PanelArbitroPage> {
   List<Partido> _partidos = [];
   bool _isLoading = true;
 
-  static const _acento = AppColors.amarilloAragon;
+  static const _acento = AppColors.naranja;
 
   @override
   void initState() {
@@ -126,7 +126,7 @@ class _PanelArbitroPageState extends State<PanelArbitroPage> {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(gradient: AppColors.gradienteArbitro),
+          decoration: const BoxDecoration(gradient: AppColors.gradienteEntrenador),
           child: SafeArea(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               const SizedBox(height: 48),
@@ -138,26 +138,26 @@ class _PanelArbitroPageState extends State<PanelArbitroPage> {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
                 ),
-                child: const Icon(Icons.gavel, size: 36, color: AppColors.negro),
+                child: const Icon(Icons.gavel, size: 36, color: AppColors.blanco),
               ),
               const SizedBox(height: 10),
-              Text(nombre, style: const TextStyle(color: AppColors.negro, fontSize: 18,
+              Text(nombre, style: const TextStyle(color: AppColors.blanco, fontSize: 18,
                   fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Text('ÁRBITRO', style: TextStyle(color: AppColors.negro, fontSize: 11,
+                  const Text('ÁRBITRO', style: TextStyle(color: AppColors.blanco, fontSize: 11,
                       letterSpacing: 1.2, fontWeight: FontWeight.w700)),
                   if (_arbitro != null) ...[
                     const SizedBox(width: 6),
-                    const Text('·', style: TextStyle(color: AppColors.negro)),
+                    const Text('·', style: TextStyle(color: AppColors.blanco)),
                     const SizedBox(width: 6),
-                    Text(codigo, style: const TextStyle(color: AppColors.negro, fontSize: 11,
+                    Text(codigo, style: const TextStyle(color: AppColors.blanco, fontSize: 11,
                         fontWeight: FontWeight.w600)),
                   ],
                 ]),
@@ -165,7 +165,7 @@ class _PanelArbitroPageState extends State<PanelArbitroPage> {
             ]),
           ),
         ),
-        title: const Text('Árbitro', style: TextStyle(color: AppColors.negro, fontSize: 16,
+        title: const Text('Árbitro', style: TextStyle(color: AppColors.blanco, fontSize: 16,
             fontWeight: FontWeight.bold)),
         titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
       ),

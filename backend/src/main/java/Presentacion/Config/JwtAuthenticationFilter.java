@@ -63,8 +63,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     log.info(" Autoridades asignadas: {}", authorities);
 
+                    var userDetails = userDetailsService.loadUserByUsername(username);
                     UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                            new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 

@@ -8,6 +8,7 @@ import 'package:tfg_appfede/widgets/Header.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
 import '../models/role.dart';
 import '../models/usuario.dart';
+import 'DetallePedidos.dart';
 import 'EditarPerfilPage.dart';
 import 'Inicio/InicioSesion.dart';
 
@@ -230,6 +231,19 @@ class _PerfilPageState extends State<PerfilPage> {
           _buildSeccion(
             titulo: 'Acciones',
             children: [
+              ListTile(
+                leading: const Icon(Icons.receipt_long, color: AppColors.naranja),
+                title: const Text(
+                  'Mis Pedidos',
+                  style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.blanco),
+                ),
+                trailing: Icon(Icons.chevron_right, color: AppColors.grisClaro.withOpacity(0.5)),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DetallePedidosPage()),
+                ),
+              ),
+              Divider(color: Colors.white.withOpacity(0.08)),
               ListTile(
                 leading: const Icon(Icons.edit, color: AppColors.naranja),
                 title: const Text(

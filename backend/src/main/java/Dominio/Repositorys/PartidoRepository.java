@@ -152,4 +152,7 @@ public interface PartidoRepository extends JpaRepository<Partido, Long> {
     @Query("SELECT COUNT(p) FROM Partido p WHERE p.fecha BETWEEN :inicio AND :fin")
     long countByFechaBetween(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 
+    @Query("SELECT p FROM Partido p WHERE p.fecha BETWEEN :inicio AND :fin AND p.estado != 'FINALIZADO'")
+    List<Partido> findPartidosEntreFechas(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
+
 }

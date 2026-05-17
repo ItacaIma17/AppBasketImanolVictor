@@ -76,7 +76,9 @@ public class SecurityConfig {
                                 "/api/partidos/listar",
                                 "/api/partidos/{id}",
                                 "/api/jugadores/{id}",
-                                "/api/estadisticas/**"
+                                "/api/estadisticas/**",
+                                "/api/productos/listar",
+                                "/api/productos/{id}"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -18,6 +18,8 @@ import 'package:tfg_appfede/screens/arbitros/MisPartidosArbitroPage.dart';
 import 'package:tfg_appfede/screens/arbitros/SeleccionarPartidoActaPage.dart';
 import 'package:tfg_appfede/screens/equipos/SolicitarEquipoPage.dart';
 import 'package:tfg_appfede/screens/Favoritos.dart';
+import 'package:tfg_appfede/screens/Tienda.dart';
+import 'package:tfg_appfede/screens/DetallePedidos.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/CerrarSesion.dart';
 
@@ -79,6 +81,19 @@ class MenuLateral extends StatelessWidget {
                       iconoActivo: Icons.person,
                       titulo: 'Mi Perfil',
                       onTap: () => _navegar(context, const PerfilPage())),
+
+                  _buildSeparador('TIENDA'),
+                  _buildDrawerItem(context,
+                      icono: Icons.shopping_bag_outlined,
+                      iconoActivo: Icons.shopping_bag,
+                      titulo: 'Tienda',
+                      accentColor: AppColors.naranja,
+                      onTap: () => _navegar(context, const TiendaPage())),
+                  _buildDrawerItem(context,
+                      icono: Icons.receipt_long_outlined,
+                      iconoActivo: Icons.receipt_long,
+                      titulo: 'Mis Pedidos',
+                      onTap: () => _navegar(context, const DetallePedidosPage())),
 
                   if (rol == Role.ENTRENADOR && entrenador != null) ...[
                     _buildSeparador('MI EQUIPO'),

@@ -42,6 +42,7 @@ public class AdminService {
     private final LigaRepository ligaRepository;
     private final PartidoRepository partidoRepository;
     private final EmailService emailService;
+    private final NotificacionService notificacionService;
 
     public AdminPanelInfoDTO obtenerResumen() {
         AdminPanelInfoDTO panel = new AdminPanelInfoDTO();
@@ -306,6 +307,15 @@ public class AdminService {
         } catch (MessagingException e) {
             log.warn("Email no enviado al árbitro: {}", e.getMessage());
         }
+
+        notificacionService.notificarSeguidoresEquipos(partido,
+                "Árbitro designado - " + partido.getEquipoLocal().getNombre() + " vs " + partido.getEquipoVisitante().getNombre(),
+                "Se ha designado árbitro para el partido de tu equipo favorito:<br><br>" +
+                "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs <strong>" +
+                partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                " <strong>Árbitro:</strong> " + arbitro.getNombre() + " " + arbitro.getApellidos() + "<br>" +
+                " <strong>Fecha:</strong> " + (partido.getFecha() != null ? partido.getFecha().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "por confirmar") + "<br>" +
+                " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar"));
 
         log.info("Árbitro {} asignado al partido {}", arbitro.getNombre(), partido.getId());
     }

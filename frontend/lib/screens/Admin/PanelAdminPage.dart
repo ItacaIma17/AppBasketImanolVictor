@@ -61,7 +61,7 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
               ? _buildError()
               : RefreshIndicator(
                   onRefresh: _cargarEstadisticas,
-                  color: AppColors.rojoAragon,
+                  color: AppColors.naranja,
                   child: CustomScrollView(
                     slivers: [
                       _buildSliverHeader(),
@@ -93,20 +93,20 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
 
   Widget _buildLoading() => const Scaffold(
     backgroundColor: AppColors.negro,
-    body: Center(child: CircularProgressIndicator(color: AppColors.rojoAragon)),
+    body: Center(child: CircularProgressIndicator(color: AppColors.naranja)),
   );
 
   Widget _buildError() => Scaffold(
     backgroundColor: AppColors.negro,
     body: Center(
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.error_outline, size: 64, color: AppColors.rojoAragon),
+        const Icon(Icons.error_outline, size: 64, color: AppColors.naranja),
         const SizedBox(height: 16),
         Text(_error!, style: const TextStyle(color: AppColors.blanco)),
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _cargarEstadisticas,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.rojoAragon),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
           child: const Text('Reintentar'),
         ),
       ]),
@@ -117,7 +117,7 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: AppColors.rojoAragon,
+      backgroundColor: AppColors.naranja,
       leading: Builder(
         builder: (ctx) => IconButton(
           icon: const Icon(Icons.menu, color: AppColors.blanco),
@@ -126,7 +126,7 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(gradient: AppColors.gradienteAdmin),
+          decoration: const BoxDecoration(gradient: AppColors.gradienteEntrenador),
           child: SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -169,9 +169,9 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
 
   Widget _buildKpiRow() {
     final kpis = [
-      _KpiData('Usuarios', _stats['totalUsuarios']?.toString() ?? '0', Icons.people, AppColors.rojoAragon),
-      _KpiData('Equipos', _stats['totalEquipos']?.toString() ?? '0', Icons.shield, AppColors.naranja),
-      _KpiData('Ligas', _stats['totalLigas']?.toString() ?? '0', Icons.emoji_events, AppColors.amarilloAragon),
+      _KpiData('Usuarios', _stats['totalUsuarios']?.toString() ?? '0', Icons.people, AppColors.naranja),
+      _KpiData('Equipos', _stats['totalEquipos']?.toString() ?? '0', Icons.shield, AppColors.amarilloAragon),
+      _KpiData('Ligas', _stats['totalLigas']?.toString() ?? '0', Icons.emoji_events, AppColors.naranja),
       _KpiData('Partidos', _stats['totalPartidos']?.toString() ?? '0', Icons.calendar_today, AppColors.grisClaro),
     ];
     return Row(
@@ -205,10 +205,10 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
   Widget _buildBotonCrearPartido() {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.gradienteAdmin,
+        gradient: AppColors.gradienteNaranjaAmarillo,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: AppColors.rojoAragon.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.naranja.withOpacity(0.40), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Material(
@@ -238,13 +238,13 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
 
   Widget _buildMenuGestion() {
     final items = [
-      _MenuItemData('Usuarios', Icons.people, AppColors.rojoAragon, () => _nav(const GestionUsuariosPage())),
-      _MenuItemData('Equipos', Icons.shield, AppColors.naranja, () => _nav(const GestionEquiposPage())),
-      _MenuItemData('Ligas', Icons.emoji_events, AppColors.amarilloAragon, () => _nav(const GestionLigasPage())),
-      _MenuItemData('Partidos', Icons.calendar_today, AppColors.rojoAragon, () => _nav(const GestionPartidosPage())),
-      _MenuItemData('Entrenadores', Icons.sports, AppColors.naranja, () => _nav(const GestionEntrenadoresPage())),
-      _MenuItemData('Árbitros', Icons.gavel, AppColors.amarilloAragon, () => _nav(const GestionArbitrosPage())),
-      _MenuItemData('Jugadores', Icons.sports_basketball, AppColors.rojoAragon, () => _nav(const GestionJugadoresPage())),
+      _MenuItemData('Usuarios', Icons.people, AppColors.naranja, () => _nav(const GestionUsuariosPage())),
+      _MenuItemData('Equipos', Icons.shield, AppColors.amarilloAragon, () => _nav(const GestionEquiposPage())),
+      _MenuItemData('Ligas', Icons.emoji_events, AppColors.naranja, () => _nav(const GestionLigasPage())),
+      _MenuItemData('Partidos', Icons.calendar_today, AppColors.naranja, () => _nav(const GestionPartidosPage())),
+      _MenuItemData('Entrenadores', Icons.sports, AppColors.amarilloAragon, () => _nav(const GestionEntrenadoresPage())),
+      _MenuItemData('Árbitros', Icons.gavel, AppColors.naranja, () => _nav(const GestionArbitrosPage())),
+      _MenuItemData('Jugadores', Icons.sports_basketball, AppColors.amarilloAragon, () => _nav(const GestionJugadoresPage())),
     ];
 
     return GridView.count(
@@ -352,7 +352,7 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
 
   Widget _buildPartidoItem(dynamic p) {
     final estado = p['estado'] ?? 'PROGRAMADO';
-    final color = estado == 'FINALIZADO' ? AppColors.naranja : AppColors.rojoAragon;
+    final color = estado == 'FINALIZADO' ? AppColors.amarilloAragon : AppColors.naranja;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -367,10 +367,10 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.rojoAragon.withOpacity(0.12),
+              color: AppColors.naranja.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.sports_basketball, color: AppColors.rojoAragon, size: 20),
+            child: const Icon(Icons.sports_basketball, color: AppColors.naranja, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -402,12 +402,12 @@ class _PanelAdminPageState extends State<PanelAdminPage> {
         Container(
           width: 4, height: 20,
           decoration: BoxDecoration(
-            color: AppColors.rojoAragon,
+            color: AppColors.naranja,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: 10),
-        Icon(icono, color: AppColors.rojoAragon, size: 17),
+        Icon(icono, color: AppColors.naranja, size: 17),
         const SizedBox(width: 8),
         Text(titulo,
             style: const TextStyle(color: AppColors.blanco, fontSize: 16, fontWeight: FontWeight.bold)),

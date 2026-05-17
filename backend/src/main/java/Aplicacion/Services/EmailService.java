@@ -35,7 +35,10 @@ public class EmailService {
         SANCION_JUGADOR,
         NOTIFICACION_SANCION_ENTRENADOR,
         RECORDATORIO_PARTIDO,
-        COMUNICADO_GENERAL
+        COMUNICADO_GENERAL,
+        PEDIDO_CONFIRMADO,
+        PEDIDO_ENVIADO,
+        PEDIDO_ENTREGADO
     }
 
     public void sendHtmlMail(String to, String subject, String htmlContent) throws MessagingException {
@@ -220,6 +223,113 @@ public class EmailService {
         sendHtmlMail(to, subject, content);
     }
 
+    public void enviarConfirmacionPedido(String to, String nombre, Long pedidoId,
+                                          double total, java.util.List<String> lineasTexto) throws MessagingException {
+        String subject = "Confirmación de pedido #" + pedidoId + " - FAB Tienda Oficial";
+        StringBuilder itemsHtml = new StringBuilder();
+        for (String linea : lineasTexto) {
+            itemsHtml.append("<tr><td style='padding:8px 12px;border-bottom:1px solid #eee;color:#333;'>")
+                     .append(linea).append("</td></tr>");
+        }
+        String content = String.format("""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;">
+              <div style="background:linear-gradient(135deg,#CC0000 0%%,#FF6600 100%%);padding:32px;text-align:center;">
+                <h1 style="color:white;margin:0;font-size:24px;">¡Gracias por tu compra, %s!</h1>
+                <p style="color:rgba(255,255,255,0.9);margin:8px 0 0 0;">Federación Aragonesa de Baloncesto · Tienda Oficial</p>
+              </div>
+              <div style="background:white;padding:30px;">
+                <div style="background:#f0fff4;border-left:4px solid #28a745;padding:14px 16px;border-radius:4px;margin-bottom:24px;">
+                  <p style="margin:0;color:#28a745;font-weight:bold;font-size:15px;">✓ Pedido confirmado</p>
+                  <p style="margin:4px 0 0 0;color:#555;">Número de pedido: <strong>#%d</strong></p>
+                </div>
+                <h3 style="color:#333;border-bottom:2px solid #FF6600;padding-bottom:8px;">Resumen del pedido</h3>
+                <table style="width:100%%;border-collapse:collapse;background:#fafafa;border-radius:8px;overflow:hidden;">%s</table>
+                <div style="margin-top:14px;text-align:right;background:#fff3e0;padding:12px 16px;border-radius:6px;">
+                  <span style="font-size:20px;font-weight:bold;color:#FF6600;">Total: %.2f €</span>
+                </div>
+                <div style="margin-top:24px;background:#fff8e1;border-radius:8px;padding:18px;">
+                  <h4 style="color:#FF6600;margin:0 0 10px 0;">¿Qué ocurre ahora?</h4>
+                  <p style="color:#555;margin:0;line-height:1.7;">
+                    Tu pedido está siendo preparado. Te enviaremos otro email cuando salga de nuestro almacén
+                    y otro cuando llegue a tu dirección. Puedes seguir el estado en la app, en la sección <strong>Mis Pedidos</strong>.
+                  </p>
+                </div>
+              </div>
+              <div style="background:#2d2d2d;padding:16px;text-align:center;">
+                <p style="color:#aaa;margin:0;font-size:12px;">Federación Aragonesa de Baloncesto · Mensaje automático, no respondas a este email.</p>
+              </div>
+            </div>
+            """, nombre, pedidoId, itemsHtml.toString(), total);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarPedidoEnviado(String to, String nombre, Long pedidoId) throws MessagingException {
+        String subject = "Tu pedido #" + pedidoId + " ha salido del almacén · FAB";
+        String content = String.format("""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;">
+              <div style="background:linear-gradient(135deg,#0055CC 0%%,#0099FF 100%%);padding:32px;text-align:center;">
+                <div style="font-size:52px;">📦</div>
+                <h1 style="color:white;margin:10px 0 0 0;font-size:22px;">¡Tu pedido está en camino!</h1>
+              </div>
+              <div style="background:white;padding:30px;">
+                <p style="color:#333;font-size:15px;">Hola <strong>%s</strong>,</p>
+                <div style="background:#e3f2fd;border-left:4px solid #0055CC;padding:14px 16px;border-radius:4px;margin:20px 0;">
+                  <p style="margin:0;color:#0055CC;font-weight:bold;font-size:15px;">🚚 Pedido #%d enviado</p>
+                  <p style="margin:8px 0 0 0;color:#555;">Tu paquete salió de nuestro almacén y está en camino hacia ti.</p>
+                </div>
+                <div style="margin:24px 0;">
+                  <div style="display:flex;align-items:center;margin-bottom:14px;">
+                    <div style="width:22px;height:22px;background:#28a745;border-radius:50%%;text-align:center;line-height:22px;color:white;font-size:12px;margin-right:12px;">✓</div>
+                    <span style="color:#28a745;font-weight:bold;">Pedido confirmado y pagado</span>
+                  </div>
+                  <div style="display:flex;align-items:center;margin-bottom:14px;">
+                    <div style="width:22px;height:22px;background:#0055CC;border-radius:50%%;text-align:center;line-height:22px;color:white;font-size:12px;margin-right:12px;">✓</div>
+                    <span style="color:#0055CC;font-weight:bold;">En camino</span>
+                  </div>
+                  <div style="display:flex;align-items:center;">
+                    <div style="width:22px;height:22px;background:#ddd;border-radius:50%%;margin-right:12px;"></div>
+                    <span style="color:#aaa;">Entregado</span>
+                  </div>
+                </div>
+                <p style="color:#666;">Recibirás otro email en cuanto tu paquete sea entregado.</p>
+              </div>
+              <div style="background:#2d2d2d;padding:16px;text-align:center;">
+                <p style="color:#aaa;margin:0;font-size:12px;">Federación Aragonesa de Baloncesto · Mensaje automático, no respondas a este email.</p>
+              </div>
+            </div>
+            """, nombre, pedidoId);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarPedidoEntregado(String to, String nombre, Long pedidoId) throws MessagingException {
+        String subject = "¡Tu pedido #" + pedidoId + " ha llegado! · FAB";
+        String content = String.format("""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;">
+              <div style="background:linear-gradient(135deg,#00695c 0%%,#26a69a 100%%);padding:32px;text-align:center;">
+                <div style="font-size:52px;">🏠</div>
+                <h1 style="color:white;margin:10px 0 0 0;font-size:22px;">¡Tu pedido ha llegado!</h1>
+              </div>
+              <div style="background:white;padding:30px;">
+                <p style="color:#333;font-size:15px;">Hola <strong>%s</strong>,</p>
+                <div style="background:#e8f5e9;border-left:4px solid #28a745;padding:14px 16px;border-radius:4px;margin:20px 0;">
+                  <p style="margin:0;color:#28a745;font-weight:bold;font-size:15px;">✓ Pedido #%d entregado</p>
+                  <p style="margin:8px 0 0 0;color:#555;">Tu paquete ha sido entregado correctamente. ¡Esperamos que disfrutes tu compra!</p>
+                </div>
+                <div style="text-align:center;margin:28px 0;padding:24px;background:#f5f5f5;border-radius:12px;">
+                  <div style="font-size:60px;">🏀</div>
+                  <p style="color:#333;font-size:16px;margin:14px 0 0 0;font-weight:bold;">
+                    ¡Gracias por comprar en la tienda oficial de la Federación Aragonesa de Baloncesto!
+                  </p>
+                </div>
+              </div>
+              <div style="background:#2d2d2d;padding:16px;text-align:center;">
+                <p style="color:#aaa;margin:0;font-size:12px;">Federación Aragonesa de Baloncesto · Mensaje automático, no respondas a este email.</p>
+              </div>
+            </div>
+            """, nombre, pedidoId);
+        sendHtmlMail(to, subject, content);
+    }
+
     public void enviarComunicado(String to, String asunto, String mensaje) throws MessagingException {
         String subject = asunto != null ? asunto : "Comunicado oficial - Federación Aragonesa de Baloncesto";
         String content = String.format("""
@@ -252,6 +362,9 @@ public class EmailService {
             case NOTIFICACION_SANCION_ENTRENADOR -> "Sanción a jugador de tu equipo - Federación Aragonesa de Baloncesto";
             case RECORDATORIO_PARTIDO -> "Recordatorio de partido - Federación Aragonesa de Baloncesto";
             case COMUNICADO_GENERAL -> "Comunicado oficial - Federación Aragonesa de Baloncesto";
+            case PEDIDO_CONFIRMADO -> "Confirmación de pedido - FAB Shop";
+            case PEDIDO_ENVIADO -> "Tu pedido está en camino - FAB Shop";
+            case PEDIDO_ENTREGADO -> "¡Tu pedido ha llegado! - FAB Shop";
         };
     }
 
@@ -344,6 +457,21 @@ public class EmailService {
                 </div>
                 <p style="color: #666; font-size: 12px;">Este es un mensaje automático, por favor no responder a este email.</p>
                 """, params.get("mensaje"));
+
+            case PEDIDO_CONFIRMADO -> String.format("""
+                <h2>Pedido confirmado</h2>
+                <p>Tu pedido #%s ha sido procesado correctamente.</p>
+                """, params.get("pedidoId"));
+
+            case PEDIDO_ENVIADO -> String.format("""
+                <h2>Tu pedido está en camino</h2>
+                <p>El pedido #%s ha sido enviado.</p>
+                """, params.get("pedidoId"));
+
+            case PEDIDO_ENTREGADO -> String.format("""
+                <h2>¡Tu pedido ha llegado!</h2>
+                <p>El pedido #%s ha sido entregado.</p>
+                """, params.get("pedidoId"));
         };
     }
 }
