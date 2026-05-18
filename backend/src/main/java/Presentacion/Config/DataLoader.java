@@ -58,11 +58,13 @@ public class DataLoader implements CommandLineRunner {
         log.info(" Inicialización completada");
         log.info("========================================");
         log.info(" CREDENCIALES DE PRUEBA:");
-        log.info("   Admin:     admin / Admin123456");
-        log.info("   Entrenador: entrenador / Entrenador123");
-        log.info("   Árbitro:   arbitro / Arbitro123");
-        log.info("   Jugador:   luka.doncic / Jugador123");
-        log.info("   Jugador:   rudy.fernandez / Jugador123");
+        log.info("   Admin:              admin / Admin123456");
+        log.info("   Entrenador (Madrid): entrenador / Entrenador123");
+        log.info("   Entrenador (Barca):  joan.penarroya / Entrenador123");
+        log.info("   Árbitro:            arbitro / Arbitro123");
+        log.info("   Jugador:            luka.doncic / Jugador123");
+        log.info("   Jugador:            rudy.fernandez / Jugador123");
+        log.info("   Jugador (Barca):    ricky.rubio / Jugador123");
         log.info("========================================");
     }
 
@@ -143,7 +145,9 @@ public class DataLoader implements CommandLineRunner {
         crearEntrenador("entrenador", "entrenador@test.com", "Carlos", "López", 45, "ENT-100001");
         crearEntrenador("entrenador2", "entrenador2@test.com", "Juan", "Martínez", 50, "ENT-100002");
         crearEntrenador("entrenador3", "entrenador3@test.com", "Pablo", "García", 38, "ENT-100003");
-        crearEntrenador("entrenador4", "entrenador4@test.com", "Miguel", "Fernández", 42, "ENT-100004");
+        crearEntrenador("imanol", "imanollapizondocarreras@gmail.com", "Imanol", "Lapizondo", 42, "ENT-100004");
+        crearEntrenador("joan.penarroya", "0497ilapizondo@e-itaca.es", "Joan", "Peñarroya", 48, "ENT-100005");
+        log.info(">>> [FC BARCELONA] Entrenador predefinido: joan.penarroya / Entrenador123");
     }
 
     private void crearEntrenador(String username, String email, String nombre, String apellido, int edad, String codigo) {
@@ -201,6 +205,12 @@ public class DataLoader implements CommandLineRunner {
                 "Ala-Pívot", 33, 2.08, 110, barcelona, "JUG-007", 18.5, 7.2, 1.5, 0.8);
         crearJugadorConEstadisticas("alex.abrines", "alex.abrines@test.com", "Alex", "Abrines", 30,
                 "Escolta", 8, 1.98, 90, barcelona, "JUG-008", 15.2, 3.5, 1.2, 0.9);
+        crearJugadorConEstadisticas("jan.vesely", "jan.vesely@test.com", "Jan", "Veselý", 32,
+                "Pívot", 24, 2.17, 115, barcelona, "JUG-014", 10.5, 5.8, 1.0, 0.6);
+        crearJugadorConEstadisticas("tomas.satoransky", "tomas.satoransky@test.com", "Tomáš", "Satoranský", 31,
+                "Base-Escolta", 10, 1.96, 93, barcelona, "JUG-015", 11.2, 4.0, 5.3, 1.4);
+        crearJugadorConEstadisticas("kyle.kuric", "kyle.kuric@test.com", "Kyle", "Kuric", 33,
+                "Alero", 14, 1.98, 88, barcelona, "JUG-016", 13.7, 3.1, 1.8, 0.7);
 
         crearJugadorConEstadisticas("dario.brizuela", "dario.brizuela@test.com", "Dario", "Brizuela", 28,
                 "Escolta", 8, 1.88, 80, unicaja, "JUG-009", 16.5, 3.2, 2.5, 1.1);
@@ -251,6 +261,8 @@ public class DataLoader implements CommandLineRunner {
         jugador.setVerificado(true);
         jugador.setUsuario(usuario);
         jugador.setEquipo(equipo);
+        jugador.setPartidosJugados(30);
+        jugador.setPuntosTotales((int) Math.round(puntos * 30));
         jugadorRepository.save(jugador);
 
         log.info(" Jugador creado: {} {} - Pts: {}, Reb: {}, Ast: {}",
@@ -302,14 +314,15 @@ public class DataLoader implements CommandLineRunner {
         Equipo joventut = equipoRepository.findByNombre("Joventut").orElse(null);
 
         Entrenador entrenador1 = entrenadorRepository.findByUsername("entrenador").orElse(null);
-        Entrenador entrenador2 = entrenadorRepository.findByUsername("entrenador2").orElse(null);
+        Entrenador entrenadorBarca = entrenadorRepository.findByUsername("joan.penarroya").orElse(null);
         Entrenador entrenador3 = entrenadorRepository.findByUsername("entrenador3").orElse(null);
         Entrenador entrenador4 = entrenadorRepository.findByUsername("entrenador4").orElse(null);
 
         asignarEntrenadorAEquipo(entrenador1, real);
-        asignarEntrenadorAEquipo(entrenador2, barca);
+        asignarEntrenadorAEquipo(entrenadorBarca, barca);
         asignarEntrenadorAEquipo(entrenador3, unicaja);
         asignarEntrenadorAEquipo(entrenador4, baskonia);
+        log.info(">>> [FC BARCELONA] Entrenador Joan Peñarroya asignado al equipo FC Barcelona");
     }
 
     private void asignarEntrenadorAEquipo(Entrenador entrenador, Equipo equipo) {
@@ -360,10 +373,18 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void crearActasYEstadisticas() {
-        List<Partido> partidosReal = partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(1L);
+        Equipo real = equipoRepository.findByNombre("Real Madrid").orElse(null);
+        Equipo barca = equipoRepository.findByNombre("FC Barcelona").orElse(null);
+        if (real == null || barca == null) {
+            log.warn(" No se encontraron equipos Real Madrid / FC Barcelona");
+            return;
+        }
+
+        List<Partido> partidosReal = partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(real.getId());
 
         Partido partidoRealBarça = partidosReal.stream()
-                .filter(p -> p.getEquipoLocal().getId() == 2L || p.getEquipoVisitante().getId() == 2L)
+                .filter(p -> p.getEquipoLocal().getId().equals(barca.getId())
+                        || p.getEquipoVisitante().getId().equals(barca.getId()))
                 .findFirst()
                 .orElse(null);
 

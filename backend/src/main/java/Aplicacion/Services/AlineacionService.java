@@ -53,7 +53,8 @@ public class AlineacionService {
                         "Partido no encontrado con ID: " + dto.getPartidoId()));
 
         if ("FINALIZADO".equals(partido.getEstado())) {
-            throw new IllegalStateException("No se puede presentar alineación para un partido finalizado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No se puede presentar alineación para un partido finalizado");
         }
 
         Entrenador entrenador = entrenadorRepository.findByUsername(username)
@@ -61,7 +62,7 @@ public class AlineacionService {
                         "Entrenador no encontrado con username: " + username));
 
         if (entrenador.getEquipo() == null) {
-            throw new IllegalStateException("No tienes un equipo asignado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes un equipo asignado");
         }
 
         Long equipoId = entrenador.getEquipo().getId();
@@ -70,7 +71,7 @@ public class AlineacionService {
                 partido.getEquipoVisitante().getId().equals(equipoId);
 
         if (!participa) {
-            throw new IllegalStateException("Tu equipo no participa en este partido");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu equipo no participa en este partido");
         }
 
         Optional<Alineacion> existente = alineacionRepository.findByPartidoIdAndEquipoId(dto.getPartidoId(), equipoId);
@@ -78,16 +79,19 @@ public class AlineacionService {
         if (existente.isPresent()) {
             Alineacion alineacionExistente = existente.get();
             if (alineacionExistente.isConfirmada()) {
-                throw new IllegalStateException("La alineación ya fue confirmada por el árbitro y no puede modificarse");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "La alineación ya fue confirmada por el árbitro y no puede modificarse");
             }
             if (alineacionExistente.isBloqueada()) {
-                throw new IllegalStateException("La alineación está bloqueada y no puede modificarse");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "La alineación está bloqueada y no puede modificarse");
             }
             return actualizarAlineacion(alineacionExistente.getId(), dto, username);
         }
 
         if (dto.getTitulares() == null || dto.getTitulares().size() != MAX_TITULARES) {
-            throw new IllegalStateException("Debes seleccionar exactamente " + MAX_TITULARES + " titulares");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Debes seleccionar exactamente " + MAX_TITULARES + " titulares");
         }
 
         Set<Long> titularesIds = dto.getTitulares().stream()
@@ -100,7 +104,8 @@ public class AlineacionService {
         Set<Long> duplicados = new HashSet<>(titularesIds);
         duplicados.retainAll(suplentesIds);
         if (!duplicados.isEmpty()) {
-            throw new IllegalStateException("Un jugador no puede estar en titulares y suplentes a la vez");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Un jugador no puede estar en titulares y suplentes a la vez");
         }
 
         Alineacion alineacion = new Alineacion();
@@ -175,11 +180,13 @@ public class AlineacionService {
         }
 
         if (alineacion.isConfirmada()) {
-            throw new IllegalStateException("La alineación ya fue confirmada por el árbitro y no puede modificarse");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "La alineación ya fue confirmada por el árbitro y no puede modificarse");
         }
 
         if (alineacion.isBloqueada()) {
-            throw new IllegalStateException("La alineación está bloqueada y no puede modificarse");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "La alineación está bloqueada y no puede modificarse");
         }
 
         alineacion.getJugadores().clear();

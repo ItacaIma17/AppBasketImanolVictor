@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class Partido {
@@ -25,6 +24,8 @@ class Partido {
   final int? actaId;
   final bool? tieneAlineacionLocal;
   final bool? tieneAlineacionVisitante;
+  final bool? alineacionLocalConfirmada;
+  final bool? alineacionVisitanteConfirmada;
   final int? alineacionLocalId;
   final int? alineacionVisitanteId;
   final int? jornada;
@@ -53,6 +54,8 @@ class Partido {
     this.actaId,
     this.tieneAlineacionLocal,
     this.tieneAlineacionVisitante,
+    this.alineacionLocalConfirmada,
+    this.alineacionVisitanteConfirmada,
     this.alineacionLocalId,
     this.alineacionVisitanteId,
     this.jornada,
@@ -133,8 +136,7 @@ class Partido {
       }
 
       return DateTime.tryParse(clean);
-    } catch (e) {
-      print('Error parseando fecha "$fechaStr": $e');
+    } catch (_) {
       return null;
     }
   }
@@ -167,11 +169,6 @@ class Partido {
   }
 
   factory Partido.fromJson(Map<String, dynamic> json) {
-    if (kDebugMode) {
-      print(' Parseando partido: ${json['id']}');
-      print('   Local: ${json['nombreLocal']} vs Visitante: ${json['nombreVisitante']}');
-    }
-
     String fechaRaw = '';
     if (json['fecha'] != null) {
       fechaRaw = json['fecha'].toString();
@@ -209,10 +206,12 @@ class Partido {
       observaciones: json['observaciones']?.toString() ?? '',
       fechaCreacion: _formatearFecha(json['fechaCreacion'] ?? json['fecha_creacion']),
       fechaActualizacion: _formatearFecha(json['fechaActualizacion'] ?? json['fecha_actualizacion']),
-      tieneActa: json['tieneActa'] as bool?,
+      tieneActa: json['tieneActa'] is bool ? json['tieneActa'] as bool : null,
       actaId: _toIntOrNull(json['actaId']),
-      tieneAlineacionLocal: json['tieneAlineacionLocal'] as bool?,
-      tieneAlineacionVisitante: json['tieneAlineacionVisitante'] as bool?,
+      tieneAlineacionLocal: json['tieneAlineacionLocal'] is bool ? json['tieneAlineacionLocal'] as bool : null,
+      tieneAlineacionVisitante: json['tieneAlineacionVisitante'] is bool ? json['tieneAlineacionVisitante'] as bool : null,
+      alineacionLocalConfirmada: json['alineacionLocalConfirmada'] is bool ? json['alineacionLocalConfirmada'] as bool : null,
+      alineacionVisitanteConfirmada: json['alineacionVisitanteConfirmada'] is bool ? json['alineacionVisitanteConfirmada'] as bool : null,
       alineacionLocalId: _toIntOrNull(json['alineacionLocalId']),
       alineacionVisitanteId: _toIntOrNull(json['alineacionVisitanteId']),
       jornada: _toIntOrNull(json['jornada']),
@@ -250,9 +249,9 @@ class Partido {
 
   String get estadoTexto {
     switch (estado) {
-      case 'PROGRAMADO': return ' PROGRAMADO';
+      case 'PROGRAMADO': return '📅 PROGRAMADO';
       case 'EN_CURSO': return '⏳ EN CURSO';
-      case 'FINALIZADO': return ' FINALIZADO';
+      case 'FINALIZADO': return '✅ FINALIZADO';
       default: return estado;
     }
   }
@@ -282,6 +281,13 @@ class Partido {
       return tieneAlineacionLocal ?? false;
     }
     return tieneAlineacionVisitante ?? false;
+  }
+
+  bool alineacionConfirmadaParaEquipo(int equipoId) {
+    if (equipoLocalId == equipoId) {
+      return alineacionLocalConfirmada ?? false;
+    }
+    return alineacionVisitanteConfirmada ?? false;
   }
 
   @override

@@ -6,6 +6,7 @@ import '../models/entrenadorEquipo.dart';
 import '../models/equipo.dart';
 import '../models/jugador.dart';
 import 'autenticacion_service.dart';
+import 'loggerService.dart';
 
 class EntrenadorService {
   static String get baseUrl => AppConfig.apiUrl;
@@ -100,7 +101,6 @@ class EntrenadorService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 404) {
-
         throw Exception('no_tiene_equipo');
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         throw Exception('No autorizado');
@@ -108,7 +108,7 @@ class EntrenadorService {
         throw Exception('Error al obtener equipo: ${response.statusCode}');
       }
     } catch (e) {
-      print(' Error obteniendo mi equipo: $e');
+      LoggerService.error('Error obteniendo mi equipo', error: e);
       rethrow;
     }
   }
@@ -117,12 +117,9 @@ class EntrenadorService {
     try {
       final token = AutenticacionService.token;
       if (token == null) {
-        print(' No hay token disponible');
+        LoggerService.warning('No hay token disponible');
         return [];
       }
-
-      print(' Obteniendo jugadores del entrenador');
-      print(' Token disponible: ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
 
       final response = await http.get(
         Uri.parse('${AppConfig.apiUrl}/entrenadores/mis-jugadores'),
@@ -132,28 +129,22 @@ class EntrenadorService {
         },
       ).timeout(const Duration(seconds: 30));
 
-      print(' Status code: ${response.statusCode}');
-      print(' Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print(' Jugadores encontrados: ${data.length}');
         return data.map((j) => Jugador.fromJson(j)).toList();
       } else if (response.statusCode == 401) {
-        print(' Token expirado o inválido, refrescando...');
-
+        LoggerService.warning('Token expirado o inválido, refrescando...');
         final refreshed = await AutenticacionService.refreshTokenUser();
         if (refreshed) {
-          print(' Token refrescado, reintentando...');
           return await getMisJugadores();
         }
         return [];
       } else {
-        print(' Error: ${response.statusCode}');
+        LoggerService.warning('Error getMisJugadores: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print(' Error obteniendo jugadores: $e');
+      LoggerService.error('Error obteniendo jugadores', error: e);
       return [];
     }
   }
@@ -189,14 +180,14 @@ class EntrenadorService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((e) => Entrenador.fromJson(e)).toList();
       } else if (response.statusCode == 403) {
-        print(' No autorizado para ver entrenadores');
+        LoggerService.warning('No autorizado para ver entrenadores');
         return [];
       } else {
-        print(' Error al cargar entrenadores: ${response.statusCode}');
+        LoggerService.warning('Error al cargar entrenadores: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print(' Excepción al cargar entrenadores: $e');
+      LoggerService.error('Excepción al cargar entrenadores', error: e);
       return [];
     }
   }
@@ -235,7 +226,7 @@ class EntrenadorService {
         return [];
       }
     } catch (e) {
-      print(' Excepción al cargar equipos: $e');
+      LoggerService.error('Excepción al cargar equipos', error: e);
       return [];
     }
   }

@@ -49,6 +49,12 @@ dependencies:
   # Para abrir URLs y PDFs
   url_launcher: ^6.2.2
 
+  # Para abrir archivos descargados (PDF)
+  open_file: ^3.3.2
+
+  # Para tomar fotos con la cámara
+  image_picker: ^1.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

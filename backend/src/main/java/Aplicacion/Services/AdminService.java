@@ -136,7 +136,9 @@ public class AdminService {
             Map<String, Object> actividad = new HashMap<>();
             actividad.put("accion", "Partido programado");
             actividad.put("usuario", "admin");
-            actividad.put("detalle", partido.getEquipoLocal().getNombre() + " vs " + partido.getEquipoVisitante().getNombre());
+            String nombreLocal = partido.getEquipoLocal() != null ? partido.getEquipoLocal().getNombre() : "?";
+            String nombreVisitante = partido.getEquipoVisitante() != null ? partido.getEquipoVisitante().getNombre() : "?";
+            actividad.put("detalle", nombreLocal + " vs " + nombreVisitante);
             actividad.put("fecha", partido.getFecha().toString());
             actividad.put("tipo", "partido");
             actividades.add(actividad);

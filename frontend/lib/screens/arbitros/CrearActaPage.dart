@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/EventoForm.dart';
 import '../../models/EventoPartido.dart';
+import '../../models/actaPartido.dart';
 import '../../models/partido.dart';
 import '../../services/actaService.dart';
 import '../../services/arbitroService.dart';
@@ -10,19 +14,22 @@ import '../../widgets/MenuLateral.dart';
 
 class CrearActaPage extends StatefulWidget {
   final Partido partido;
+  final ActaPartido? actaExistente;
 
-  const CrearActaPage({super.key, required this.partido});
+  const CrearActaPage({super.key, required this.partido, this.actaExistente});
 
   @override
   State<CrearActaPage> createState() => _CrearActaPageState();
 }
 
-class _CrearActaPageState extends State<CrearActaPage> {
+class _CrearActaPageState extends State<CrearActaPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _observacionesController = TextEditingController();
   final _resultadoLocalCtrl = TextEditingController();
   final _resultadoVisitanteCtrl = TextEditingController();
 
+  // Tab manual
   List<EventoPartido> _eventos = [];
   bool _isLoading = false;
   bool _cargandoAlineaciones = true;
@@ -34,18 +41,53 @@ class _CrearActaPageState extends State<CrearActaPage> {
   List<Map<String, dynamic>> _jugadoresLocal = [];
   List<Map<String, dynamic>> _jugadoresVisitante = [];
 
+  // Tabs
+  late TabController _tabsActa;
+
+  // Tab archivo
+  Uint8List? _archivoBytes;
+  String? _archivoNombre;
+  String _archivoContentType = 'application/pdf';
+  bool _subiendoArchivo = false;
+  final _resLocalArchivoCtrl = TextEditingController();
+  final _resVisitanteArchivoCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    _verificarAlineaciones();
+    _tabsActa = TabController(length: 2, vsync: this);
+    final acta = widget.actaExistente;
+    if (acta != null) {
+      _resultadoLocalCtrl.text = acta.resultadoLocal;
+      _resultadoVisitanteCtrl.text = acta.resultadoVisitante;
+      _observacionesController.text = acta.observaciones ?? '';
+      _eventos = acta.eventos.map((e) => EventoPartido(
+        id: e.id,
+        jugadorId: e.jugadorId,
+        nombreJugador: e.nombreJugador,
+        nombreEquipo: e.nombreEquipo,
+        minuto: e.minuto,
+        tipo: e.tipo,
+        descripcion: e.descripcion,
+        puntos: e.puntos,
+      )).toList();
+      _alineacionesConfirmadas = true;
+      _verificandoAlineaciones = false;
+      _cargandoAlineaciones = false;
+    } else {
+      _verificarAlineaciones();
+    }
     _cargarAlineaciones();
   }
 
   @override
   void dispose() {
+    _tabsActa.dispose();
     _observacionesController.dispose();
     _resultadoLocalCtrl.dispose();
     _resultadoVisitanteCtrl.dispose();
+    _resLocalArchivoCtrl.dispose();
+    _resVisitanteArchivoCtrl.dispose();
     super.dispose();
   }
 
@@ -61,11 +103,9 @@ class _CrearActaPageState extends State<CrearActaPage> {
 
   Future<void> _cargarAlineaciones() async {
     setState(() => _cargandoAlineaciones = true);
-
     try {
-      final alineaciones = await ArbitroService.getAlineacionesParaActa(
-        widget.partido.id,
-      );
+      final alineaciones =
+          await ArbitroService.getAlineacionesParaActa(widget.partido.id);
 
       List<Map<String, dynamic>> _extraerJugadores(dynamic alineacion) {
         if (alineacion is! Map) return [];
@@ -93,30 +133,27 @@ class _CrearActaPageState extends State<CrearActaPage> {
         setState(() => _cargandoAlineaciones = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error cargando alineaciones: $e'),
-            backgroundColor: Colors.red,
-          ),
+              content: Text('Error cargando alineaciones: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
   }
+
+  // ── Manual ──────────────────────────────────────────────────────────────
 
   void _agregarEvento() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => EventoForm(
         equipos: [
-          {
-            'nombre': widget.partido.nombreLocal,
-            'jugadores': _jugadoresLocal,
-          },
+          {'nombre': widget.partido.nombreLocal, 'jugadores': _jugadoresLocal},
           {
             'nombre': widget.partido.nombreVisitante,
-            'jugadores': _jugadoresVisitante,
+            'jugadores': _jugadoresVisitante
           },
         ],
         onGuardar: (evento) {
@@ -127,9 +164,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
     );
   }
 
-  void _eliminarEvento(int index) {
-    setState(() => _eventos.removeAt(index));
-  }
+  void _eliminarEvento(int index) => setState(() => _eventos.removeAt(index));
 
   Future<void> _guardarActa() async {
     final form = _formKey.currentState;
@@ -139,56 +174,138 @@ class _CrearActaPageState extends State<CrearActaPage> {
     final resVisitante = int.tryParse(_resultadoVisitanteCtrl.text.trim());
 
     if (resLocal == null || resVisitante == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa un resultado numérico válido para ambos equipos'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ingresa un resultado numérico válido'),
+          backgroundColor: Colors.orange));
       return;
     }
 
     setState(() => _isLoading = true);
-
     try {
-      final actaData = {
+      final data = {
         'partidoId': widget.partido.id,
         'resultadoLocal': resLocal,
         'resultadoVisitante': resVisitante,
         'observaciones': _observacionesController.text,
         'eventos': _eventos
             .map((e) => {
-          'jugadorId': e.jugadorId,
-          'nombreJugador': e.nombreJugador,
-          'nombreEquipo': e.nombreEquipo,
-          'minuto': e.minuto,
-          'tipo': e.tipo,
-          'descripcion': e.descripcion,
-        })
+                  'jugadorId': e.jugadorId,
+                  'nombreJugador': e.nombreJugador,
+                  'nombreEquipo': e.nombreEquipo,
+                  'minuto': e.minuto,
+                  'tipo': e.tipo,
+                  'descripcion': e.descripcion,
+                })
             .toList(),
       };
-
-      await ActaService.guardarActa(actaData);
-
+      final actaId = widget.actaExistente?.id;
+      if (actaId != null) {
+        await ActaService.actualizarActa(actaId, data);
+      } else {
+        await ActaService.guardarActa(data);
+      }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(' Acta guardada exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(actaId != null ? 'Acta actualizada' : 'Acta guardada exitosamente'),
+            backgroundColor: Colors.green));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  // ── Archivo ──────────────────────────────────────────────────────────────
+
+  Future<void> _seleccionarPdf() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _archivoBytes = result.files.single.bytes!;
+        _archivoNombre = result.files.single.name;
+        _archivoContentType = 'application/pdf';
+      });
+    }
+  }
+
+  Future<void> _seleccionarImagen() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _archivoBytes = result.files.single.bytes!;
+        _archivoNombre = result.files.single.name;
+        _archivoContentType =
+            'image/${result.files.single.extension ?? 'jpeg'}';
+      });
+    }
+  }
+
+  Future<void> _tomarFoto() async {
+    final picker = ImagePicker();
+    final XFile? photo =
+        await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+    if (photo != null) {
+      final bytes = await photo.readAsBytes();
+      if (mounted) {
+        setState(() {
+          _archivoBytes = bytes;
+          _archivoNombre = 'foto_acta.jpg';
+          _archivoContentType = 'image/jpeg';
+        });
+      }
+    }
+  }
+
+  Future<void> _subirArchivo() async {
+    if (_archivoBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selecciona un archivo primero'),
+          backgroundColor: Colors.orange));
+      return;
+    }
+    setState(() => _subiendoArchivo = true);
+    try {
+      await ActaService.subirArchivoActa(
+        partidoId: widget.partido.id,
+        bytes: _archivoBytes!,
+        contentType: _archivoContentType,
+        filename: _archivoNombre ?? 'acta.pdf',
+        resultadoLocal: _resLocalArchivoCtrl.text.isNotEmpty
+            ? _resLocalArchivoCtrl.text
+            : null,
+        resultadoVisitante: _resVisitanteArchivoCtrl.text.isNotEmpty
+            ? _resVisitanteArchivoCtrl.text
+            : null,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(' Acta subida exitosamente'),
+            backgroundColor: Colors.green));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _subiendoArchivo = false);
+    }
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -197,50 +314,294 @@ class _CrearActaPageState extends State<CrearActaPage> {
       drawer: const MenuLateral(),
       appBar: const HeaderApp(titulo: "Crear Acta"),
       body: SafeArea(
-          child: _verificandoAlineaciones
-
-              ? const Center(
-            child: CircularProgressIndicator(color: AppColors.amarilloAragon),
-          )
-
-              : !_alineacionesConfirmadas
-              ? _buildActaBloqueada()
-
-              : _isLoading || _cargandoAlineaciones
-              ? const Center(
-            child: CircularProgressIndicator(
-                color: AppColors.amarilloAragon),
-          )
-              : Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        _buildInfoPartido(),
-                        const SizedBox(height: 16),
-                        _buildResultadoForm(),
-                        const SizedBox(height: 16),
-                        _buildEventosSection(),
-                        const SizedBox(height: 16),
-                        _buildObservacionesForm(),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
-                _buildBotonGuardar(),
-              ],
-            ),
-          ),
-        ),
+        child: _verificandoAlineaciones
+            ? const Center(
+                child: CircularProgressIndicator(
+                    color: AppColors.amarilloAragon))
+            : !_alineacionesConfirmadas
+                ? _buildActaBloqueada()
+                : _isLoading || _cargandoAlineaciones
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            color: AppColors.amarilloAragon))
+                    : Column(
+                        children: [
+                          _buildTabBar(),
+                          Expanded(
+                            child: TabBarView(
+                              controller: _tabsActa,
+                              children: [
+                                _buildManualTab(),
+                                _buildArchivoTab(),
+                              ],
+                            ),
+                          ),
+                          AnimatedBuilder(
+                            animation: _tabsActa,
+                            builder: (_, __) => _tabsActa.index == 0
+                                ? _buildBotonGuardar()
+                                : _buildBotonSubir(),
+                          ),
+                        ],
+                      ),
+      ),
     );
   }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabsActa,
+        indicator: BoxDecoration(
+          gradient: AppColors.gradienteRojoNaranja,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        labelColor: AppColors.blanco,
+        unselectedLabelColor: AppColors.grisClaro,
+        labelStyle:
+            const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        tabs: const [
+          Tab(icon: Icon(Icons.edit_note, size: 18), text: 'Manual'),
+          Tab(icon: Icon(Icons.upload_file, size: 18), text: 'Subir Archivo'),
+        ],
+      ),
+    );
+  }
+
+  // ── Tab manual ────────────────────────────────────────────────────────────
+
+  Widget _buildManualTab() {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoPartido(),
+            const SizedBox(height: 16),
+            _buildResultadoForm(),
+            const SizedBox(height: 16),
+            _buildEventosSection(),
+            const SizedBox(height: 16),
+            _buildObservacionesForm(),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Tab archivo ───────────────────────────────────────────────────────────
+
+  Widget _buildArchivoTab() {
+    final esPdf = _archivoContentType == 'application/pdf';
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoPartido(),
+          const SizedBox(height: 16),
+
+          // Botones selección
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Seleccionar Archivo',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _btnSeleccion(
+                          icon: Icons.picture_as_pdf,
+                          label: 'PDF',
+                          color: AppColors.rojoAragon,
+                          onTap: _seleccionarPdf),
+                      _btnSeleccion(
+                          icon: Icons.image_outlined,
+                          label: 'Imagen',
+                          color: Colors.blue,
+                          onTap: _seleccionarImagen),
+                      _btnSeleccion(
+                          icon: Icons.camera_alt_outlined,
+                          label: 'Cámara',
+                          color: Colors.green,
+                          onTap: _tomarFoto),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Preview archivo seleccionado
+          if (_archivoBytes != null) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          esPdf ? Icons.picture_as_pdf : Icons.image,
+                          color: esPdf ? AppColors.rojoAragon : Colors.blue,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _archivoNombre ?? 'archivo',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${(_archivoBytes!.length / 1024).toStringAsFixed(1)} KB',
+                                style: const TextStyle(
+                                    color: AppColors.grisClaro,
+                                    fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red,
+                              size: 20),
+                          onPressed: () => setState(() {
+                            _archivoBytes = null;
+                            _archivoNombre = null;
+                          }),
+                        ),
+                      ],
+                    ),
+                    if (!esPdf) ...[
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          _archivoBytes!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Resultado (opcional)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Resultado del Partido',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  const Text('Opcional — introduce el marcador final',
+                      style: TextStyle(
+                          color: AppColors.grisClaro, fontSize: 12)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _resLocalArchivoCtrl,
+                          decoration: InputDecoration(
+                            labelText: widget.partido.nombreLocal,
+                            border: const OutlineInputBorder(),
+                            suffixText: 'pts',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('-',
+                            style: TextStyle(fontSize: 24)),
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _resVisitanteArchivoCtrl,
+                          decoration: InputDecoration(
+                            labelText: widget.partido.nombreVisitante,
+                            border: const OutlineInputBorder(),
+                            suffixText: 'pts',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _btnSeleccion({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Shared widgets ────────────────────────────────────────────────────────
 
   Widget _buildActaBloqueada() {
     return Center(
@@ -249,57 +610,40 @@ class _CrearActaPageState extends State<CrearActaPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.lock_clock,
-              size: 80,
-              color: AppColors.amarilloAragon,
-            ),
+            const Icon(Icons.lock_clock,
+                size: 80, color: AppColors.amarilloAragon),
             const SizedBox(height: 20),
-            const Text(
-              'Acta bloqueada',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppColors.blanco,
-              ),
-            ),
+            const Text('Acta bloqueada',
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blanco)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.black26,
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(12)),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('1 ', style: TextStyle(fontSize: 16)),
-                      Expanded(
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('1 ', style: TextStyle(fontSize: 16)),
+                    Expanded(
                         child: Text(
-                          'Ambos entrenadores deben haber subido sus alineaciones.',
-                          style: TextStyle(
-                              color: AppColors.grisClaro, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
+                            'Ambos entrenadores deben haber subido sus alineaciones.',
+                            style: TextStyle(
+                                color: AppColors.grisClaro, fontSize: 14))),
+                  ]),
                   SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('2 ', style: TextStyle(fontSize: 16)),
-                      Expanded(
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('2 ', style: TextStyle(fontSize: 16)),
+                    Expanded(
                         child: Text(
-                          'Debes confirmar las alineaciones desde la pantalla "Confirmar Alineaciones".',
-                          style: TextStyle(
-                              color: AppColors.grisClaro, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
+                            'Debes confirmar las alineaciones desde "Confirmar Alineaciones".',
+                            style: TextStyle(
+                                color: AppColors.grisClaro, fontSize: 14))),
+                  ]),
                 ],
               ),
             ),
@@ -310,18 +654,16 @@ class _CrearActaPageState extends State<CrearActaPage> {
                 _verificarAlineaciones();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.naranja,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
+                  backgroundColor: AppColors.naranja,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12))),
               icon: const Icon(Icons.refresh, color: AppColors.blanco),
-              label: const Text(
-                'Verificar de nuevo',
-                style: TextStyle(
-                    color: AppColors.blanco, fontWeight: FontWeight.bold),
-              ),
+              label: const Text('Verificar de nuevo',
+                  style: TextStyle(
+                      color: AppColors.blanco,
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -337,14 +679,13 @@ class _CrearActaPageState extends State<CrearActaPage> {
           children: [
             Text(
               '${widget.partido.nombreLocal} vs ${widget.partido.nombreVisitante}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Text(
-              '${widget.partido.fecha}  ·  ${widget.partido.hora}',
-              style: const TextStyle(color: Colors.grey),
-            ),
+            Text('${widget.partido.fecha}  ·  ${widget.partido.hora}',
+                style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 4),
             Text(
               widget.partido.pabellon.isNotEmpty
@@ -365,10 +706,9 @@ class _CrearActaPageState extends State<CrearActaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Resultado del Partido',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const Text('Resultado del Partido',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -384,7 +724,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) =>
-                    v?.trim().isEmpty ?? true ? 'Requerido' : null,
+                        v?.trim().isEmpty ?? true ? 'Requerido' : null,
                   ),
                 ),
                 const Padding(
@@ -403,7 +743,7 @@ class _CrearActaPageState extends State<CrearActaPage> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) =>
-                    v?.trim().isEmpty ?? true ? 'Requerido' : null,
+                        v?.trim().isEmpty ?? true ? 'Requerido' : null,
                   ),
                 ),
               ],
@@ -424,17 +764,15 @@ class _CrearActaPageState extends State<CrearActaPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Eventos del Partido',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                const Text('Eventos del Partido',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Agregar'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.naranja,
-                    foregroundColor: Colors.white,
-                  ),
+                      backgroundColor: AppColors.naranja,
+                      foregroundColor: Colors.white),
                   onPressed: _agregarEvento,
                 ),
               ],
@@ -443,7 +781,8 @@ class _CrearActaPageState extends State<CrearActaPage> {
             if (_eventos.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text('No hay eventos registrados')),
+                child: Center(
+                    child: Text('No hay eventos registrados')),
               )
             else
               ListView.builder(
@@ -462,7 +801,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
   Widget _buildEventoCard(EventoPartido evento, int index) {
     final Color color;
     final String icono;
-
     switch (evento.tipo) {
       case 'CANASTA':
         color = Colors.green;
@@ -492,7 +830,6 @@ class _CrearActaPageState extends State<CrearActaPage> {
         color = Colors.blue;
         icono = '';
     }
-
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -518,10 +855,9 @@ class _CrearActaPageState extends State<CrearActaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Observaciones',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const Text('Observaciones',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextFormField(
               key: const ValueKey('acta_observaciones'),
@@ -543,13 +879,12 @@ class _CrearActaPageState extends State<CrearActaPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.negro,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2))
         ],
       ),
       child: SizedBox(
@@ -557,21 +892,60 @@ class _CrearActaPageState extends State<CrearActaPage> {
         height: 56,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.naranja,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
+              backgroundColor: AppColors.naranja,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12))),
           onPressed: _isLoading ? null : _guardarActa,
           child: _isLoading
               ? const SizedBox(
-            height: 24,
-            width: 24,
-            child: CircularProgressIndicator(
-                color: Colors.white, strokeWidth: 2),
-          )
-              : const Text(
-            'Guardar Acta',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : const Text('Guardar Acta',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBotonSubir() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.negro,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2))
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  _archivoBytes != null ? AppColors.naranja : Colors.grey,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12))),
+          onPressed: (_subiendoArchivo || _archivoBytes == null)
+              ? null
+              : _subirArchivo,
+          icon: _subiendoArchivo
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : const Icon(Icons.cloud_upload_outlined,
+                  color: Colors.white),
+          label: Text(
+            _archivoBytes == null ? 'Selecciona un archivo' : 'Subir Acta',
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
       ),

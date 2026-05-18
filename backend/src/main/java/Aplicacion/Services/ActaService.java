@@ -13,15 +13,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +38,8 @@ public class ActaService {
     private final PartidoRepository partidoRepository;
     private final ArbitroRepository arbitroRepository;
     private final EquipoRepository equipoRepository;
+    private final Dominio.Repositorys.JugadorRepository jugadorRepository;
+    private final EmailService emailService;
 
     @Transactional
     public ActaResponseDTO guardarActa(ActaRequestDTO request, String username) {
@@ -83,17 +90,31 @@ public class ActaService {
                     evento.setPuntos(1);
                 }
 
+                if (eventoDTO.getJugadorId() != null) {
+                    jugadorRepository.findById(eventoDTO.getJugadorId()).ifPresent(evento::setJugador);
+                }
+
                 acta.getEventos().add(evento);
             });
         }
 
-        partido.setResultadoLocal(Integer.parseInt(request.getResultadoLocal()));
-        partido.setResultadoVisitante(Integer.parseInt(request.getResultadoVisitante()));
+        try {
+            partido.setResultadoLocal(Integer.parseInt(request.getResultadoLocal() != null ? request.getResultadoLocal() : "0"));
+            partido.setResultadoVisitante(Integer.parseInt(request.getResultadoVisitante() != null ? request.getResultadoVisitante() : "0"));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los resultados deben ser numéricos");
+        }
+        acta.setResultadoLocal(request.getResultadoLocal() != null ? request.getResultadoLocal() : "0");
+        acta.setResultadoVisitante(request.getResultadoVisitante() != null ? request.getResultadoVisitante() : "0");
         partido.setEstado("FINALIZADO");
-        partidoRepository.save(partido);
 
         ActaPartido saved = actaPartidoRepository.save(acta);
         log.info(" Acta guardada con ID: {}", saved.getId());
+
+        partido.setActaPartido(saved);
+        partidoRepository.save(partido);
+
+        _actualizarStatsJugadores(saved);
 
         return ActaResponseDTO.fromEntity(saved, username);
     }
@@ -129,10 +150,48 @@ public class ActaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para editar esta acta");
         }
 
-        if (request.getResultadoLocal() != null) acta.setResultadoLocal(request.getResultadoLocal());
-        if (request.getResultadoVisitante() != null) acta.setResultadoVisitante(request.getResultadoVisitante());
+        Partido partido = acta.getPartido();
+        if (request.getResultadoLocal() != null) {
+            try {
+                partido.setResultadoLocal(Integer.parseInt(request.getResultadoLocal()));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resultado local debe ser numérico");
+            }
+            acta.setResultadoLocal(request.getResultadoLocal());
+        }
+        if (request.getResultadoVisitante() != null) {
+            try {
+                partido.setResultadoVisitante(Integer.parseInt(request.getResultadoVisitante()));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resultado visitante debe ser numérico");
+            }
+            acta.setResultadoVisitante(request.getResultadoVisitante());
+        }
         if (request.getObservaciones() != null) acta.setObservaciones(request.getObservaciones());
         acta.setFechaActa(LocalDateTime.now());
+
+        if (request.getEventos() != null) {
+            acta.getEventos().clear();
+            request.getEventos().forEach(eventoDTO -> {
+                EventoPartido evento = new EventoPartido();
+                evento.setActa(acta);
+                evento.setNombreJugador(eventoDTO.getNombreJugador());
+                evento.setNombreEquipo(eventoDTO.getNombreEquipo());
+                evento.setMinuto(eventoDTO.getMinuto());
+                evento.setTipo(eventoDTO.getTipo());
+                evento.setDescripcion(eventoDTO.getDescripcion());
+                evento.setTimestamp(LocalDateTime.now());
+                if ("CANASTA".equals(eventoDTO.getTipo())) evento.setPuntos(2);
+                else if ("TIRO_3PUNTOS".equals(eventoDTO.getTipo())) evento.setPuntos(3);
+                else if ("TIRO_LIBRE".equals(eventoDTO.getTipo())) evento.setPuntos(1);
+                if (eventoDTO.getJugadorId() != null) {
+                    jugadorRepository.findById(eventoDTO.getJugadorId()).ifPresent(evento::setJugador);
+                }
+                acta.getEventos().add(evento);
+            });
+        }
+
+        partidoRepository.save(partido);
 
         ActaPartido saved = actaPartidoRepository.save(acta);
         return ActaResponseDTO.fromEntity(saved, username);
@@ -146,6 +205,11 @@ public class ActaService {
         if (!puedeEditarInterno(acta, username)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para eliminar esta acta");
         }
+        Partido partido = acta.getPartido();
+        partido.setEstado("PROGRAMADO");
+        partido.setResultadoLocal(null);
+        partido.setResultadoVisitante(null);
+        partidoRepository.save(partido);
         actaPartidoRepository.delete(acta);
     }
 
@@ -189,8 +253,15 @@ public class ActaService {
         ActaPartido acta = actaPartidoRepository.findById(actaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada"));
 
-        int puntosLocal = Integer.parseInt(acta.getResultadoLocal());
-        int puntosVisitante = Integer.parseInt(acta.getResultadoVisitante());
+        int puntosLocal = 0;
+        int puntosVisitante = 0;
+        try {
+            if (acta.getResultadoLocal() != null) puntosLocal = Integer.parseInt(acta.getResultadoLocal());
+            if (acta.getResultadoVisitante() != null) puntosVisitante = Integer.parseInt(acta.getResultadoVisitante());
+        } catch (NumberFormatException e) {
+            log.warn("Resultado no numérico en acta {}: local={}, visitante={}", actaId,
+                    acta.getResultadoLocal(), acta.getResultadoVisitante());
+        }
 
         Map<String, Integer> puntosPorJugador = acta.getEventos().stream()
                 .filter(e -> e.getPuntos() != null)
@@ -227,6 +298,59 @@ public class ActaService {
         );
     }
 
+    @Transactional
+    public ActaResponseDTO subirArchivoActa(Long partidoId, MultipartFile archivo,
+                                             String resultadoLocal, String resultadoVisitante,
+                                             String observaciones, String username) {
+        log.info("Subiendo archivo de acta para partido ID: {}", partidoId);
+
+        Arbitro arbitro = arbitroRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Árbitro no encontrado"));
+
+        Partido partido = partidoRepository.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
+
+        if (partido.getArbitro() == null || !partido.getArbitro().getId().equals(arbitro.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para crear acta de este partido");
+        }
+
+        ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId).orElseGet(() -> {
+            ActaPartido nueva = new ActaPartido();
+            nueva.setPartido(partido);
+            nueva.setArbitro(arbitro);
+            nueva.setFechaActa(LocalDateTime.now());
+            return nueva;
+        });
+
+        try {
+            acta.setArchivoActa(archivo.getBytes());
+            acta.setTipoArchivoActa(archivo.getContentType());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error procesando el archivo");
+        }
+
+        String resLocal = (resultadoLocal != null && !resultadoLocal.isBlank()) ? resultadoLocal : "0";
+        String resVisitante = (resultadoVisitante != null && !resultadoVisitante.isBlank()) ? resultadoVisitante : "0";
+        acta.setResultadoLocal(resLocal);
+        acta.setResultadoVisitante(resVisitante);
+        if (observaciones != null) acta.setObservaciones(observaciones);
+
+        try {
+            partido.setResultadoLocal(Integer.parseInt(resLocal));
+            partido.setResultadoVisitante(Integer.parseInt(resVisitante));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los resultados deben ser numéricos");
+        }
+        partido.setEstado("FINALIZADO");
+
+        ActaPartido saved = actaPartidoRepository.save(acta);
+        log.info("Archivo de acta subido con ID: {}", saved.getId());
+
+        partido.setActaPartido(saved);
+        partidoRepository.save(partido);
+        return ActaResponseDTO.fromEntity(saved, username);
+    }
+
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> generarPdf(Long actaId) {
         log.info("Generando PDF del acta ID: {}", actaId);
@@ -234,55 +358,201 @@ public class ActaService {
         ActaPartido acta = actaPartidoRepository.findById(actaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada"));
 
-        String htmlContent = generarHtmlActa(acta);
+        try {
+            byte[] pdfBytes;
+            String filename = "acta_partido_" + acta.getPartido().getId() + ".pdf";
 
-        byte[] pdfBytes = ("PDF no implementado aún. Acta ID: " + actaId).getBytes();
+            if (acta.getArchivoActa() != null && acta.getArchivoActa().length > 0) {
+                String tipo = acta.getTipoArchivoActa();
+                if ("application/pdf".equals(tipo)) {
+                    pdfBytes = acta.getArchivoActa();
+                } else {
+                    pdfBytes = buildPdfConImagen(acta);
+                }
+            } else {
+                pdfBytes = buildPdf(acta);
+            }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "acta_" + actaId + ".pdf");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", filename);
+            return ResponseEntity.ok().headers(headers).body(pdfBytes);
+        } catch (Exception e) {
+            log.error("Error generando PDF del acta {}", actaId, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generando PDF");
+        }
     }
 
-    private String generarHtmlActa(ActaPartido acta) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-        StringBuilder html = new StringBuilder();
-        html.append("<html><head><meta charset='UTF-8'><title>Acta del Partido</title></head><body>");
-        html.append("<h1>Acta del Partido</h1>");
-        html.append("<p><strong>Fecha:</strong> ").append(acta.getFechaActa().format(formatter)).append("</p>");
-        html.append("<p><strong>Árbitro:</strong> ").append(acta.getArbitro().getNombre()).append("</p>");
-        html.append("<h2>Resultado</h2>");
-        html.append("<p>").append(acta.getPartido().getEquipoLocal().getNombre()).append(": ").append(acta.getResultadoLocal()).append(" - ");
-        html.append(acta.getResultadoVisitante()).append(": ").append(acta.getPartido().getEquipoVisitante().getNombre()).append("</p>");
-
-        if (acta.getObservaciones() != null && !acta.getObservaciones().isEmpty()) {
-            html.append("<h2>Observaciones</h2>");
-            html.append("<p>").append(acta.getObservaciones()).append("</p>");
-        }
-
-        html.append("<h2>Eventos del Partido</h2>");
-        html.append("<table border='1'><tr><th>Minuto</th><th>Jugador</th><th>Equipo</th><th>Tipo</th><th>Descripción</th><th>Puntos</th></tr>");
-
-        for (EventoPartido evento : acta.getEventos()) {
-            html.append("<tr>");
-            html.append("<td>").append(evento.getMinuto()).append("'</td>");
-            html.append("<td>").append(evento.getNombreJugador()).append("</td>");
-            html.append("<td>").append(evento.getNombreEquipo()).append("</td>");
-            html.append("<td>").append(evento.getTipo()).append("</td>");
-            html.append("<td>").append(evento.getDescripcion() != null ? evento.getDescripcion() : "").append("</td>");
-            html.append("<td>").append(evento.getPuntos() != null ? evento.getPuntos() : "").append("</td>");
-            html.append("</tr>");
-        }
-
-        html.append("</table></body></html>");
-        return html.toString();
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> generarPdfPorPartido(Long partidoId) {
+        ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay acta para este partido"));
+        return generarPdf(acta.getId());
     }
 
-    @Transactional
+    private byte[] buildPdfConImagen(ActaPartido acta) throws Exception {
+        com.itextpdf.text.Document doc = new com.itextpdf.text.Document(
+                com.itextpdf.text.PageSize.A4, 20, 20, 20, 20);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        com.itextpdf.text.pdf.PdfWriter.getInstance(doc, baos);
+        doc.open();
+        com.itextpdf.text.Image img = com.itextpdf.text.Image.getInstance(acta.getArchivoActa());
+        float pageWidth = doc.getPageSize().getWidth() - 40;
+        float pageHeight = doc.getPageSize().getHeight() - 40;
+        img.scaleToFit(pageWidth, pageHeight);
+        img.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        doc.add(img);
+        doc.close();
+        return baos.toByteArray();
+    }
+
+    private byte[] buildPdf(ActaPartido acta) throws Exception {
+        com.itextpdf.text.Document doc = new com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4, 36, 36, 54, 36);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        com.itextpdf.text.pdf.PdfWriter.getInstance(doc, baos);
+        doc.open();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        com.itextpdf.text.Font fontTitulo = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA_BOLD, 18, com.itextpdf.text.BaseColor.BLACK);
+        com.itextpdf.text.Font fontSeccion = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA_BOLD, 12, com.itextpdf.text.BaseColor.BLACK);
+        com.itextpdf.text.Font fontNormal = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA, 10, com.itextpdf.text.BaseColor.BLACK);
+        com.itextpdf.text.Font fontBold = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA_BOLD, 10, com.itextpdf.text.BaseColor.BLACK);
+        com.itextpdf.text.Font fontResultado = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA_BOLD, 28, com.itextpdf.text.BaseColor.BLACK);
+        com.itextpdf.text.Font fontEquipo = com.itextpdf.text.FontFactory.getFont(
+                com.itextpdf.text.FontFactory.HELVETICA_BOLD, 13, com.itextpdf.text.BaseColor.BLACK);
+
+        // Título
+        com.itextpdf.text.Paragraph titulo = new com.itextpdf.text.Paragraph("ACTA DEL PARTIDO", fontTitulo);
+        titulo.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        doc.add(titulo);
+        doc.add(new com.itextpdf.text.Paragraph(" "));
+
+        // Resultado
+        com.itextpdf.text.pdf.PdfPTable tablaResultado = new com.itextpdf.text.pdf.PdfPTable(3);
+        tablaResultado.setWidthPercentage(100);
+        tablaResultado.setWidths(new float[]{3, 2, 3});
+
+        com.itextpdf.text.pdf.PdfPCell cellLocal = new com.itextpdf.text.pdf.PdfPCell(
+                new com.itextpdf.text.Phrase(acta.getPartido().getEquipoLocal().getNombre(), fontEquipo));
+        cellLocal.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        cellLocal.setBorder(0);
+        cellLocal.setPadding(8);
+
+        String resultado = acta.getResultadoLocal() + " - " + acta.getResultadoVisitante();
+        com.itextpdf.text.pdf.PdfPCell cellResultado = new com.itextpdf.text.pdf.PdfPCell(
+                new com.itextpdf.text.Phrase(resultado, fontResultado));
+        cellResultado.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        cellResultado.setVerticalAlignment(com.itextpdf.text.Element.ALIGN_MIDDLE);
+        cellResultado.setBorder(com.itextpdf.text.Rectangle.BOX);
+        cellResultado.setPadding(10);
+        cellResultado.setBackgroundColor(new com.itextpdf.text.BaseColor(245, 245, 245));
+
+        com.itextpdf.text.pdf.PdfPCell cellVisitante = new com.itextpdf.text.pdf.PdfPCell(
+                new com.itextpdf.text.Phrase(acta.getPartido().getEquipoVisitante().getNombre(), fontEquipo));
+        cellVisitante.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        cellVisitante.setBorder(0);
+        cellVisitante.setPadding(8);
+
+        tablaResultado.addCell(cellLocal);
+        tablaResultado.addCell(cellResultado);
+        tablaResultado.addCell(cellVisitante);
+        doc.add(tablaResultado);
+        doc.add(new com.itextpdf.text.Paragraph(" "));
+
+        // Info árbitro y fecha
+        com.itextpdf.text.pdf.PdfPTable tablaInfo = new com.itextpdf.text.pdf.PdfPTable(2);
+        tablaInfo.setWidthPercentage(100);
+        com.itextpdf.text.pdf.PdfPCell cellArbitro = new com.itextpdf.text.pdf.PdfPCell();
+        cellArbitro.addElement(new com.itextpdf.text.Paragraph("Árbitro: " + acta.getArbitro().getNombre(), fontNormal));
+        cellArbitro.setBorder(0);
+        com.itextpdf.text.pdf.PdfPCell cellFecha = new com.itextpdf.text.pdf.PdfPCell();
+        cellFecha.addElement(new com.itextpdf.text.Paragraph("Fecha: " + acta.getFechaActa().format(fmt), fontNormal));
+        cellFecha.setBorder(0);
+        tablaInfo.addCell(cellArbitro);
+        tablaInfo.addCell(cellFecha);
+        doc.add(tablaInfo);
+
+        if (acta.getObservaciones() != null && !acta.getObservaciones().isBlank()) {
+            doc.add(new com.itextpdf.text.Paragraph(" "));
+            doc.add(new com.itextpdf.text.Paragraph("Observaciones:", fontBold));
+            doc.add(new com.itextpdf.text.Paragraph(acta.getObservaciones(), fontNormal));
+        }
+
+        doc.add(new com.itextpdf.text.Paragraph(" "));
+
+        // Eventos
+        doc.add(new com.itextpdf.text.Paragraph("Eventos del Partido (" + acta.getEventos().size() + ")", fontSeccion));
+        doc.add(new com.itextpdf.text.Paragraph(" "));
+
+        if (!acta.getEventos().isEmpty()) {
+            com.itextpdf.text.pdf.PdfPTable tablaEventos = new com.itextpdf.text.pdf.PdfPTable(5);
+            tablaEventos.setWidthPercentage(100);
+            tablaEventos.setWidths(new float[]{1, 2.5f, 2f, 2f, 1});
+
+            String[] headers = {"Min.", "Jugador", "Equipo", "Tipo", "Pts"};
+            com.itextpdf.text.BaseColor headerBg = new com.itextpdf.text.BaseColor(230, 230, 230);
+            for (String h : headers) {
+                com.itextpdf.text.pdf.PdfPCell hCell = new com.itextpdf.text.pdf.PdfPCell(
+                        new com.itextpdf.text.Phrase(h, fontBold));
+                hCell.setBackgroundColor(headerBg);
+                hCell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+                hCell.setPadding(5);
+                tablaEventos.addCell(hCell);
+            }
+
+            List<EventoPartido> eventosOrdenados = acta.getEventos().stream()
+                    .sorted(java.util.Comparator.comparingInt(EventoPartido::getMinuto))
+                    .collect(Collectors.toList());
+
+            boolean alternado = false;
+            com.itextpdf.text.BaseColor rowAlt = new com.itextpdf.text.BaseColor(250, 250, 250);
+            for (EventoPartido ev : eventosOrdenados) {
+                com.itextpdf.text.BaseColor bg = alternado ? rowAlt : com.itextpdf.text.BaseColor.WHITE;
+                addEventoCell(tablaEventos, ev.getMinuto() + "'", fontNormal, bg, com.itextpdf.text.Element.ALIGN_CENTER);
+                addEventoCell(tablaEventos, ev.getNombreJugador(), fontNormal, bg, com.itextpdf.text.Element.ALIGN_LEFT);
+                addEventoCell(tablaEventos, ev.getNombreEquipo(), fontNormal, bg, com.itextpdf.text.Element.ALIGN_LEFT);
+                addEventoCell(tablaEventos, tipoLabel(ev.getTipo()), fontNormal, bg, com.itextpdf.text.Element.ALIGN_LEFT);
+                addEventoCell(tablaEventos, ev.getPuntos() != null ? String.valueOf(ev.getPuntos()) : "-", fontNormal, bg, com.itextpdf.text.Element.ALIGN_CENTER);
+                alternado = !alternado;
+            }
+            doc.add(tablaEventos);
+        } else {
+            doc.add(new com.itextpdf.text.Paragraph("Sin eventos registrados.", fontNormal));
+        }
+
+        doc.close();
+        return baos.toByteArray();
+    }
+
+    private void addEventoCell(com.itextpdf.text.pdf.PdfPTable table, String text,
+                                com.itextpdf.text.Font font, com.itextpdf.text.BaseColor bg, int align) {
+        com.itextpdf.text.pdf.PdfPCell cell = new com.itextpdf.text.pdf.PdfPCell(
+                new com.itextpdf.text.Phrase(text != null ? text : "", font));
+        cell.setBackgroundColor(bg);
+        cell.setHorizontalAlignment(align);
+        cell.setPadding(4);
+        table.addCell(cell);
+    }
+
+    private String tipoLabel(String tipo) {
+        if (tipo == null) return "";
+        switch (tipo) {
+            case "CANASTA": return "Canasta (2)";
+            case "TIRO_3PUNTOS": return "Triple (3)";
+            case "TIRO_LIBRE": return "Tiro libre (1)";
+            case "FALTA": return "Falta";
+            case "TECNICA": return "T. Técnica";
+            default: return tipo;
+        }
+    }
+
+    @Transactional(readOnly = true)
     public void compartirActa(Long actaId, String emailDestino, String username) {
         log.info("Compartiendo acta ID: {} con email: {}", actaId, emailDestino);
 
@@ -293,7 +563,59 @@ public class ActaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para compartir esta acta");
         }
 
-        log.info(" Email enviado a: {} con el acta ID: {}", emailDestino, actaId);
+        try {
+            ResponseEntity<byte[]> pdfResponse = generarPdf(actaId);
+            byte[] pdfBytes = pdfResponse.getBody();
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generando PDF para compartir");
+            }
+
+            String equipoLocal = acta.getPartido() != null && acta.getPartido().getEquipoLocal() != null
+                    ? acta.getPartido().getEquipoLocal().getNombre() : "Local";
+            String equipoVisitante = acta.getPartido() != null && acta.getPartido().getEquipoVisitante() != null
+                    ? acta.getPartido().getEquipoVisitante().getNombre() : "Visitante";
+            String filename = "acta_" + equipoLocal + "_vs_" + equipoVisitante + ".pdf";
+
+            String htmlContent = String.format("""
+                <h2>Acta del Partido</h2>
+                <p><strong>%s vs %s</strong></p>
+                <p>Resultado: %s - %s</p>
+                <p>Árbitro: %s</p>
+                <p>Se adjunta el acta del partido en formato PDF.</p>
+                <br>
+                <p><em>Federación Aragonesa de Baloncesto</em></p>
+                """,
+                    equipoLocal, equipoVisitante,
+                    acta.getResultadoLocal(), acta.getResultadoVisitante(),
+                    acta.getArbitro() != null ? acta.getArbitro().getNombre() : "");
+
+            emailService.sendHtmlMailWithAttachment(emailDestino,
+                    "Acta del partido: " + equipoLocal + " vs " + equipoVisitante,
+                    htmlContent, pdfBytes, filename);
+
+            log.info("Acta ID {} enviada por email a: {}", actaId, emailDestino);
+        } catch (MessagingException e) {
+            log.error("Error enviando email del acta {}: {}", actaId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error enviando el email");
+        }
+    }
+
+    private void _actualizarStatsJugadores(ActaPartido acta) {
+        Map<Long, Integer> puntosPorJugador = new HashMap<>();
+        Set<Long> jugadorIds = new HashSet<>();
+        acta.getEventos().forEach(e -> {
+            if (e.getJugador() != null) {
+                jugadorIds.add(e.getJugador().getId());
+                if (e.getPuntos() != null) {
+                    puntosPorJugador.merge(e.getJugador().getId(), e.getPuntos(), Integer::sum);
+                }
+            }
+        });
+        jugadorIds.forEach(jId -> jugadorRepository.findById(jId).ifPresent(j -> {
+            j.setPuntosTotales(j.getPuntosTotales() + puntosPorJugador.getOrDefault(jId, 0));
+            j.setPartidosJugados(j.getPartidosJugados() + 1);
+            jugadorRepository.save(j);
+        }));
     }
 
     private boolean puedeEditarInterno(ActaPartido acta, String username) {

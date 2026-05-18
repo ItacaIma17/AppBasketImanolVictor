@@ -23,7 +23,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         Usuario usuario = usuarioRepository.findByUsername(username);
 
-        log.error(" Usuario no encontrado: {}", username);
+        if (usuario == null) {
+            throw new UsernameNotFoundException("Usuario no encontrado: " + username);
+        }
 
         log.info(" Usuario cargado: {}, contraseña hash: {}",
                 usuario.getUsername(),

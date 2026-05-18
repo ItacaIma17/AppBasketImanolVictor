@@ -2,6 +2,7 @@ package Aplicacion.Services;
 
 import Dominio.Entity.*;
 import Dominio.Repositorys.*;
+import Dominio.Repositorys.AlineacionRepository;
 import Presentacion.DTOS.Partido.CrearPartidoCompletoDTO;
 import Presentacion.DTOS.Partido.PartidoRequestDTO;
 import Presentacion.DTOS.Partido.PartidoResponse;
@@ -31,6 +32,7 @@ public class PartidoService {
     private final ArbitroRepository arbitroRepository;
     private final JugadorRepository jugadorRepository;
     private final ActaPartidoRepository actaPartidoRepository;
+    private final AlineacionRepository alineacionRepository;
 
     @Transactional
     public PartidoResponse crearPartido(PartidoRequestDTO dto) {
@@ -55,9 +57,9 @@ public class PartidoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Equipo visitante no encontrado con ID: " + dto.getEquipoVisitanteId()));
 
-        if (dto.getJornada() == null || dto.getJornada() < 1 || dto.getJornada() > 22) {
+        if (dto.getJornada() == null || dto.getJornada() < 1 || dto.getJornada() > 34) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La jornada debe ser entre 1 y 22");
+                    "La jornada debe ser entre 1 y 34");
         }
 
         boolean existeEnJornada = partidoRepository.existsByEquiposAndJornada(
@@ -313,7 +315,22 @@ public class PartidoService {
         Long equipoId = entrenador.getEquipo().getId();
         log.info("Entrenador {} tiene equipo ID: {}", username, equipoId);
 
-        return getPartidosByEquipo(equipoId);
+        return partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId).stream()
+                .map(p -> {
+                    PartidoResponse r = PartidoResponse.fromEntity(p);
+                    if (p.getEquipoLocal() != null) {
+                        var alLocal = alineacionRepository.findByPartidoIdAndEquipoId(p.getId(), p.getEquipoLocal().getId());
+                        r.setTieneAlineacionLocal(alLocal.isPresent());
+                        r.setAlineacionLocalConfirmada(alLocal.map(a -> a.isConfirmada()).orElse(false));
+                    }
+                    if (p.getEquipoVisitante() != null) {
+                        var alVis = alineacionRepository.findByPartidoIdAndEquipoId(p.getId(), p.getEquipoVisitante().getId());
+                        r.setTieneAlineacionVisitante(alVis.isPresent());
+                        r.setAlineacionVisitanteConfirmada(alVis.map(a -> a.isConfirmada()).orElse(false));
+                    }
+                    return r;
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -342,10 +359,6 @@ public class PartidoService {
                         "Árbitro no encontrado: " + username));
 
         List<Partido> partidos = partidoRepository.findByArbitroId(arbitro.getId());
-
-        if (partidos == null) {
-            return List.of();
-        }
 
         return partidos.stream()
                 .map(PartidoResponse::fromEntity)
@@ -582,16 +595,20 @@ public class PartidoService {
                 acta.getResultadoLocal() + " - " + acta.getResultadoVisitante() : "Pendiente");
         detalle.put("fechaFormateada", partido.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
 
-        detalle.put("equipoLocal", Map.of(
-                "id", partido.getEquipoLocal().getId(),
-                "nombre", partido.getEquipoLocal().getNombre(),
-                "escudo", partido.getEquipoLocal().getEscudoUrl()
-        ));
-        detalle.put("equipoVisitante", Map.of(
-                "id", partido.getEquipoVisitante().getId(),
-                "nombre", partido.getEquipoVisitante().getNombre(),
-                "escudo", partido.getEquipoVisitante().getEscudoUrl()
-        ));
+        if (partido.getEquipoLocal() != null) {
+            detalle.put("equipoLocal", Map.of(
+                    "id", partido.getEquipoLocal().getId(),
+                    "nombre", partido.getEquipoLocal().getNombre(),
+                    "escudo", partido.getEquipoLocal().getEscudoUrl() != null ? partido.getEquipoLocal().getEscudoUrl() : ""
+            ));
+        }
+        if (partido.getEquipoVisitante() != null) {
+            detalle.put("equipoVisitante", Map.of(
+                    "id", partido.getEquipoVisitante().getId(),
+                    "nombre", partido.getEquipoVisitante().getNombre(),
+                    "escudo", partido.getEquipoVisitante().getEscudoUrl() != null ? partido.getEquipoVisitante().getEscudoUrl() : ""
+            ));
+        }
 
         if (partido.getArbitro() != null) {
             detalle.put("arbitro", Map.of(
@@ -641,6 +658,7 @@ public class PartidoService {
         for (Partido p : partidos) {
             if (p.getEstado() == null || !"FINALIZADO".equals(p.getEstado())) continue;
 
+            if (p.getEquipoLocal() == null || p.getEquipoVisitante() == null) continue;
             boolean esLocal = p.getEquipoLocal().getId().equals(equipoId);
             int puntosEquipo = esLocal ? p.getResultadoLocal() : p.getResultadoVisitante();
             int puntosRival = esLocal ? p.getResultadoVisitante() : p.getResultadoLocal();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../../models/partido.dart';
+import '../../services/autenticacion_service.dart';
 import '../../services/partidoService.dart';
 import '../../widgets/MenuLateral.dart';
 import 'PresentarAlinecionPage.dart';
@@ -20,6 +21,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
   bool _isLoading = true;
   String? _error;
   String _filtro = 'PROGRAMADO';
+  int? _miEquipoId;
 
   static const _acento = AppColors.naranja;
 
@@ -32,6 +34,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
   Future<void> _cargarPartidos() async {
     setState(() { _isLoading = true; _error = null; });
     try {
+      _miEquipoId = AutenticacionService.entrenadorActual?.equipoId;
       final partidos = await PartidoService.getPartidosEntrenador();
       setState(() { _partidos = partidos; _isLoading = false; });
     } catch (e) {
@@ -41,7 +44,11 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
 
   List<Partido> get _partidosFiltrados {
     if (_filtro == 'TODOS') return _partidos;
-    return _partidos.where((p) => p.estado == _filtro).toList();
+    final lista = _partidos.where((p) => p.estado == _filtro).toList();
+    if (_filtro == 'PROGRAMADO' && _miEquipoId != null) {
+      return lista.where((p) => !p.tieneAlineacionParaEquipo(_miEquipoId!)).toList();
+    }
+    return lista;
   }
 
   @override
@@ -161,28 +168,52 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
 
   Widget _buildError() {
     return Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.error_outline, size: 64, color: AppColors.rojoAragon),
-        const SizedBox(height: 16),
-        Text(_error!, style: const TextStyle(color: AppColors.blanco),
-            textAlign: TextAlign.center),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _cargarPartidos,
-          style: ElevatedButton.styleFrom(backgroundColor: _acento),
-          child: const Text('Reintentar'),
-        ),
-      ]),
+      child: SingleChildScrollView(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.error_outline, size: 64, color: AppColors.rojoAragon),
+          const SizedBox(height: 16),
+          Text(_error!, style: const TextStyle(color: AppColors.blanco),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _cargarPartidos,
+            style: ElevatedButton.styleFrom(backgroundColor: _acento),
+            child: const Text('Reintentar'),
+          ),
+        ]),
+      ),
     );
   }
 
-  Widget _buildPartidoCard(Partido partido) {
-    DateTime? fechaPartido;
+  DateTime? _parseFechaHora(String fecha, String hora) {
     try {
-      fechaPartido = DateTime.parse('${partido.fecha} ${partido.hora}');
+      final parts = fecha.split('/');
+      if (parts.length == 3) {
+        final d = int.parse(parts[0]);
+        final m = int.parse(parts[1]);
+        final y = int.parse(parts[2]);
+        final hParts = hora.split(':');
+        if (hParts.length == 2) {
+          return DateTime(y, m, d, int.parse(hParts[0]), int.parse(hParts[1]));
+        }
+        return DateTime(y, m, d);
+      }
     } catch (_) {}
+    return null;
+  }
 
-    final tieneAlineacion = partido.tieneAlineacionLocal ?? false;
+  Widget _buildPartidoCard(Partido partido) {
+    final fechaPartido = _parseFechaHora(partido.fecha, partido.hora);
+
+    final tieneAlineacion = _miEquipoId != null
+        ? partido.tieneAlineacionParaEquipo(_miEquipoId!)
+        : (partido.tieneAlineacionLocal ?? false);
+    final confirmada = _miEquipoId != null
+        ? partido.alineacionConfirmadaParaEquipo(_miEquipoId!)
+        : (partido.alineacionLocalConfirmada ?? false);
+    final esLocal = _miEquipoId != null
+        ? partido.esLocalParaEquipo(_miEquipoId!)
+        : true;
     final partidoId = int.tryParse(partido.id.toString()) ?? 0;
     final equipoLocalId = int.tryParse(partido.equipoLocalId.toString()) ?? 0;
     final esFinalizado = partido.estado == 'FINALIZADO';
@@ -192,12 +223,15 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
     if (esFinalizado) {
       chipColor = _acento;
       chipLabel = 'Finalizado';
-    } else if (tieneAlineacion) {
-      chipColor = AppColors.amarilloAragon;
-      chipLabel = 'Alineación Lista';
-    } else {
+    } else if (!tieneAlineacion) {
       chipColor = AppColors.rojoAragon;
       chipLabel = 'Pendiente';
+    } else if (!confirmada) {
+      chipColor = Colors.blue;
+      chipLabel = 'En Espera';
+    } else {
+      chipColor = Colors.green;
+      chipLabel = 'Confirmada';
     }
 
     return Container(
@@ -216,7 +250,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
             if (esFinalizado && partido.tieneActa == true) {
               _verActa(partidoId);
             } else if (!esFinalizado && !tieneAlineacion) {
-              _presentarAlineacion(partido, true);
+              _presentarAlineacion(partido, esLocal);
             } else if (!esFinalizado && tieneAlineacion) {
               _verAlineacion(partidoId, equipoLocalId);
             }
@@ -258,7 +292,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
                 ]),
                 const SizedBox(height: 4),
               ],
-              if (partido.direccionPabellon != null)
+              if (partido.direccionPabellon != null && partido.direccionPabellon!.isNotEmpty)
                 Row(children: [
                   const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grisClaro),
                   const SizedBox(width: 6),

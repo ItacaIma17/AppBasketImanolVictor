@@ -229,7 +229,7 @@ public class EntrenadorService {
 
     public void actualizarPassword(String email, String nuevaPasswordEncriptada) {
         Entrenador entrenador = entrenadorRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado con email: " + email));
         entrenador.setPassword(nuevaPasswordEncriptada);
         entrenadorRepository.save(entrenador);
         log.info("Password actualizado para entrenador: {}", email);
@@ -243,7 +243,7 @@ public class EntrenadorService {
 
     public void marcarComoVerificado(String email) {
         Entrenador entrenador = entrenadorRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado con email: " + email));
         entrenador.setVerificado(true);
         entrenadorRepository.save(entrenador);
         log.info("Entrenador verificado: {}", email);

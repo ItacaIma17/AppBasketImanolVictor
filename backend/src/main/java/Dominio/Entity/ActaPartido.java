@@ -34,5 +34,11 @@ public class ActaPartido {
 
     @OneToMany(mappedBy = "acta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventoPartido> eventos = new ArrayList<>();
+
+    @Column(name = "archivo_acta")
+    private byte[] archivoActa;
+
+    @Column(name = "tipo_archivo_acta", length = 100)
+    private String tipoArchivoActa;
 }
 

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(mvn compile *)",
       "Bash(flutter analyze *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\imano\\\\Desktop\\\\App90\\\\frontend\\\\lib\" -Recurse -Filter \"*.dart\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Select-String -Pattern \"\\(screen|page|pantalla|jugador|equipo|detalle\\)\")"
     ]
   }
 }

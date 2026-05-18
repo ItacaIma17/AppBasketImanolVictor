@@ -6,10 +6,12 @@ import Dominio.Repositorys.AlineacionRepository;
 import Presentacion.DTOS.Entrenador.AlineacionRequestDTO;
 import Presentacion.DTOS.Entrenador.AlineacionResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -37,10 +39,11 @@ public class AlineacionController {
             String username = getCurrentUsername();
             AlineacionResponseDTO response = alineacionService.presentarAlineacion(dto, username);
             return ResponseEntity.ok(response);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", e.getMessage(),
-                    "bloqueada", true
+        } catch (ResponseStatusException e) {
+            boolean bloqueada = e.getStatusCode() == HttpStatus.CONFLICT;
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of(
+                    "error", e.getReason() != null ? e.getReason() : "Error",
+                    "bloqueada", bloqueada
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -55,6 +58,8 @@ public class AlineacionController {
             String username = getCurrentUsername();
             AlineacionResponseDTO response = alineacionService.actualizarAlineacion(id, dto, username);
             return ResponseEntity.ok(response);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -66,6 +71,8 @@ public class AlineacionController {
             String username = getCurrentUsername();
             alineacionService.eliminarAlineacion(id, username);
             return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -77,6 +84,8 @@ public class AlineacionController {
             String username = getCurrentUsername();
             AlineacionResponseDTO response = alineacionService.confirmarAlineacion(id, username);
             return ResponseEntity.ok(response);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -87,6 +96,8 @@ public class AlineacionController {
         try {
             var alineaciones = alineacionService.getAlineacionesPartido(partidoId);
             return ResponseEntity.ok(alineaciones);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -102,6 +113,8 @@ public class AlineacionController {
                 return ResponseEntity.noContent().build();
             }
             return ResponseEntity.ok(alineacion);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -111,7 +124,7 @@ public class AlineacionController {
     public ResponseEntity<?> desbloquearAlineacion(@PathVariable Long id) {
         try {
             Alineacion alineacion = alineacionRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Alineación no encontrada"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alineación no encontrada"));
 
             if (alineacion.isConfirmada()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -123,6 +136,8 @@ public class AlineacionController {
                     "mensaje", "Alineación desbloqueada correctamente",
                     "id", id
             ));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -132,6 +147,8 @@ public class AlineacionController {
     public ResponseEntity<?> listarAlineaciones() {
         try {
             return ResponseEntity.ok(alineacionService.listarTodas());
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason() != null ? e.getReason() : "Error"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

@@ -228,11 +228,17 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
         children: [
           Icon(icon, size: 20, color: AppColors.naranja),
           const SizedBox(width: 12),
-          SizedBox(
-            width: 80,
-            child: Text(label, style: const TextStyle(color: Colors.grey)),
+          Flexible(
+            flex: 2,
+            child: Text(label, style: const TextStyle(color: Colors.grey),
+                overflow: TextOverflow.ellipsis),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+          const SizedBox(width: 8),
+          Flexible(
+            flex: 3,
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis),
+          ),
         ],
       ),
     );

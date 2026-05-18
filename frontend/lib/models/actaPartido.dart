@@ -11,6 +11,7 @@ class ActaPartido {
   final String? observaciones;
   final List<EventoActa> eventos;
   final bool puedeEditar;
+  final bool tieneArchivoSubido;
 
   ActaPartido({
     this.id,
@@ -25,6 +26,7 @@ class ActaPartido {
     this.observaciones,
     required this.eventos,
     this.puedeEditar = false,
+    this.tieneArchivoSubido = false,
   });
 
   factory ActaPartido.fromJson(Map<String, dynamic> json) {
@@ -51,12 +53,15 @@ class ActaPartido {
       resultadoVisitante: json['resultadoVisitante'] ?? '',
       arbitroId: _parseIntNullable(json['arbitroId']),
       arbitroNombre: json['arbitroNombre'] ?? '',
-      fechaActa: DateTime.parse(json['fechaActa']),
+      fechaActa: json['fechaActa'] != null
+          ? DateTime.tryParse(json['fechaActa'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       observaciones: json['observaciones'],
       eventos: (json['eventos'] as List? ?? [])
           .map((e) => EventoActa.fromJson(e))
           .toList(),
       puedeEditar: json['puedeEditar'] ?? false,
+      tieneArchivoSubido: json['tieneArchivoSubido'] ?? false,
     );
   }
 
@@ -74,6 +79,7 @@ class ActaPartido {
       'observaciones': observaciones,
       'eventos': eventos.map((e) => e.toJson()).toList(),
       'puedeEditar': puedeEditar,
+      'tieneArchivoSubido': tieneArchivoSubido,
     };
   }
 }

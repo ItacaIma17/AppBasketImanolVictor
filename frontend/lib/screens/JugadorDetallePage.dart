@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 import '../models/jugador.dart';
-import '../services/FavoritosPage.dart';
+import '../data/gestorFavoritos.dart';
 import '../widgets/MenuLateral.dart';
 
 class JugadorDetallePage extends StatefulWidget {
@@ -28,7 +28,8 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
 
   Future<void> _verificarFavorito() async {
     try {
-      final esFav = await FavoritosService.esJugadorFavorito(widget.jugador.id);
+      await FavoritosManager().cargarFavoritos();
+      final esFav = FavoritosManager().esJugadorFavorito(widget.jugador.id!);
       if (mounted) setState(() { _esFavorito = esFav; _cargandoFavorito = false; });
     } catch (_) {
       if (mounted) setState(() => _cargandoFavorito = false);
@@ -41,30 +42,17 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
         const SnackBar(content: Text('ID inválido'), backgroundColor: AppColors.rojoAragon));
       return;
     }
-    setState(() => _cargandoFavorito = true);
-    try {
-      if (_esFavorito) {
-        await FavoritosService.eliminarJugadorFavorito(widget.jugador.id);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Eliminado de favoritos'),
-              backgroundColor: AppColors.superficie1, duration: Duration(seconds: 1)));
-      } else {
-        await FavoritosService.agregarJugadorFavorito(
-          widget.jugador.id,
-          widget.jugador.nombreCompleto,
-          equipoNombre: widget.equipoNombre ?? widget.jugador.nombreEquipo,
-        );
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Añadido a favoritos'),
-              backgroundColor: AppColors.naranja, duration: Duration(seconds: 1)));
-      }
-      if (mounted) setState(() { _esFavorito = !_esFavorito; _cargandoFavorito = false; });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.rojoAragon));
-        setState(() => _cargandoFavorito = false);
-      }
+    setState(() {
+      FavoritosManager().toggleJugadorFavorito(widget.jugador.id!);
+      _esFavorito = FavoritosManager().esJugadorFavorito(widget.jugador.id!);
+      _cargandoFavorito = false;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(_esFavorito ? 'Añadido a favoritos' : 'Eliminado de favoritos'),
+        backgroundColor: _esFavorito ? AppColors.naranja : AppColors.superficie1,
+        duration: const Duration(seconds: 1),
+      ));
     }
   }
 
@@ -244,7 +232,8 @@ class _JugadorDetallePageState extends State<JugadorDetallePage> {
     return Column(children: [
       Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
           color: _acento)),
-      Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grisClaro)),
+      Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grisClaro),
+          overflow: TextOverflow.ellipsis, maxLines: 1),
     ]);
   }
 

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/models/role.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/EstadisticasPartido.dart';
 import 'package:tfg_appfede/widgets/DetallesPartidos/MarcadorPartido.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:tfg_appfede/models/actaPartido.dart';
 import 'package:tfg_appfede/services/actaService.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/screens/arbitros/CrearActaPage.dart';
 import 'package:tfg_appfede/screens/arbitros/verActaArbitroPage.dart';
+import 'package:tfg_appfede/screens/Entrenador/VerActaEntrenador.dart';
+import 'package:tfg_appfede/utils/descarga_pdf.dart';
 
 class DetallePartidoPage extends StatefulWidget {
   final Partido partido;
@@ -28,35 +28,39 @@ class DetallePartidoPage extends StatefulWidget {
 
 class _DetallePartidoPageState extends State<DetallePartidoPage> {
 
-  late Map<String, dynamic> _estadisticas;
+  Map<String, dynamic>? _estadisticas;
 
   ActaPartido? _acta;
   bool _cargandoActa = true;
+  bool _descargandoPdf = false;
 
   @override
   void initState() {
     super.initState();
-    _cargarEstadisticas();
     _cargarActa();
   }
 
-  void _cargarEstadisticas() {
-    _estadisticas = {
+  Map<String, dynamic> _calcularEstadisticas(ActaPartido acta) {
+    int faltas(String equipo) => acta.eventos
+        .where((e) => e.nombreEquipo == equipo &&
+            (e.tipo == 'FALTA' || e.tipo == 'TECNICA' || e.tipo == 'EXPULSION'))
+        .length;
+    return {
       'equipoLocal': {
-        'puntos': widget.partido.puntosLocal,
-        'rebotes': 42,
-        'asistencias': 18,
-        'robos': 8,
-        'tapones': 5,
-        'faltas': 20,
+        'puntos': int.tryParse(acta.resultadoLocal) ?? 0,
+        'rebotes': 0,
+        'asistencias': 0,
+        'robos': 0,
+        'tapones': 0,
+        'faltas': faltas(acta.equipoLocal),
       },
       'equipoVisitante': {
-        'puntos': widget.partido.puntosVisitante,
-        'rebotes': 38,
-        'asistencias': 15,
-        'robos': 6,
-        'tapones': 3,
-        'faltas': 22,
+        'puntos': int.tryParse(acta.resultadoVisitante) ?? 0,
+        'rebotes': 0,
+        'asistencias': 0,
+        'robos': 0,
+        'tapones': 0,
+        'faltas': faltas(acta.equipoVisitante),
       },
     };
   }
@@ -65,9 +69,32 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
     setState(() => _cargandoActa = true);
     try {
       final acta = await ActaService.obtenerActaPorPartido(widget.partido.id);
-      if (mounted) setState(() { _acta = acta; _cargandoActa = false; });
-    } catch (_) {
-      if (mounted) setState(() { _acta = null; _cargandoActa = false; });
+      if (mounted) {
+        setState(() {
+          _acta = acta;
+          _estadisticas = acta != null ? _calcularEstadisticas(acta) : null;
+          _cargandoActa = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _acta = null; _estadisticas = null; _cargandoActa = false; });
+    }
+  }
+
+  Future<void> _descargarPdf() async {
+    if (_descargandoPdf) return;
+    setState(() => _descargandoPdf = true);
+    try {
+      final bytes = await ActaService.descargarActaPdf(widget.partido.id);
+      await guardarYAbrirPdf(bytes, 'acta_partido_${widget.partido.id}.pdf');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error descargando PDF: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _descargandoPdf = false);
     }
   }
 
@@ -90,9 +117,10 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
 
                       MarcadorPartido(partido: widget.partido),
 
-                      const SizedBox(height: 24),
-
-                      EstadisticasPartido(estadisticas: _estadisticas),
+                      if (_estadisticas != null) ...[
+                        const SizedBox(height: 24),
+                        EstadisticasPartido(estadisticas: _estadisticas!),
+                      ],
 
                       const SizedBox(height: 24),
 
@@ -189,7 +217,10 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
                   icon: const Icon(Icons.edit, color: AppColors.naranja),
                   onPressed: () async {
                     await Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => CrearActaPage(partido: widget.partido)));
+                        builder: (_) => CrearActaPage(
+                              partido: widget.partido,
+                              actaExistente: _acta,
+                            )));
                     _cargarActa();
                   },
                 ),
@@ -202,20 +233,41 @@ class _DetallePartidoPageState extends State<DetallePartidoPage> {
             const SizedBox(height: 16),
             _buildIncidenciasActa(_acta!),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.naranja,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.naranja,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => (esArbitro || esAdmin)
+                            ? VerActaArbitroPage(partido: widget.partido)
+                            : VerActaEntrenadorPage(partidoId: widget.partido.id))),
+                    icon: const Icon(Icons.visibility, color: AppColors.blanco),
+                    label: const Text('Ver acta',
+                        style: TextStyle(color: AppColors.blanco, fontWeight: FontWeight.bold)),
+                  ),
                 ),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => VerActaArbitroPage(partido: widget.partido))),
-                icon: const Icon(Icons.visibility, color: AppColors.blanco),
-                label: const Text('Ver acta completa',
-                    style: TextStyle(color: AppColors.blanco, fontWeight: FontWeight.bold)),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.rojoAragon,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: _descargandoPdf ? null : _descargarPdf,
+                    icon: _descargandoPdf
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: AppColors.blanco, strokeWidth: 2))
+                        : const Icon(Icons.picture_as_pdf, color: AppColors.blanco),
+                    label: const Text('Descargar PDF',
+                        style: TextStyle(color: AppColors.blanco, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
           ] else ...[
             Container(

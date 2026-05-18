@@ -45,7 +45,7 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
       }
       return null;
     } catch (e) {
-      print('Error parseando fecha: $fechaStr - $e');
+      // fecha inválida, retornar null
       return null;
     }
   }
@@ -72,8 +72,10 @@ class _EquipoDetallePageState extends State<EquipoDetallePage> {
         _cargando = false;
       });
     } catch (e) {
-      print('Error cargando datos: $e');
-      setState(() => _cargando = false);
+      setState(() {
+        _error = e.toString();
+        _cargando = false;
+      });
     }
   }
 
@@ -420,7 +422,9 @@ Widget _buildJugadoresList() {
         return fechaB.compareTo(fechaA);
       });
 
-    return Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -503,11 +507,12 @@ Widget _buildJugadoresList() {
         else
           ...finalizados.map((p) => _buildPartidoCard(p, esProximo: false)),
       ],
+    ),
     );
   }
 
   Widget _buildPartidoCard(Partido partido, {required bool esProximo}) {
-    final esLocal = partido.equipoLocalId == widget.equipoId;
+    final esLocal = partido.equipoLocalId == (_equipo?.id ?? widget.equipoId);
     final rival = esLocal ? partido.nombreVisitante : partido.nombreLocal;
     final resultado = esLocal
         ? '${partido.puntosLocal} - ${partido.puntosVisitante}'
@@ -537,6 +542,8 @@ Widget _buildJugadoresList() {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(

@@ -19,14 +19,6 @@ class ArbitroService {
     return headers;
   }
 
-  static Future<Map<String, String>> _getHeadersAsync() async {
-    final token = await AutenticacionService.getToken();
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
   static Future<List<Arbitro>> listarArbitros() async {
     try {
       final response = await http.get(
@@ -493,7 +485,7 @@ class ArbitroService {
         return {
           'localPresentada': data['alineacionLocal'] != null,
           'visitantePresentada': data['alineacionVisitante'] != null,
-          'ambasConfirmadas': data['ambasPresentadas'] ?? false,
+          'ambasConfirmadas': data['partidoListoParaComenzar'] ?? false,
         };
       }
       return {'localPresentada': false, 'visitantePresentada': false, 'ambasConfirmadas': false};

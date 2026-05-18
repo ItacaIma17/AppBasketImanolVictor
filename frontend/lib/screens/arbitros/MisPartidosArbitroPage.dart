@@ -5,9 +5,13 @@ import 'package:tfg_appfede/models/partido.dart';
 import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/BarraInferior.dart';
 import 'package:tfg_appfede/widgets/MenuLateral.dart';
+import '../../models/actaPartido.dart';
+import '../../services/actaService.dart';
 import '../../services/arbitroService.dart';
+import '../../utils/descarga_pdf.dart';
 import 'ConfirmarAlineaciones.dart';
 import 'CrearActaPage.dart';
+import 'verActaArbitroPage.dart';
 
 class MisPartidosArbitroPage extends StatefulWidget {
   const MisPartidosArbitroPage({super.key});
@@ -411,9 +415,40 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
     );
   }
 
+  Future<void> _descargarPdf(Partido partido) async {
+    try {
+      final bytes = await ActaService.descargarActaPdf(partido.id);
+      await guardarYAbrirPdf(bytes, 'acta_partido_${partido.id}.pdf');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error descargando PDF: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _navegarAEditarActa(Partido partido) async {
+    try {
+      final ActaPartido acta = await ActaService.obtenerActaPorPartido(partido.id);
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CrearActaPage(partido: partido, actaExistente: acta),
+        ),
+      );
+      _cargarPartidos();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error cargando acta: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   Widget _buildBotonesAccion(Partido partido) {
-    final esProgramado = partido.estado == 'PROGRAMADO';
     final esFinalizado = partido.estado == 'FINALIZADO';
+    final tieneActa = partido.tieneActa == true;
 
     return Wrap(
       spacing: 8,
@@ -435,17 +470,42 @@ class _MisPartidosArbitroPageState extends State<MisPartidosArbitroPage>
             ).then((_) => _cargarPartidos()),
           ),
 
-        _buildBotonAccion(
-          icono: Icons.description_outlined,
-          label: esFinalizado ? 'Ver Acta' : 'Subir Acta',
-          color: AppColors.naranja,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CrearActaPage(partido: partido),
-            ),
-          ).then((_) => _cargarPartidos()),
-        ),
+        if (tieneActa) ...[
+          _buildBotonAccion(
+            icono: Icons.description_outlined,
+            label: 'Ver Acta',
+            color: AppColors.naranja,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VerActaArbitroPage(partido: partido),
+              ),
+            ).then((_) => _cargarPartidos()),
+          ),
+          _buildBotonAccion(
+            icono: Icons.picture_as_pdf,
+            label: 'Descargar PDF',
+            color: AppColors.naranja,
+            onTap: () => _descargarPdf(partido),
+          ),
+          _buildBotonAccion(
+            icono: Icons.edit_document,
+            label: 'Editar Acta',
+            color: AppColors.amarilloAragon,
+            onTap: () => _navegarAEditarActa(partido),
+          ),
+        ] else
+          _buildBotonAccion(
+            icono: Icons.edit_document,
+            label: 'Subir Acta',
+            color: AppColors.amarilloAragon,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CrearActaPage(partido: partido),
+              ),
+            ).then((_) => _cargarPartidos()),
+          ),
       ],
     );
   }

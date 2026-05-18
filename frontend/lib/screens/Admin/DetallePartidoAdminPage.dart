@@ -7,6 +7,8 @@ import '../../services/actaService.dart';
 import '../../services/equipoService.dart';
 import '../../models/actaPartido.dart';
 import '../../widgets/Partidos/CrearPartidosCompletosDialog.dart';
+import '../arbitros/verActaArbitroPage.dart';
+import '../arbitros/CrearActaPage.dart';
 
 class DetallePartidoAdminPage extends StatefulWidget {
   final Partido partido;
@@ -31,12 +33,15 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
     setState(() => _cargando = true);
     try {
       final acta = await ActaService.obtenerActaPorPartido(widget.partido.id);
-      if (mounted) setState(() => _acta = acta);
-    } catch (_) {}
-    if (mounted) setState(() => _cargando = false);
+      if (mounted) setState(() { _acta = acta; _cargando = false; });
+    } catch (_) {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   Future<void> _finalizarPartido() async {
+    resultadoLocal = 0;
+    resultadoVisitante = 0;
     final resultado = await showDialog<Map<String, int>>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -223,6 +228,9 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
                         fontWeight: FontWeight.bold,
                         decoration: TextDecoration.underline,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -270,6 +278,9 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
                         fontWeight: FontWeight.bold,
                         decoration: TextDecoration.underline,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -313,16 +324,36 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
             if (_acta!.observaciones != null && _acta!.observaciones!.isNotEmpty)
               _buildInfoRow(Icons.notes, 'Observaciones', _acta!.observaciones!),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text('Ver acta completa'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => VerActaArbitroPage(partido: widget.partido),
+                      ),
+                    ),
+                    icon: const Icon(Icons.visibility),
+                    label: const Text('Ver acta'),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CrearActaPage(partido: widget.partido),
+                      ),
+                    ).then((_) => _cargarActa()),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Editar acta'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey.shade700),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

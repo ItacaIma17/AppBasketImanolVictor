@@ -4,6 +4,7 @@ import '../config/api_config.dart';
 import '../models/equipo.dart';
 import '../models/jugador.dart';
 import 'autenticacion_service.dart';
+import 'loggerService.dart';
 
 class EquipoService {
   static String get baseUrl => AppConfig.apiUrl;
@@ -31,7 +32,7 @@ class EquipoService {
           try {
             equipos.add(Equipo.fromJson(data[i]));
           } catch (e) {
-            print(' Error parseando equipo[$i]: $e');
+            LoggerService.warning('Error parseando equipo[$i]: $e');
           }
         }
         return equipos;
@@ -39,19 +40,8 @@ class EquipoService {
         throw Exception('Error al cargar equipos: ${response.statusCode}');
       }
     } catch (e) {
-      print(' Error listando equipos: $e');
+      LoggerService.error('Error listando equipos: $e');
       rethrow;
-    }
-  }
-
-  static Future<List<Equipo>> listarPorLiga(int ligaId) async {
-    try {
-      final response = await AppConfig.get('/equipos/liga/$ligaId');
-      final list = response is List ? response : [];
-      return list.map<Equipo>((j) => Equipo.fromJson(j)).toList();
-    } catch (_) {
-      final todos = await listarEquipos();
-      return todos.where((e) => e.ligaId == ligaId).toList();
     }
   }
 
@@ -66,10 +56,10 @@ class EquipoService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((e) => Equipo.fromJson(e)).toList();
       } else {
-        throw Exception('Error al cargar equipos de la liga');
+        throw Exception('Error al cargar equipos de la liga: ${response.statusCode}');
       }
     } catch (e) {
-      print(' Error listando equipos por liga: $e');
+      LoggerService.error('Error listando equipos por liga $ligaId: $e');
       rethrow;
     }
   }
@@ -81,16 +71,14 @@ class EquipoService {
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
-      print(' Listar equipos sin entrenador response: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data.map((e) => Equipo.fromJson(e)).toList();
       } else {
-        throw Exception('Error al cargar equipos sin entrenador');
+        throw Exception('Error al cargar equipos sin entrenador: ${response.statusCode}');
       }
     } catch (e) {
-      print(' Error listando equipos sin entrenador: $e');
+      LoggerService.error('Error listando equipos sin entrenador: $e');
       rethrow;
     }
   }
@@ -106,26 +94,21 @@ class EquipoService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((e) => Equipo.fromJson(e)).toList();
       } else {
-        throw Exception('Error al cargar solicitudes pendientes');
+        throw Exception('Error al cargar solicitudes pendientes: ${response.statusCode}');
       }
     } catch (e) {
-      print(' Error listando solicitudes pendientes: $e');
+      LoggerService.error('Error listando solicitudes pendientes: $e');
       rethrow;
     }
   }
 
   static Future<Equipo> crearEquipo(Map<String, dynamic> equipoData) async {
     try {
-      print(' Creando equipo: $equipoData');
-
       final response = await http.post(
         Uri.parse('$baseUrl/equipos/crear'),
         headers: _headers,
         body: json.encode(equipoData),
       ).timeout(const Duration(seconds: 30));
-
-      print(' Crear equipo response: ${response.statusCode}');
-      print(' Body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return Equipo.fromJson(json.decode(response.body));
@@ -134,7 +117,7 @@ class EquipoService {
         throw Exception(error['message'] ?? 'Error al crear equipo');
       }
     } catch (e) {
-      print(' Error creando equipo: $e');
+      LoggerService.error('Error creando equipo: $e');
       rethrow;
     }
   }
@@ -152,7 +135,7 @@ class EquipoService {
         throw Exception('Equipo no encontrado');
       }
     } catch (e) {
-      print(' Error obteniendo equipo: $e');
+      LoggerService.error('Error obteniendo equipo $id: $e');
       rethrow;
     }
   }
@@ -161,7 +144,7 @@ class EquipoService {
     try {
       final token = AutenticacionService.token;
       if (token == null) {
-        print(' No hay token disponible');
+        LoggerService.warning('No hay token disponible');
         return [];
       }
 
@@ -175,14 +158,13 @@ class EquipoService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print(' Jugadores encontrados en equipo $equipoId: ${data.length}');
         return data.map((j) => Jugador.fromJson(j)).toList();
       } else {
-        print(' Error obteniendo jugadores: ${response.statusCode}');
+        LoggerService.warning('Error obteniendo jugadores: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print(' Error obteniendo jugadores del equipo: $e');
+      LoggerService.error('Error obteniendo jugadores del equipo $equipoId: $e');
       return [];
     }
   }
@@ -200,24 +182,18 @@ class EquipoService {
         throw Exception('Código de equipo inválido');
       }
     } catch (e) {
-      print(' Error obteniendo equipo por código: $e');
+      LoggerService.error('Error obteniendo equipo por código $codigo: $e');
       rethrow;
     }
   }
 
   static Future<Equipo> actualizarEquipo(int id, Map<String, dynamic> equipoData) async {
     try {
-      print(' Actualizando equipo ID: $id');
-      print(' Datos enviados: $equipoData');
-
       final response = await http.put(
         Uri.parse('$baseUrl/equipos/$id'),
         headers: _headers,
         body: json.encode(equipoData),
       ).timeout(const Duration(seconds: 30));
-
-      print(' Status code: ${response.statusCode}');
-      print(' Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         return Equipo.fromJson(json.decode(response.body));
@@ -226,29 +202,25 @@ class EquipoService {
         throw Exception(error['message'] ?? 'Error al actualizar equipo');
       }
     } catch (e) {
-      print(' Error actualizando equipo: $e');
+      LoggerService.error('Error actualizando equipo $id: $e');
       rethrow;
     }
   }
 
   static Future<void> solicitarDirigirEquipo(String codigoSolicitud) async {
     try {
-      print(' Solicitando equipo con código: $codigoSolicitud');
-
       final response = await http.post(
         Uri.parse('$baseUrl/equipos/solicitar'),
         headers: _headers,
         body: json.encode({'codigoSolicitud': codigoSolicitud}),
       ).timeout(const Duration(seconds: 30));
 
-      print(' Solicitar equipo response: ${response.statusCode}');
-
       if (response.statusCode != 200) {
         final error = json.decode(response.body);
         throw Exception(error['message'] ?? 'Error al solicitar equipo');
       }
     } catch (e) {
-      print(' Error solicitando equipo: $e');
+      LoggerService.error('Error solicitando equipo con código $codigoSolicitud: $e');
       rethrow;
     }
   }
@@ -269,8 +241,6 @@ class EquipoService {
         }),
       ).timeout(const Duration(seconds: 30));
 
-      print(' Aprobar solicitud response: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         return Equipo.fromJson(json.decode(response.body));
       } else {
@@ -278,7 +248,7 @@ class EquipoService {
         throw Exception(error['message'] ?? 'Error al procesar solicitud');
       }
     } catch (e) {
-      print(' Error aprobando solicitud: $e');
+      LoggerService.error('Error aprobando solicitud: $e');
       rethrow;
     }
   }
@@ -290,14 +260,12 @@ class EquipoService {
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
-      print(' Eliminar equipo response: ${response.statusCode}');
-
       if (response.statusCode != 200 && response.statusCode != 204) {
         final error = json.decode(response.body);
         throw Exception(error['message'] ?? 'Error al eliminar equipo');
       }
     } catch (e) {
-      print(' Error eliminando equipo: $e');
+      LoggerService.error('Error eliminando equipo $id: $e');
       rethrow;
     }
   }
@@ -316,7 +284,7 @@ class EquipoService {
         throw Exception('Error al regenerar código');
       }
     } catch (e) {
-      print(' Error regenerando código: $e');
+      LoggerService.error('Error regenerando código para equipo $equipoId: $e');
       rethrow;
     }
   }
@@ -334,30 +302,12 @@ class EquipoService {
         throw Exception('Error al cargar estadísticas');
       }
     } catch (e) {
-      print(' Error obteniendo estadísticas: $e');
+      LoggerService.error('Error obteniendo estadísticas del equipo $equipoId: $e');
       rethrow;
     }
   }
 
-  static Future<List<dynamic>> obtenerJugadoresEquipo(int equipoId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/equipos/$equipoId/jugadores'),
-        headers: _headers,
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Error al cargar jugadores');
-      }
-    } catch (e) {
-      print(' Error obteniendo jugadores: $e');
-      rethrow;
-    }
-  }
-
-  static Future<List<dynamic>> obtenerProximosPartidos(int equipoId) async {
+  static Future<Map<String, dynamic>> obtenerProximosPartidos(int equipoId) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/equipos/$equipoId/proximos-partidos'),
@@ -370,7 +320,7 @@ class EquipoService {
         throw Exception('Error al cargar próximos partidos');
       }
     } catch (e) {
-      print(' Error obteniendo próximos partidos: $e');
+      LoggerService.error('Error obteniendo próximos partidos del equipo $equipoId: $e');
       rethrow;
     }
   }

@@ -8,6 +8,7 @@ import '../../services/equipoService.dart';
 import '../../services/loggerService.dart';
 import '../../services/partidoService.dart';
 import '../../widgets/Partidos/CrearPartidosCompletosDialog.dart';
+import 'DetallePartidoAdminPage.dart';
 
 class GestionPartidosPage extends StatefulWidget {
   const GestionPartidosPage({super.key, this.ligaId});
@@ -283,7 +284,14 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
       estadoColor = Colors.orange;
     else if (estado == 'FINALIZADO') estadoColor = Colors.green;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetallePartidoAdminPage(partido: partido),
+        ),
+      ).then((refresh) { if (refresh == true) _cargarDatos(); }),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -303,6 +311,8 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 14),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
@@ -380,6 +390,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
           ),
         ],
       ),
+    ),
     );
   }
 }

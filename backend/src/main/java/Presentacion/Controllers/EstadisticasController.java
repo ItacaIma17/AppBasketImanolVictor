@@ -7,9 +7,11 @@ import Dominio.Repositorys.JugadorRepository;
 import Dominio.Repositorys.PartidoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +47,7 @@ public class EstadisticasController {
         log.info(" Estadísticas del jugador ID: {}", id);
 
         Jugador jugador = jugadorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no encontrado"));
 
         return ResponseEntity.ok(buildJugadorStats(jugador));
     }
@@ -90,6 +92,7 @@ public class EstadisticasController {
         for (var partido : partidos) {
             if (!"FINALIZADO".equals(partido.getEstado())) continue;
             if (partido.getResultadoLocal() == null || partido.getResultadoVisitante() == null) continue;
+            if (partido.getEquipoLocal() == null || partido.getEquipoVisitante() == null) continue;
 
             Long localId = partido.getEquipoLocal().getId();
             Long visitanteId = partido.getEquipoVisitante().getId();
@@ -139,7 +142,7 @@ public class EstadisticasController {
         log.info(" Estadísticas del equipo ID: {}", id);
 
         var equipo = equipoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipo no encontrado"));
 
         var partidos = partidoRepository.findAll().stream()
                 .filter(p -> p.participaEquipo(equipo))
@@ -149,6 +152,7 @@ public class EstadisticasController {
         for (var partido : partidos) {
             if (!"FINALIZADO".equals(partido.getEstado())) continue;
             if (partido.getResultadoLocal() == null || partido.getResultadoVisitante() == null) continue;
+            if (partido.getEquipoLocal() == null || partido.getEquipoVisitante() == null) continue;
             pj++;
             boolean esLocal = partido.getEquipoLocal().getId().equals(id);
             int propios = esLocal ? partido.getResultadoLocal() : partido.getResultadoVisitante();

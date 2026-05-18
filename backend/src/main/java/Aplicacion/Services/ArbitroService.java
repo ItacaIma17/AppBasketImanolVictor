@@ -97,7 +97,8 @@ public class ArbitroService {
     @Transactional
     public void marcarComoVerificado(String email) {
         Arbitro arbitro = arbitroRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Árbitro no encontrado con email: " + email));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Árbitro no encontrado con email: " + email));
         arbitro.setVerificado(true);
         arbitroRepository.save(arbitro);
     }
@@ -105,7 +106,8 @@ public class ArbitroService {
     @Transactional
     public void actualizarPassword(String email, String nuevaPasswordEncriptada) {
         Arbitro arbitro = arbitroRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Árbitro no encontrado con email: " + email));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Árbitro no encontrado con email: " + email));
         arbitro.setPassword(nuevaPasswordEncriptada);
         arbitroRepository.save(arbitro);
     }
@@ -127,7 +129,7 @@ public class ArbitroService {
 
         List<Partido> partidos = partidoRepository.findByArbitroId(arbitro.getId());
 
-        if (partidos == null || partidos.isEmpty()) {
+        if (partidos.isEmpty()) {
             return List.of();
         }
 

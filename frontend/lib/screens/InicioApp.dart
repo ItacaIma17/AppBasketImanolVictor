@@ -106,11 +106,8 @@ class _InicioPageState extends State<InicioPage> {
 
   Equipo? _getEquipoById(int? equipoId) {
     if (equipoId == null) return null;
-    try {
-      return _equipos.firstWhere((e) => e.id == equipoId);
-    } catch (e) {
-      return null;
-    }
+    final matches = _equipos.where((e) => e.id == equipoId);
+    return matches.isEmpty ? null : matches.first;
   }
 
   void _onSearch(String query) {
@@ -320,7 +317,7 @@ class _InicioPageState extends State<InicioPage> {
     return Material(
       color: Colors.transparent,
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 360),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(14),

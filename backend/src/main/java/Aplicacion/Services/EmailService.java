@@ -54,6 +54,20 @@ public class EmailService {
         log.info(" Email HTML enviado a: {} - Asunto: {}", to, subject);
     }
 
+    public void sendHtmlMailWithAttachment(String to, String subject, String htmlContent,
+                                            byte[] attachment, String attachmentFilename) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setFrom(fromEmail);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        helper.addAttachment(attachmentFilename,
+                new org.springframework.core.io.ByteArrayResource(attachment));
+        mailSender.send(message);
+        log.info(" Email con adjunto enviado a: {} - Asunto: {}", to, subject);
+    }
+
     public void sendTextMail(String to, String subject, String textContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");

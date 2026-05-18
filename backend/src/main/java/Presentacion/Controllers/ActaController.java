@@ -13,7 +13,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +33,7 @@ public class ActaController {
 
     @PostMapping("/guardar")
     @PreAuthorize("hasRole('ARBITRO')")
-    public ResponseEntity<?> guardarActa(@RequestBody ActaRequestDTO actaRequest) {
+    public ResponseEntity<?> guardarActa(@Valid @RequestBody ActaRequestDTO actaRequest) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         log.info(" Guardando acta para partido ID: {}", actaRequest.getPartidoId());
@@ -37,7 +41,7 @@ public class ActaController {
         boolean alineacionesListas = alineacionService.ambasAlineacionesConfirmadas(actaRequest.getPartidoId());
         if (!alineacionesListas) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("message", "No se puede crear el acta hasta que el árbitro haya confirmado las alineaciones de ambos equipos."));
+                    .body(Map.of("message", "No se puede crear el acta hasta que los entrenadores hayan confirmado las alineaciones de ambos equipos."));
         }
 
         return ResponseEntity.ok(actaService.guardarActa(actaRequest, username));
@@ -47,7 +51,9 @@ public class ActaController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ActaResponseDTO> obtenerActaPorPartido(@PathVariable Long partidoId,
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(actaService.obtenerActaPorPartido(partidoId, userDetails.getUsername()));
+        ActaResponseDTO acta = actaService.obtenerActaPorPartido(partidoId, userDetails.getUsername());
+        if (acta == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(acta);
     }
 
     @GetMapping("/{actaId}")
@@ -77,6 +83,20 @@ public class ActaController {
         log.info(" Eliminando acta ID: {}", actaId);
         actaService.eliminarActa(actaId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/partido/{partidoId}/subir", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ARBITRO')")
+    public ResponseEntity<?> subirArchivoActa(
+            @PathVariable Long partidoId,
+            @RequestParam("archivo") MultipartFile archivo,
+            @RequestParam(value = "resultadoLocal", required = false) String resultadoLocal,
+            @RequestParam(value = "resultadoVisitante", required = false) String resultadoVisitante,
+            @RequestParam(value = "observaciones", required = false) String observaciones,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info(" Subiendo archivo de acta para partido ID: {}", partidoId);
+        return ResponseEntity.ok(actaService.subirArchivoActa(
+                partidoId, archivo, resultadoLocal, resultadoVisitante, observaciones, userDetails.getUsername()));
     }
 
     @GetMapping("/partido/{partidoId}/existe")
@@ -120,10 +140,15 @@ public class ActaController {
     }
 
     @GetMapping("/{actaId}/pdf")
-    @PreAuthorize("hasAnyRole('ARBITRO', 'ADMIN', 'ENTRENADOR', 'JUGADOR')")
     public ResponseEntity<byte[]> descargarPdf(@PathVariable Long actaId) {
         log.info(" Descargando PDF del acta ID: {}", actaId);
         return actaService.generarPdf(actaId);
+    }
+
+    @GetMapping("/partido/{partidoId}/pdf")
+    public ResponseEntity<byte[]> descargarPdfPorPartido(@PathVariable Long partidoId) {
+        log.info(" Descargando PDF del acta para partido ID: {}", partidoId);
+        return actaService.generarPdfPorPartido(partidoId);
     }
 
     @PostMapping("/{actaId}/compartir")

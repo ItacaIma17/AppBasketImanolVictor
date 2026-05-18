@@ -27,6 +27,10 @@ public class NotificacionService {
     private static final DateTimeFormatter FORMATO_FECHA =
             DateTimeFormatter.ofPattern("EEEE dd 'de' MMMM 'a las' HH:mm", new Locale("es", "ES"));
 
+    private static String eqNombre(Dominio.Entity.Equipo e) {
+        return e != null && e.getNombre() != null ? e.getNombre() : "Equipo desconocido";
+    }
+
     public void notificarPartidoCreado(Partido partido) {
         if (partido == null) return;
 
@@ -35,8 +39,8 @@ public class NotificacionService {
                 : "fecha por confirmar";
 
         String asunto = " Nuevo partido programado - " +
-                partido.getEquipoLocal().getNombre() + " vs " +
-                partido.getEquipoVisitante().getNombre();
+                eqNombre(partido.getEquipoLocal()) + " vs " +
+                eqNombre(partido.getEquipoVisitante());
 
         String cuerpo = construirCuerpoPartido(partido, fecha,
                 "Se ha programado un nuevo partido en la Federación Aragonesa de Baloncesto.");
@@ -85,17 +89,17 @@ public class NotificacionService {
         if (partido == null) return;
 
         String asunto = " Resultado: " +
-                partido.getEquipoLocal().getNombre() + " " +
+                eqNombre(partido.getEquipoLocal()) + " " +
                 partido.getResultadoLocal() + " - " +
                 partido.getResultadoVisitante() + " " +
-                partido.getEquipoVisitante().getNombre();
+                eqNombre(partido.getEquipoVisitante());
 
         String cuerpo = "El partido entre <strong>" +
-                partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
-                partido.getEquipoVisitante().getNombre() + "</strong> ha finalizado.<br><br>" +
+                eqNombre(partido.getEquipoLocal()) + "</strong> y <strong>" +
+                eqNombre(partido.getEquipoVisitante()) + "</strong> ha finalizado.<br><br>" +
                 "<strong>Resultado final:</strong><br>" +
-                partido.getEquipoLocal().getNombre() + ": " + partido.getResultadoLocal() + " pts<br>" +
-                partido.getEquipoVisitante().getNombre() + ": " + partido.getResultadoVisitante() + " pts<br><br>" +
+                eqNombre(partido.getEquipoLocal()) + ": " + partido.getResultadoLocal() + " pts<br>" +
+                eqNombre(partido.getEquipoVisitante()) + ": " + partido.getResultadoVisitante() + " pts<br><br>" +
                 "Consulta las estadísticas detalladas en la aplicación FAB.";
 
         notificarEquipo(partido, asunto, cuerpo);
@@ -103,11 +107,11 @@ public class NotificacionService {
 
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has registrado el resultado del partido entre <strong>" +
-                    partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
-                    partido.getEquipoVisitante().getNombre() + "</strong>.<br><br>" +
+                    eqNombre(partido.getEquipoLocal()) + "</strong> y <strong>" +
+                    eqNombre(partido.getEquipoVisitante()) + "</strong>.<br><br>" +
                     "<strong>Resultado final:</strong><br>" +
-                    partido.getEquipoLocal().getNombre() + ": " + partido.getResultadoLocal() + " pts<br>" +
-                    partido.getEquipoVisitante().getNombre() + ": " + partido.getResultadoVisitante() + " pts";
+                    eqNombre(partido.getEquipoLocal()) + ": " + partido.getResultadoLocal() + " pts<br>" +
+                    eqNombre(partido.getEquipoVisitante()) + ": " + partido.getResultadoVisitante() + " pts";
 
             enviarNotificacion(partido.getArbitro().getEmail(), asunto, cuerpoArbitro);
         }
@@ -122,12 +126,12 @@ public class NotificacionService {
                 : "fecha por confirmar";
 
         String asunto = " Nueva designación - " +
-                partido.getEquipoLocal().getNombre() + " vs " +
-                partido.getEquipoVisitante().getNombre();
+                eqNombre(partido.getEquipoLocal()) + " vs " +
+                eqNombre(partido.getEquipoVisitante());
 
         String cuerpo = "Has sido designado como árbitro para el partido:<br><br>" +
-                "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
-                "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                "<strong>" + eqNombre(partido.getEquipoLocal()) + "</strong> vs " +
+                "<strong>" + eqNombre(partido.getEquipoVisitante()) + "</strong><br><br>" +
                 " <strong>Fecha:</strong> " + fecha + "<br>" +
                 " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
                 " <strong>Ubicación:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +
@@ -137,8 +141,8 @@ public class NotificacionService {
 
         String asuntoSeguidores = "Árbitro designado para el partido de tu equipo";
         String cuerpoSeguidores = "Se ha designado árbitro para el partido:<br><br>" +
-                "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
-                "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                "<strong>" + eqNombre(partido.getEquipoLocal()) + "</strong> vs " +
+                "<strong>" + eqNombre(partido.getEquipoVisitante()) + "</strong><br><br>" +
                 " <strong>Árbitro:</strong> " + partido.getArbitro().getNombre() + " " + partido.getArbitro().getApellidos() + "<br>" +
                 " <strong>Fecha:</strong> " + fecha + "<br>" +
                 " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar");
@@ -161,8 +165,8 @@ public class NotificacionService {
             String asuntoArbitro = "Nueva alineación presentada - " + nombreEquipo;
             String cuerpoArbitro = "El equipo <strong>" + nombreEquipo + "</strong> ha presentado su alineación " +
                     "para el partido del " + fecha + ".<br><br>" +
-                    "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs " +
-                    "<strong>" + partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                    "<strong>" + eqNombre(partido.getEquipoLocal()) + "</strong> vs " +
+                    "<strong>" + eqNombre(partido.getEquipoVisitante()) + "</strong><br><br>" +
                     "Revisa y confirma la alineación desde la aplicación.";
             enviarNotificacion(partido.getArbitro().getEmail(), asuntoArbitro, cuerpoArbitro);
         }
@@ -171,8 +175,8 @@ public class NotificacionService {
         String cuerpoSeguidores = "El equipo <strong>" + nombreEquipo + "</strong> ha enviado su alineación " +
                 "para el partido del " + fecha + " frente a <strong>" +
                 (partido.getEquipoLocal().getId().equals(alineacion.getEquipo().getId())
-                        ? partido.getEquipoVisitante().getNombre()
-                        : partido.getEquipoLocal().getNombre()) +
+                        ? eqNombre(partido.getEquipoVisitante())
+                        : eqNombre(partido.getEquipoLocal())) +
                 "</strong>.<br><br>Consulta los detalles en la aplicación FAB.";
         notificarSeguidoresEquipo(alineacion.getEquipo().getId(), asuntoSeguidores, cuerpoSeguidores);
     }
@@ -205,12 +209,12 @@ public class NotificacionService {
         if (partido == null) return;
 
         String asunto = " Acta disponible - " +
-                partido.getEquipoLocal().getNombre() + " vs " +
-                partido.getEquipoVisitante().getNombre();
+                eqNombre(partido.getEquipoLocal()) + " vs " +
+                eqNombre(partido.getEquipoVisitante());
 
         String cuerpo = "El acta del partido entre <strong>" +
-                partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
-                partido.getEquipoVisitante().getNombre() + "</strong> ya está disponible.<br><br>" +
+                eqNombre(partido.getEquipoLocal()) + "</strong> y <strong>" +
+                eqNombre(partido.getEquipoVisitante()) + "</strong> ya está disponible.<br><br>" +
                 "Puedes consultarla desde la aplicación en la sección de Actas y Estadísticas.";
 
         notificarEquipo(partido, asunto, cuerpo);
@@ -218,8 +222,8 @@ public class NotificacionService {
 
         if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
             String cuerpoArbitro = "Has subido el acta del partido entre <strong>" +
-                    partido.getEquipoLocal().getNombre() + "</strong> y <strong>" +
-                    partido.getEquipoVisitante().getNombre() + "</strong>.<br><br>" +
+                    eqNombre(partido.getEquipoLocal()) + "</strong> y <strong>" +
+                    eqNombre(partido.getEquipoVisitante()) + "</strong>.<br><br>" +
                     "El acta ha sido registrada correctamente en el sistema.";
 
             enviarNotificacion(partido.getArbitro().getEmail(), asunto, cuerpoArbitro);
@@ -320,8 +324,8 @@ public class NotificacionService {
 
     private String construirCuerpoPartido(Partido partido, String fecha, String intro) {
         return intro + "<br><br>" +
-                "<strong>" + partido.getEquipoLocal().getNombre() + "</strong> vs <strong>" +
-                partido.getEquipoVisitante().getNombre() + "</strong><br><br>" +
+                "<strong>" + eqNombre(partido.getEquipoLocal()) + "</strong> vs <strong>" +
+                eqNombre(partido.getEquipoVisitante()) + "</strong><br><br>" +
                 " <strong>Fecha:</strong> " + fecha + "<br>" +
                 " <strong>Pabellón:</strong> " + (partido.getPabellon() != null ? partido.getPabellon() : "por confirmar") + "<br>" +
                 " <strong>Dirección:</strong> " + (partido.getUbicacion() != null ? partido.getUbicacion() : "por confirmar") + "<br><br>" +

@@ -18,14 +18,6 @@ class AlineacionService {
     return headers;
   }
 
-  static Future<Map<String, String>> _getHeadersAsync() async {
-    final token = await AutenticacionService.getToken();
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
   static Future<Alineacion> presentarAlineacion(Map<String, dynamic> data) async {
     try {
       LoggerService.info('Presentando alineación', tag: 'ALINEACION',
@@ -106,15 +98,15 @@ class AlineacionService {
         return {
           'local': data['alineacionLocal'] != null ? {
             'id': data['alineacionLocal']['id'],
-            'nombreEquipo': data['nombreLocal'] ?? 'Local',
+            'nombreEquipo': data['equipoLocal'] ?? data['nombreLocal'] ?? 'Local',
             'jugadores': _procesarJugadoresAlineacion(data['alineacionLocal']),
-            'confirmada': data['alineacionLocalConfirmada'] ?? false,
+            'confirmada': data['alineacionLocal']['confirmada'] ?? false,
           } : null,
           'visitante': data['alineacionVisitante'] != null ? {
             'id': data['alineacionVisitante']['id'],
-            'nombreEquipo': data['nombreVisitante'] ?? 'Visitante',
+            'nombreEquipo': data['equipoVisitante'] ?? data['nombreVisitante'] ?? 'Visitante',
             'jugadores': _procesarJugadoresAlineacion(data['alineacionVisitante']),
-            'confirmada': data['alineacionVisitanteConfirmada'] ?? false,
+            'confirmada': data['alineacionVisitante']['confirmada'] ?? false,
           } : null,
         };
       } else if (response.statusCode == 404) {

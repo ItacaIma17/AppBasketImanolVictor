@@ -603,7 +603,7 @@ public class UserService {
         log.info(" Obteniendo perfil para: {}", username);
         Usuario usuario = findByUsername(username);
         if (usuario == null) {
-            throw new RuntimeException("Usuario no encontrado");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado: " + username);
         }
 
         return UsuarioPerfilDTO.builder()

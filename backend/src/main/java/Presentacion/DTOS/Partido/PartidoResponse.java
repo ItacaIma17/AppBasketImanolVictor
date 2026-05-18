@@ -22,6 +22,12 @@ public class PartidoResponse {
     private Long arbitroId;
     private String arbitroNombre;
     private Integer jornada;
+    private Boolean tieneAlineacionLocal;
+    private Boolean tieneAlineacionVisitante;
+    private Boolean alineacionLocalConfirmada;
+    private Boolean alineacionVisitanteConfirmada;
+    private Boolean tieneActa;
+    private Long actaId;
 
     public static PartidoResponse fromEntity(Partido partido) {
         PartidoResponse dto = new PartidoResponse();
@@ -58,6 +64,11 @@ public class PartidoResponse {
                 nombreCompleto = (nombreCompleto + " " + partido.getArbitro().getApellidos()).trim();
             }
             dto.setArbitroNombre(nombreCompleto);
+        }
+
+        dto.setTieneActa(partido.getActaPartido() != null);
+        if (partido.getActaPartido() != null) {
+            dto.setActaId(partido.getActaPartido().getId());
         }
 
         return dto;

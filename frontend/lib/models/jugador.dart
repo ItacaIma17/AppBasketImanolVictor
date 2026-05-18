@@ -114,7 +114,7 @@ class Jugador {
       verificado: json['verificado'] ?? false,
       tieneEquipo: json['tieneEquipo'] ?? false,
       equipoId: _parseIntNullable(json['equipoId']),
-      nombreEquipo: json['nombreEquipo'],
+      nombreEquipo: json['nombreEquipo'] ?? json['equipoNombre'],
     );
   }
 

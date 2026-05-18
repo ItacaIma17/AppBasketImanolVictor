@@ -37,12 +37,12 @@ class _EventoFormState extends State<EventoForm> {
   ];
 
   final Map<String, String> _tiposDisplay = {
-    'CANASTA': ' Canasta (2 puntos)',
-    'TIRO_3PUNTOS': '3 Triple (3 puntos)',
+    'CANASTA': '🏀 Canasta (2 puntos)',
+    'TIRO_3PUNTOS': '3️⃣ Triple (3 puntos)',
     'TIRO_LIBRE': '⬜ Tiro Libre (1 punto)',
-    'FALTA': ' Falta',
-    'TECNICA': ' Falta Técnica',
-    'EXPULSION': ' Expulsión',
+    'FALTA': '✋ Falta',
+    'TECNICA': '🟡 Falta Técnica',
+    'EXPULSION': '⛔ Expulsión',
   };
 
   @override
@@ -101,7 +101,7 @@ class _EventoFormState extends State<EventoForm> {
                     .map<DropdownMenuItem<Map<String, dynamic>>>((jugador) {
                   return DropdownMenuItem<Map<String, dynamic>>(
                     value: jugador,
-                    child: Text('${jugador['dorsal']} - ${jugador['nombreCompleto']}'),
+                    child: Text('${jugador['dorsal']} - ${jugador['nombreJugador'] ?? jugador['nombre']}'),
                   );
                 }).toList()
                     : [],
@@ -190,7 +190,7 @@ class _EventoFormState extends State<EventoForm> {
       final evento = EventoPartido(
         id: null,
         jugadorId: _jugadorSeleccionado!['jugadorId'],
-        nombreJugador: _jugadorSeleccionado!['nombreCompleto'],
+        nombreJugador: (_jugadorSeleccionado!['nombreJugador'] ?? _jugadorSeleccionado!['nombre'] ?? '').toString(),
         nombreEquipo: _equipoSeleccionado!,
         minuto: int.parse(_minuto!),
         tipo: _tipoEvento!,

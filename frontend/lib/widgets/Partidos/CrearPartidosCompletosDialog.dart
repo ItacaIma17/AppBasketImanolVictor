@@ -543,7 +543,6 @@ class _CrearPartidoCompletoDialogState
         ..._arbitros.map((a) => DropdownMenuItem(
           value: a,
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
                 radius: 12,
@@ -583,6 +582,34 @@ class _CrearPartidoCompletoDialogState
               ),
             ],
           ),
+        )),
+      ],
+      selectedItemBuilder: (context) => [
+        const Text('Sin árbitro asignado',
+            style: TextStyle(
+                color: AppColors.grisClaro,
+                fontSize: 13,
+                fontStyle: FontStyle.italic)),
+        ..._arbitros.map((a) => Row(
+          children: [
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: AppColors.naranja.withOpacity(0.2),
+              child: Text(a.iniciales,
+                  style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.naranja,
+                      fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(a.nombreCompleto,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: AppColors.blanco, fontSize: 13)),
+            ),
+          ],
         )),
       ],
       onChanged: (v) => setState(() => _arbitro = v),

@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
 import '../models/actaPartido.dart';
 import 'autenticacion_service.dart';
 import 'loggerService.dart';
-import 'package:path_provider/path_provider.dart';
 
 class ActaService {
   static String get baseUrl => AppConfig.apiUrl;
@@ -134,7 +134,7 @@ class ActaService {
     }
   }
 
-  static Future<File> descargarActaPdf(int partidoId) async {
+  static Future<Uint8List> descargarActaPdf(int partidoId) async {
     try {
       LoggerService.info('Descargando PDF del acta', tag: 'ACTA', data: {'partidoId': partidoId});
 
@@ -144,22 +144,56 @@ class ActaService {
       ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
-
-        final directory = await getApplicationDocumentsDirectory();
-
-        final file = File('${directory.path}/acta_partido_$partidoId.pdf');
-
-        await file.writeAsBytes(response.bodyBytes);
-
         LoggerService.info('PDF descargado exitosamente', tag: 'ACTA',
-            data: {'path': file.path, 'size': response.bodyBytes.length});
-
-        return file;
+            data: {'size': response.bodyBytes.length});
+        return response.bodyBytes;
       } else {
-        throw Exception('Error al descargar PDF');
+        throw Exception('Error al descargar PDF: ${response.statusCode}');
       }
     } catch (e) {
       LoggerService.error('Error descargando PDF', tag: 'ACTA', error: e);
+      rethrow;
+    }
+  }
+
+  static Future<void> subirArchivoActa({
+    required int partidoId,
+    required Uint8List bytes,
+    required String contentType,
+    required String filename,
+    String? resultadoLocal,
+    String? resultadoVisitante,
+    String? observaciones,
+  }) async {
+    try {
+      LoggerService.info('Subiendo archivo de acta', tag: 'ACTA', data: {'partidoId': partidoId});
+      final token = AutenticacionService.token;
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/actas/partido/$partidoId/subir'),
+      );
+      if (token != null) request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(http.MultipartFile.fromBytes(
+        'archivo',
+        bytes,
+        filename: filename,
+        contentType: MediaType.parse(contentType),
+      ));
+      if (resultadoLocal != null) request.fields['resultadoLocal'] = resultadoLocal;
+      if (resultadoVisitante != null) request.fields['resultadoVisitante'] = resultadoVisitante;
+      if (observaciones != null) request.fields['observaciones'] = observaciones;
+
+      final streamed = await request.send().timeout(const Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        String msg = 'Error al subir archivo';
+        try { msg = json.decode(response.body)['message'] ?? msg; } catch (_) {}
+        throw Exception(msg);
+      }
+      LoggerService.info('Archivo subido exitosamente', tag: 'ACTA');
+    } catch (e) {
+      LoggerService.error('Error subiendo archivo de acta', tag: 'ACTA', error: e);
       rethrow;
     }
   }
@@ -295,10 +329,11 @@ class ActaService {
 
   static Future<void> compartirActaPorEmail(int actaId, String email) async {
     try {
+      final uri = Uri.parse('$baseUrl/actas/$actaId/compartir')
+          .replace(queryParameters: {'email': email});
       final response = await http.post(
-        Uri.parse('$baseUrl/actas/$actaId/compartir'),
+        uri,
         headers: _headers,
-        body: json.encode({'email': email}),
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {

@@ -191,10 +191,10 @@ public class PartidoController {
 
         try {
             Partido partido = partidoRepository.findById(partidoId)
-                    .orElseThrow(() -> new RuntimeException("Partido no encontrado"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
             Arbitro arbitro = arbitroRepository.findById(arbitroId)
-                    .orElseThrow(() -> new RuntimeException("Árbitro no encontrado"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Árbitro no encontrado"));
 
             partido.setArbitro(arbitro);
             partidoRepository.save(partido);
@@ -202,6 +202,8 @@ public class PartidoController {
             log.info(" Árbitro {} asignado al partido {}", arbitroId, partidoId);
             return ResponseEntity.ok(Map.of("message", "Árbitro asignado correctamente"));
 
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             log.error("Error asignando árbitro: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
