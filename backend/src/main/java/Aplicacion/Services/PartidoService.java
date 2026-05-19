@@ -6,6 +6,7 @@ import Dominio.Repositorys.AlineacionRepository;
 import Presentacion.DTOS.Partido.CrearPartidoCompletoDTO;
 import Presentacion.DTOS.Partido.PartidoRequestDTO;
 import Presentacion.DTOS.Partido.PartidoResponse;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ public class PartidoService {
     private final JugadorRepository jugadorRepository;
     private final ActaPartidoRepository actaPartidoRepository;
     private final AlineacionRepository alineacionRepository;
+    private final EmailService emailService;
 
     @Transactional
     public PartidoResponse crearPartido(PartidoRequestDTO dto) {
@@ -520,6 +522,21 @@ public class PartidoService {
             Partido saved = partidoRepository.save(partido);
             log.info(" Árbitro {} asignado al partido {}", arbitro.getNombre(), saved.getId());
 
+            if (arbitro.getEmail() != null) {
+                try {
+                    String pabellon = saved.getPabellon() != null ? saved.getPabellon() : saved.getUbicacion();
+                    emailService.enviarAsignacionPartidoArbitro(
+                            arbitro.getEmail(),
+                            arbitro.getNombre() + " " + arbitro.getApellidos(),
+                            saved.getEquipoLocal().getNombre(),
+                            saved.getEquipoVisitante().getNombre(),
+                            saved.getFecha(),
+                            pabellon != null ? pabellon : "Por confirmar");
+                } catch (MessagingException e) {
+                    log.warn("Email de asignación no enviado al árbitro {}: {}", arbitro.getEmail(), e.getMessage());
+                }
+            }
+
             return PartidoResponse.fromEntity(saved);
         }
 
@@ -640,7 +657,42 @@ public class PartidoService {
         actualizarEstadisticasEquipo(partido.getEquipoLocal().getId(), resultadoLocal, resultadoVisitante);
         actualizarEstadisticasEquipo(partido.getEquipoVisitante().getId(), resultadoVisitante, resultadoLocal);
 
-        return PartidoResponse.fromEntity(partidoRepository.save(partido));
+        Partido saved = partidoRepository.save(partido);
+
+        String nombreLocal = partido.getEquipoLocal().getNombre();
+        String nombreVisitante = partido.getEquipoVisitante().getNombre();
+
+        Entrenador entrenadorLocal = partido.getEquipoLocal().getEntrenador();
+        if (entrenadorLocal != null && entrenadorLocal.getEmail() != null) {
+            try {
+                emailService.enviarResultadoPartido(entrenadorLocal.getEmail(), entrenadorLocal.getNombre(),
+                        nombreLocal, nombreVisitante, resultadoLocal, resultadoVisitante);
+            } catch (MessagingException e) {
+                log.warn("Email resultado no enviado al entrenador local {}: {}", entrenadorLocal.getEmail(), e.getMessage());
+            }
+        }
+
+        Entrenador entrenadorVisitante = partido.getEquipoVisitante().getEntrenador();
+        if (entrenadorVisitante != null && entrenadorVisitante.getEmail() != null) {
+            try {
+                emailService.enviarResultadoPartido(entrenadorVisitante.getEmail(), entrenadorVisitante.getNombre(),
+                        nombreLocal, nombreVisitante, resultadoLocal, resultadoVisitante);
+            } catch (MessagingException e) {
+                log.warn("Email resultado no enviado al entrenador visitante {}: {}", entrenadorVisitante.getEmail(), e.getMessage());
+            }
+        }
+
+        if (partido.getArbitro() != null && partido.getArbitro().getEmail() != null) {
+            try {
+                emailService.enviarResultadoPartido(partido.getArbitro().getEmail(),
+                        partido.getArbitro().getNombre() + " " + partido.getArbitro().getApellidos(),
+                        nombreLocal, nombreVisitante, resultadoLocal, resultadoVisitante);
+            } catch (MessagingException e) {
+                log.warn("Email resultado no enviado al árbitro {}: {}", partido.getArbitro().getEmail(), e.getMessage());
+            }
+        }
+
+        return PartidoResponse.fromEntity(saved);
     }
 
     @Transactional(readOnly = true)

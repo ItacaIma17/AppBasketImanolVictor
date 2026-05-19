@@ -44,11 +44,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
 
   List<Partido> get _partidosFiltrados {
     if (_filtro == 'TODOS') return _partidos;
-    final lista = _partidos.where((p) => p.estado == _filtro).toList();
-    if (_filtro == 'PROGRAMADO' && _miEquipoId != null) {
-      return lista.where((p) => !p.tieneAlineacionParaEquipo(_miEquipoId!)).toList();
-    }
-    return lista;
+    return _partidos.where((p) => p.estado == _filtro).toList();
   }
 
   @override
@@ -252,7 +248,7 @@ class _MisPartidosEntrenadorPageState extends State<MisPartidosEntrenadorPage> {
             } else if (!esFinalizado && !tieneAlineacion) {
               _presentarAlineacion(partido, esLocal);
             } else if (!esFinalizado && tieneAlineacion) {
-              _verAlineacion(partidoId, equipoLocalId);
+              _verAlineacion(partidoId, _miEquipoId ?? equipoLocalId);
             }
           },
           child: Padding(

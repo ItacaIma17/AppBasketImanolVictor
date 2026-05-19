@@ -344,6 +344,128 @@ public class EmailService {
         sendHtmlMail(to, subject, content);
     }
 
+    public void enviarSolicitudAprobada(String to, String nombre, String equipoNombre) throws MessagingException {
+        String subject = "Solicitud aprobada - Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>¡Enhorabuena, %s!</h2>
+            <p>Tu solicitud para dirigir el equipo <strong style="color: orange;">%s</strong> ha sido
+               <strong style="color: green;">aprobada</strong>.</p>
+            <p>Ya puedes acceder a los datos del equipo, subir alineaciones y gestionar tus jugadores desde la app.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, equipoNombre);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarSolicitudRechazada(String to, String nombre, String equipoNombre) throws MessagingException {
+        String subject = "Solicitud denegada - Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>Hola, %s</h2>
+            <p>Lamentamos informarte de que tu solicitud para dirigir el equipo
+               <strong>%s</strong> ha sido <strong style="color: red;">denegada</strong>.</p>
+            <p>Si crees que es un error, ponte en contacto con la Federación.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, equipoNombre);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarResultadoPartido(String to, String nombre, String equipoLocal,
+                                       String equipoVisitante, int resultadoLocal,
+                                       int resultadoVisitante) throws MessagingException {
+        String subject = "Resultado del partido - Federación Aragonesa de Baloncesto";
+        String ganador = resultadoLocal > resultadoVisitante ? equipoLocal
+                : resultadoLocal < resultadoVisitante ? equipoVisitante : "Empate";
+        String content = String.format("""
+            <h2>Hola, %s</h2>
+            <p>El partido ha finalizado. Resultado oficial:</p>
+            <table border="1" cellpadding="10" style="border-collapse: collapse; text-align: center;">
+                <tr>
+                    <th style="background: #f0f0f0;">%s</th>
+                    <th style="background: #FF6600; color: white; font-size: 20px;">%d - %d</th>
+                    <th style="background: #f0f0f0;">%s</th>
+                </tr>
+            </table>
+            %s
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, equipoLocal, resultadoLocal, resultadoVisitante, equipoVisitante,
+                resultadoLocal != resultadoVisitante
+                        ? "<p><strong>Ganador: " + ganador + "</strong></p>"
+                        : "<p><strong>Empate</strong></p>");
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarBienvenidaEntrenador(String to, String nombre, String username,
+                                           String password) throws MessagingException {
+        String subject = "Bienvenido a la Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>¡Bienvenido, %s!</h2>
+            <p>El administrador ha creado tu cuenta de entrenador en la Federación Aragonesa de Baloncesto.</p>
+            <p>Tus credenciales de acceso son:</p>
+            <table border="1" cellpadding="8" style="border-collapse: collapse;">
+                <tr><th style="background: #f0f0f0;">Usuario</th><td><strong>%s</strong></td></tr>
+                <tr><th style="background: #f0f0f0;">Contraseña</th><td><strong>%s</strong></td></tr>
+            </table>
+            <p style="color: red;"><strong>Por seguridad, cambia tu contraseña en el primer inicio de sesión.</strong></p>
+            <p>Descarga la app e inicia sesión con estas credenciales.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, username, password);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarBienvenidaArbitro(String to, String nombre, String username,
+                                        String password) throws MessagingException {
+        String subject = "Bienvenido a la Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>¡Bienvenido, %s!</h2>
+            <p>El administrador ha creado tu cuenta de árbitro en la Federación Aragonesa de Baloncesto.</p>
+            <p>Tus credenciales de acceso son:</p>
+            <table border="1" cellpadding="8" style="border-collapse: collapse;">
+                <tr><th style="background: #f0f0f0;">Usuario</th><td><strong>%s</strong></td></tr>
+                <tr><th style="background: #f0f0f0;">Contraseña</th><td><strong>%s</strong></td></tr>
+            </table>
+            <p style="color: red;"><strong>Por seguridad, cambia tu contraseña en el primer inicio de sesión.</strong></p>
+            <p>Descarga la app e inicia sesión con estas credenciales.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre, username, password);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarConfirmacionCambioContrasena(String to, String nombre) throws MessagingException {
+        String subject = "Contraseña actualizada - Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>Hola, %s</h2>
+            <p>Tu contraseña ha sido <strong>restablecida correctamente</strong>.</p>
+            <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+            <p style="color: red;">Si no has sido tú quien realizó este cambio, contacta inmediatamente con la
+               Federación Aragonesa de Baloncesto respondiendo a este email.</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre);
+        sendHtmlMail(to, subject, content);
+    }
+
+    public void enviarBienvenidaVerificacion(String to, String nombre) throws MessagingException {
+        String subject = "¡Cuenta verificada! - Federación Aragonesa de Baloncesto";
+        String content = String.format("""
+            <h2>¡Bienvenido/a a la Federación Aragonesa de Baloncesto, %s!</h2>
+            <p>Tu cuenta ha sido <strong style="color: green;">verificada correctamente</strong>.</p>
+            <p>Ya puedes acceder a todas las funcionalidades de la app:</p>
+            <ul>
+                <li>Ver partidos y resultados en tiempo real</li>
+                <li>Consultar clasificaciones y estadísticas</li>
+                <li>Seguir a tus equipos y jugadores favoritos</li>
+            </ul>
+            <p>¡Disfruta de la app!</p>
+            <br>
+            <p>Federación Aragonesa de Baloncesto</p>
+            """, nombre);
+        sendHtmlMail(to, subject, content);
+    }
+
     public void enviarComunicado(String to, String asunto, String mensaje) throws MessagingException {
         String subject = asunto != null ? asunto : "Comunicado oficial - Federación Aragonesa de Baloncesto";
         String content = String.format("""

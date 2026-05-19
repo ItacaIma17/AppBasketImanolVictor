@@ -104,7 +104,7 @@ class PartidoService {
 
   static Future<Map<String, dynamic>?> getDetallePartido(int partidoId) async {
     try {
-      final response = await AppConfig.get('/partidos/$partidoId/detalle');
+      final response = await AppConfig.get('/partidos/$partidoId/detalle-completo');
 
       if (response == null) return null;
 
@@ -156,7 +156,7 @@ class PartidoService {
   static Future<List<Partido>> obtenerPartidosPorEquipoLocal(int equipoId) async {
     try {
       final partidos = await getPartidosByEquipo(equipoId);
-      return partidos.where((p) => p.nombreLocal == equipoId).toList();
+      return partidos.where((p) => p.equipoLocalId == equipoId).toList();
     } catch (e) {
       return [];
     }
@@ -165,7 +165,7 @@ class PartidoService {
   static Future<List<Partido>> obtenerPartidosPorEquipoVisitante(int equipoId) async {
     try {
       final partidos = await getPartidosByEquipo(equipoId);
-      return partidos.where((p) => p.nombreVisitante == equipoId).toList();
+      return partidos.where((p) => p.equipoVisitanteId == equipoId).toList();
     } catch (e) {
       return [];
     }
@@ -221,13 +221,12 @@ class PartidoService {
       }
 
       final data = {
-        'puntosLocal': resultado['puntosLocal'] ?? 0,
-        'puntosVisitante': resultado['puntosVisitante'] ?? 0,
-        'estado': 'FINALIZADO',
+        'resultadoLocal': resultado['puntosLocal'] ?? resultado['resultadoLocal'] ?? 0,
+        'resultadoVisitante': resultado['puntosVisitante'] ?? resultado['resultadoVisitante'] ?? 0,
       };
 
       final response = await http.put(
-        Uri.parse('${AppConfig.apiUrl}/admin/partidos/$partidoId/resultado'),
+        Uri.parse('${AppConfig.apiUrl}/partidos/$partidoId/resultado'),
         headers: await _getHeaders(),
         body: json.encode(data),
       );

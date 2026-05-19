@@ -104,6 +104,12 @@ public class AdminController {
         return ResponseEntity.ok(adminService.obtenerEstadisticas());
     }
 
+    @GetMapping("/estadisticas/usuarios")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticasUsuarios() {
+        log.info(" Obteniendo estadísticas de usuarios");
+        return ResponseEntity.ok(adminService.obtenerEstadisticas());
+    }
+
     @GetMapping("/actividad-reciente")
     public ResponseEntity<List<Map<String, Object>>> obtenerActividadReciente() {
         log.info(" Obteniendo actividad reciente");

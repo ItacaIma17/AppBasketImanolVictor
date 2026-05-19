@@ -238,7 +238,7 @@ class JugadorService {
   static Future<EstadisticasJugador> obtenerEstadisticasJugador(int jugadorId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/jugadores/$jugadorId/estadisticas'),
+        Uri.parse('$baseUrl/jugadores/$jugadorId/estadisticas-completas'),
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
@@ -313,7 +313,7 @@ class JugadorService {
   static Future<List<dynamic>> getMisPartidos() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/jugadores/mis-partidos'),
+        Uri.parse('$baseUrl/partidos/jugador/mis-partidos'),
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 

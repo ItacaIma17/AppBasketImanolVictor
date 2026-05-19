@@ -247,6 +247,66 @@ public class ActaService {
     }
 
     @Transactional(readOnly = true)
+    public List<ActaResponseDTO> listarTodas() {
+        return actaPartidoRepository.findAll().stream()
+                .map(acta -> ActaResponseDTO.fromEntity(acta, null))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getEstadisticasJugadorEnPartido(Long partidoId, Long jugadorId) {
+        ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada para el partido"));
+
+        List<EventoPartido> eventosJugador = acta.getEventos().stream()
+                .filter(e -> e.getJugador() != null && e.getJugador().getId().equals(jugadorId))
+                .collect(Collectors.toList());
+
+        int puntos = eventosJugador.stream()
+                .filter(e -> e.getPuntos() != null).mapToInt(EventoPartido::getPuntos).sum();
+
+        Map<String, Long> eventosPorTipo = eventosJugador.stream()
+                .collect(Collectors.groupingBy(EventoPartido::getTipo, Collectors.counting()));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("partidoId", partidoId);
+        result.put("jugadorId", jugadorId);
+        result.put("puntos", puntos);
+        result.put("totalEventos", eventosJugador.size());
+        result.put("eventosPorTipo", eventosPorTipo);
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getEstadisticasEquipoEnPartido(Long partidoId, Long equipoId) {
+        ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acta no encontrada para el partido"));
+
+        String nombreEquipo = equipoRepository.findById(equipoId)
+                .map(e -> e.getNombre()).orElse(null);
+
+        List<EventoPartido> eventosEquipo = acta.getEventos().stream()
+                .filter(e -> e.getNombreEquipo() != null && nombreEquipo != null
+                        && e.getNombreEquipo().equals(nombreEquipo))
+                .collect(Collectors.toList());
+
+        int puntosTotales = eventosEquipo.stream()
+                .filter(e -> e.getPuntos() != null).mapToInt(EventoPartido::getPuntos).sum();
+
+        Map<String, Long> eventosPorTipo = eventosEquipo.stream()
+                .collect(Collectors.groupingBy(EventoPartido::getTipo, Collectors.counting()));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("partidoId", partidoId);
+        result.put("equipoId", equipoId);
+        result.put("nombreEquipo", nombreEquipo);
+        result.put("puntosTotales", puntosTotales);
+        result.put("totalEventos", eventosEquipo.size());
+        result.put("eventosPorTipo", eventosPorTipo);
+        return result;
+    }
+
+    @Transactional(readOnly = true)
     public Map<String, Object> obtenerEstadisticasActa(Long actaId) {
         log.info("Obteniendo estadísticas del acta ID: {}", actaId);
 

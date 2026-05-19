@@ -5,6 +5,7 @@ import '../models/equipo.dart';
 import '../models/partido.dart';
 import '../services/equipoService.dart';
 import '../services/partidoService.dart';
+import '../services/EstadisticasService.dart';
 import '../widgets/Header.dart';
 import '../widgets/MenuLateral.dart';
 import 'equipos/DetalleEquipoPage.dart';
@@ -32,6 +33,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
   late TabController _tabController;
   List<Equipo> _equipos = [];
   List<Partido> _partidos = [];
+  List<Map<String, dynamic>> _clasificacion = [];
   bool _isLoading = true;
   String? _error;
   bool _esFavoritaLiga = false;
@@ -56,22 +58,28 @@ class _ClasificacionPageState extends State<ClasificacionPage>
     });
 
     try {
-      final todosEquipos = await EquipoService.listarEquipos();
-      final todosPartidos = await PartidoService.listarPartidos();
+      final results = await Future.wait([
+        EquipoService.listarEquipos(),
+        PartidoService.listarPartidos(),
+        EstadisticasService.getClasificacion(widget.id_categoria),
+      ]);
 
-      final equiposFiltrados = todosEquipos.where((e) =>
-      e.nombreLiga == widget.categoria
-      ).toList();
+      final todosEquipos = results[0] as List<Equipo>;
+      final todosPartidos = results[1] as List<Partido>;
+      final clasificacion = results[2] as List<Map<String, dynamic>>;
+
+      final equiposFiltrados = todosEquipos
+          .where((e) => e.ligaId == widget.id_categoria || e.nombreLiga == widget.categoria)
+          .toList();
 
       final partidosFiltrados = todosPartidos
           .where((p) => p.ligaId == widget.id_categoria)
           .toList();
 
-      equiposFiltrados.sort((a, b) => (b.puntos ?? 0).compareTo(a.puntos ?? 0));
-
       setState(() {
         _equipos = equiposFiltrados;
         _partidos = partidosFiltrados;
+        _clasificacion = clasificacion;
         _isLoading = false;
       });
     } catch (e) {
@@ -346,7 +354,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
   }
 
   Widget _buildClasificacion() {
-    if (_equipos.isEmpty) {
+    if (_clasificacion.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -354,7 +362,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
             Icon(Icons.emoji_events, size: 64, color: Colors.white54),
             SizedBox(height: 16),
             Text(
-              'No hay equipos en esta liga',
+              'No hay partidos finalizados en esta liga',
               style: TextStyle(color: Colors.white54, fontSize: 16),
             ),
           ],
@@ -364,23 +372,37 @@ class _ClasificacionPageState extends State<ClasificacionPage>
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      itemCount: _equipos.length,
+      itemCount: _clasificacion.length,
       itemBuilder: (context, index) {
-        final equipo = _equipos[index];
-        return _buildEquipoRow(equipo, index + 1);
+        return _buildClasificacionRow(_clasificacion[index]);
       },
     );
   }
 
-  Widget _buildEquipoRow(Equipo equipo, int posicion) {
+  Widget _buildClasificacionRow(Map<String, dynamic> entry) {
+    final posicion = entry['posicion'] as int? ?? 0;
+    final nombre = entry['nombre'] as String? ?? '';
+    final pj = entry['pj'] as int? ?? 0;
+    final pg = entry['pg'] as int? ?? 0;
+    final pp = entry['pp'] as int? ?? 0;
+    final puntos = entry['puntos'] as int? ?? 0;
+    final equipoId = entry['id'];
+
+    final equipo = _equipos.firstWhere(
+      (e) => e.id == equipoId,
+      orElse: () => Equipo(id: null, nombre: nombre, ciudad: '', nombreEstadio: ''),
+    );
+
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EquipoDetallePage(equipo: equipo),
-          ),
-        );
+        if (equipo.id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EquipoDetallePage(equipo: equipo),
+            ),
+          );
+        }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),
@@ -411,7 +433,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      equipo.nombre,
+                      nombre,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -419,36 +441,38 @@ class _ClasificacionPageState extends State<ClasificacionPage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'PJ: ${equipo.partidosJugados ?? 0} | PG: ${equipo.partidosGanados ?? 0} | PP: ${equipo.partidosPerdidos ?? 0}',
+                      'PJ: $pj | PG: $pg | PP: $pp',
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
               ),
               Text(
-                '${equipo.puntos ?? 0} pts',
+                '$puntos pts',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.naranja,
                 ),
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: Icon(
-                  FavoritosManager().esEquipoFavorito(equipo.id!)
-                      ? Icons.star
-                      : Icons.star_border,
-                  color: FavoritosManager().esEquipoFavorito(equipo.id!)
-                      ? Colors.amber
-                      : Colors.grey,
+              if (equipo.id != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    FavoritosManager().esEquipoFavorito(equipo.id!)
+                        ? Icons.star
+                        : Icons.star_border,
+                    color: FavoritosManager().esEquipoFavorito(equipo.id!)
+                        ? Colors.amber
+                        : Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      FavoritosManager().toggleEquipoFavorito(equipo.id!);
+                    });
+                  },
                 ),
-                onPressed: () {
-                  setState(() {
-                    FavoritosManager().toggleEquipoFavorito(equipo.id!);
-                  });
-                },
-              ),
+              ],
             ],
           ),
         ),

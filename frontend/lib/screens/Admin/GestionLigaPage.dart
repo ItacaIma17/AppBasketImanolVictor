@@ -58,6 +58,83 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
     }
   }
 
+  Future<void> _editarLiga(Liga liga) async {
+    _nombreController.text = liga.nombreLiga;
+    _paisController.text = liga.pais ?? '';
+    _temporadaController.text = liga.temporada ?? '';
+    _descripcionController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Liga'),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nombreController,
+                decoration: const InputDecoration(labelText: 'Nombre de la liga'),
+                validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _paisController,
+                decoration: const InputDecoration(labelText: 'País'),
+                validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _temporadaController,
+                decoration: const InputDecoration(labelText: 'Temporada (ej: 2024-2025)'),
+                validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => _guardarEdicion(liga.id!),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _guardarEdicion(int ligaId) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    Navigator.pop(context);
+
+    try {
+      final ligaData = {
+        'nombreLiga': _nombreController.text.trim(),
+        'pais': _paisController.text.trim().isEmpty ? 'España' : _paisController.text.trim(),
+        'numeroEquipos': 0,
+        'temporada': _temporadaController.text.trim(),
+      };
+
+      await LigaService.actualizarLiga(ligaId, ligaData);
+      _limpiarFormulario();
+      await _cargarLigas();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Liga actualizada correctamente'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      _mostrarError('Error al actualizar liga: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _crearLiga() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -274,10 +351,18 @@ class _GestionLigasPageState extends State<GestionLigasPage> {
                                       ),
                                     ],
                                   ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () => _eliminarLiga(liga),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, color: Colors.blue),
+                                        onPressed: () => _editarLiga(liga),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => _eliminarLiga(liga),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );

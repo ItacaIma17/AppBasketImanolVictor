@@ -475,7 +475,9 @@ class AutenticacionService {
         _token = loginResponse.token;
         _refreshToken = loginResponse.refreshToken;
         await cargarUsuarioActual(loginResponse.username);
-        await cargarEntidadEspecifica(_usuarioActual!);
+        if (_usuarioActual != null) {
+          await cargarEntidadEspecifica(_usuarioActual!);
+        }
         await _guardarSesion();
         return loginResponse;
       } else {
@@ -517,11 +519,11 @@ class AutenticacionService {
 
           final headers = {
             'Content-Type': 'application/json',
-
+            'Authorization': 'Bearer $_token',
           };
 
           await http.post(
-            Uri.parse('$baseUrl/usuarios/logout?username=${_usuarioActual!.username}'),
+            Uri.parse('$baseUrl/usuarios/logout'),
             headers: headers,
           ).timeout(const Duration(seconds: 3));
         } catch (e) {

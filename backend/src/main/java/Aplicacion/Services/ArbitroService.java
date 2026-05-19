@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.mail.MessagingException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public class ArbitroService {
     private final PasswordEncoder passwordEncoder;
     private final AlineacionService alineacionService;
     private final AlineacionRepository alineacionRepository;
+    private final EmailService emailService;
 
     private static final String CODIGO_PREFIX = "ARB-";
     private static final SecureRandom random = new SecureRandom();
@@ -233,18 +235,27 @@ public class ArbitroService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El código de árbitro ya está en uso");
         }
 
+        String plainPassword = dto.getPassword();
         Arbitro arbitro = new Arbitro();
         arbitro.setNombre(dto.getNombre());
         arbitro.setApellidos(dto.getApellidos());
         arbitro.setUsername(dto.getUsername());
-        arbitro.setPassword(passwordEncoder.encode(dto.getPassword()));
+        arbitro.setPassword(passwordEncoder.encode(plainPassword));
         arbitro.setEmail(dto.getEmail());
         arbitro.setEdad(dto.getEdad());
         arbitro.setCodigoArbitro(dto.getCodigoArbitro() != null ? dto.getCodigoArbitro() : generarCodigoArbitro());
         arbitro.setRole(Roles.ARBITRO);
         arbitro.setVerificado(false);
 
-        return ArbitroResponse.fromEntity(arbitroRepository.save(arbitro));
+        Arbitro saved = arbitroRepository.save(arbitro);
+
+        try {
+            emailService.enviarBienvenidaArbitro(saved.getEmail(), saved.getNombre(), saved.getUsername(), plainPassword);
+        } catch (MessagingException e) {
+            log.warn("Email de bienvenida no enviado al árbitro {}: {}", saved.getEmail(), e.getMessage());
+        }
+
+        return ArbitroResponse.fromEntity(saved);
     }
 
     public ArbitroResponse actualizarArbitro(Long id, ArbitroRequest dto) {
@@ -282,6 +293,15 @@ public class ArbitroService {
     }
 
     @Transactional
+    public ArbitroResponse cambiarEstado(Long id, Boolean activo) {
+        Arbitro arbitro = arbitroRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Árbitro no encontrado con ID: " + id));
+        arbitro.setActivo(activo);
+        return ArbitroResponse.fromEntity(arbitroRepository.save(arbitro));
+    }
+
+    @Transactional
     public void asignarArbitroAPartido(AsignarArbitroDTO dto) {
         Arbitro arbitro = arbitroRepository.findById(dto.getArbitroId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -298,6 +318,21 @@ public class ArbitroService {
         partido.setArbitro(arbitro);
         partidoRepository.save(partido);
         log.info("Árbitro {} asignado al partido {}", arbitro.getNombre(), partido.getId());
+
+        if (arbitro.getEmail() != null) {
+            try {
+                String pabellon = partido.getPabellon() != null ? partido.getPabellon() : partido.getUbicacion();
+                emailService.enviarAsignacionPartidoArbitro(
+                        arbitro.getEmail(),
+                        arbitro.getNombre() + " " + arbitro.getApellidos(),
+                        partido.getEquipoLocal().getNombre(),
+                        partido.getEquipoVisitante().getNombre(),
+                        partido.getFecha(),
+                        pabellon != null ? pabellon : "Por confirmar");
+            } catch (MessagingException e) {
+                log.warn("Email de asignación no enviado al árbitro {}: {}", arbitro.getEmail(), e.getMessage());
+            }
+        }
     }
 
     @Transactional

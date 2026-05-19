@@ -19,6 +19,7 @@ public class ArbitroResponse {
     private Integer edad;
     private String codigoArbitro;
     private Boolean verificado;
+    private Boolean activo;
     private Integer partidosAsignados;
     private List<PartidoAsignadoDTO> proximosPartidos;
 
@@ -49,7 +50,8 @@ public class ArbitroResponse {
                 .apellidos(arbitro.getApellidos())
                 .edad(arbitro.getEdad())
                 .codigoArbitro(arbitro.getCodigoArbitro())
-                .verificado(arbitro.getVerificado());
+                .verificado(arbitro.getVerificado())
+                .activo(arbitro.getActivo() != null ? arbitro.getActivo() : true);
 
         if (arbitro.getPartidos() != null && !arbitro.getPartidos().isEmpty()) {
             builder.partidosAsignados(arbitro.getPartidos().size())

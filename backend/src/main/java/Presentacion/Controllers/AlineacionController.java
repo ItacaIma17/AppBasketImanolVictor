@@ -132,6 +132,9 @@ public class AlineacionController {
                 ));
             }
 
+            alineacion.setBloqueada(false);
+            alineacionRepository.save(alineacion);
+
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Alineación desbloqueada correctamente",
                     "id", id

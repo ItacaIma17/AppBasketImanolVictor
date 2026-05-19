@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.mail.MessagingException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class EntrenadorService {
     private final EquipoRepository equipoRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     private static final String CODIGO_PREFIX = "ENT-";
     private static final SecureRandom random = new SecureRandom();
@@ -68,10 +70,11 @@ public class EntrenadorService {
         }
 
         Entrenador entrenador = new Entrenador();
+        String plainPassword = dto.getPassword();
         entrenador.setNombre(dto.getNombre());
         entrenador.setApellido(dto.getApellido());
         entrenador.setUsername(dto.getUsername());
-        entrenador.setPassword(passwordEncoder.encode(dto.getPassword()));
+        entrenador.setPassword(passwordEncoder.encode(plainPassword));
         entrenador.setEmail(dto.getEmail());
         entrenador.setEdad(dto.getEdad());
         entrenador.setCodigoEntrenador(dto.getCodigoEntrenador());
@@ -82,6 +85,12 @@ public class EntrenadorService {
 
         Entrenador saved = entrenadorRepository.save(entrenador);
         log.info("Entrenador creado con ID: {}", saved.getId());
+
+        try {
+            emailService.enviarBienvenidaEntrenador(saved.getEmail(), saved.getNombre(), saved.getUsername(), plainPassword);
+        } catch (MessagingException e) {
+            log.warn("Email de bienvenida no enviado al entrenador {}: {}", saved.getEmail(), e.getMessage());
+        }
 
         return EntrenadorRequest.fromEntity(saved);
     }

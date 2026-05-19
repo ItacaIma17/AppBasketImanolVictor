@@ -185,8 +185,9 @@ public class UserController {
         try {
             String token = jwtTokenProvider.getTokenFromRequest(request);
             if (token != null && jwtTokenProvider.validateToken(token)) {
-
-                log.info("Usuario cerró sesión: {}", jwtTokenProvider.getUsernameFromToken(token));
+                String username = jwtTokenProvider.getUsernameFromToken(token);
+                log.info("Usuario cerró sesión: {}", username);
+                userService.actualizarRefreshToken(username, null);
             }
             return ResponseEntity.ok(Map.of("message", "Logout exitoso"));
         } catch (Exception e) {
@@ -217,7 +218,7 @@ public class UserController {
             log.info(" Rol: {}", usuario.getRole());
             log.info(" Verificado: {}", usuario.isVerificado());
             log.info(" Bloqueado: {}", usuario.isBloqueado());
-            log.info(" Password hash en BD: {}", usuario.getPassword());
+            log.info(" Usuario tiene contraseña registrada: {}", usuario.getPassword() != null);
 
             boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword());
             log.info(" ¿Coinciden las contraseñas? {}", passwordMatches);
@@ -337,6 +338,9 @@ public class UserController {
             @RequestBody ActualizarUsuarioDTO actualizarUsuarioDTO) {
 
         String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String token = authHeader.substring(7);
         String username = jwtTokenProvider.getUsernameFromToken(token);
 

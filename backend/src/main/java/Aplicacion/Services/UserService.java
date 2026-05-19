@@ -354,6 +354,12 @@ public class UserService {
             usuarioRepository.save(usuario);
             log.info(" Usuario marcado como verificado: {}", usuario.getUsername());
 
+            try {
+                emailService.enviarBienvenidaVerificacion(email, usuario.getNombre());
+            } catch (MessagingException e) {
+                log.warn("Email de bienvenida no enviado a {}: {}", email, e.getMessage());
+            }
+
             if (usuario.getRole() == Roles.ENTRENADOR) {
                 entrenadorRepository.findById(usuario.getId())
                         .ifPresent(entrenador -> {
@@ -576,6 +582,13 @@ public class UserService {
         usuarioRepository.save(usuario);
         actualizarPasswordEnEntidad(usuario);
         emailVerificationRepository.delete(reset);
+
+        try {
+            emailService.enviarConfirmacionCambioContrasena(email, usuario.getNombre());
+        } catch (MessagingException e) {
+            log.warn("Email confirmación contraseña no enviado a {}: {}", email, e.getMessage());
+        }
+
         log.info("Contraseña restablecida para: {}", email);
     }
 

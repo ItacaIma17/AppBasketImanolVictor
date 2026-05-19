@@ -5,7 +5,6 @@ import Dominio.Entity.Arbitro;
 import Dominio.Entity.Partido;
 import Dominio.Entity.Roles.Roles;
 import Dominio.Repositorys.ArbitroRepository;
-import Dominio.Repositorys.PartidoRepository;
 import Presentacion.DTOS.Arbitro.ArbitroResponse;
 import Presentacion.DTOS.Partido.CrearPartidoCompletoDTO;
 import Presentacion.DTOS.Partido.PartidoRequestDTO;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 public class PartidoController {
 
     private final PartidoService partidoService;
-    private final PartidoRepository partidoRepository;
     private final ArbitroRepository arbitroRepository;
 
     @PostMapping("/crear")
@@ -190,17 +188,9 @@ public class PartidoController {
             @PathVariable Long arbitroId) {
 
         try {
-            Partido partido = partidoRepository.findById(partidoId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
-
-            Arbitro arbitro = arbitroRepository.findById(arbitroId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Árbitro no encontrado"));
-
-            partido.setArbitro(arbitro);
-            partidoRepository.save(partido);
-
+            PartidoResponse response = partidoService.asignarArbitro(partidoId, arbitroId);
             log.info(" Árbitro {} asignado al partido {}", arbitroId, partidoId);
-            return ResponseEntity.ok(Map.of("message", "Árbitro asignado correctamente"));
+            return ResponseEntity.ok(response);
 
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));

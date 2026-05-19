@@ -87,7 +87,11 @@ class _GestionUsuariosPageState extends State<GestionUsuariosPage> {
     );
     if (confirmar != true) return;
     try {
-      await AdminService.bloquearUsuario(u['id']);
+      if (bloqueado) {
+        await AdminService.desbloquearUsuario(u['id']);
+      } else {
+        await AdminService.bloquearUsuario(u['id']);
+      }
       await _cargar();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

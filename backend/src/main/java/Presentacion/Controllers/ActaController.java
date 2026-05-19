@@ -47,6 +47,26 @@ public class ActaController {
         return ResponseEntity.ok(actaService.guardarActa(actaRequest, username));
     }
 
+    @GetMapping("/listar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ActaResponseDTO>> listarTodasActas() {
+        return ResponseEntity.ok(actaService.listarTodas());
+    }
+
+    @GetMapping("/partido/{partidoId}/jugador/{jugadorId}/estadisticas")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> getEstadisticasJugadorEnPartido(
+            @PathVariable Long partidoId, @PathVariable Long jugadorId) {
+        return ResponseEntity.ok(actaService.getEstadisticasJugadorEnPartido(partidoId, jugadorId));
+    }
+
+    @GetMapping("/partido/{partidoId}/equipo/{equipoId}/estadisticas")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> getEstadisticasEquipoEnPartido(
+            @PathVariable Long partidoId, @PathVariable Long equipoId) {
+        return ResponseEntity.ok(actaService.getEstadisticasEquipoEnPartido(partidoId, equipoId));
+    }
+
     @GetMapping("/partido/{partidoId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ActaResponseDTO> obtenerActaPorPartido(@PathVariable Long partidoId,

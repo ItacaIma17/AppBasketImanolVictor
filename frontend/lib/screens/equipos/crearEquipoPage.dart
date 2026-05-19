@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tfg_appfede/config/common/resources/colores.dart';
 
 import '../../models/equipo.dart';
+import '../../models/liga.dart';
 import '../../services/equipoService.dart';
 import '../Liga/LigaService.dart';
 
@@ -21,7 +22,7 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
   final _escudoUrlController = TextEditingController();
 
   int? _ligaId;
-  List<Map<String, dynamic>> _ligas = [];
+  List<Liga> _ligas = [];
   bool _isLoading = false;
 
   @override
@@ -44,7 +45,7 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
     try {
       final ligas = await LigaService.listarLigas();
       setState(() {
-        _ligas = ligas.cast<Map<String, dynamic>>();
+        _ligas = ligas;
       });
     } catch (e) {
       print('Error cargando ligas: $e');
@@ -63,16 +64,16 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
     setState(() => _isLoading = true);
 
     try {
-      final equipo = Equipo(
-          nombre: _nombreController.text,
-          nombreEstadio: _estadioController.text,
-          ciudad: _ciudadController.text,
-          anoFundacion: int.parse(_anoController.text),
-          escudoUrl: _escudoUrlController.text.isNotEmpty ? _escudoUrlController.text : null,
-    ligaId: _ligaId,
-    );
+      final equipoData = {
+        'nombre': _nombreController.text.trim(),
+        'nombreEstadio': _estadioController.text.trim(),
+        'ciudad': _ciudadController.text.trim(),
+        'anoFundacion': int.parse(_anoController.text.trim()),
+        'escudoUrl': _escudoUrlController.text.isNotEmpty ? _escudoUrlController.text.trim() : null,
+        'ligaId': _ligaId,
+      };
 
-    await EquipoService.crearEquipo(equipo as Map<String, dynamic>);
+      await EquipoService.crearEquipo(equipoData);
 
     if (mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -165,8 +166,8 @@ class _CrearEquipoPageState extends State<CrearEquipoPage> {
       items: [
         const DropdownMenuItem<int>(value: null, child: Text('Selecciona una liga')),
         ..._ligas.map((liga) => DropdownMenuItem<int>(
-          value: liga['id'],
-          child: Text(liga['nombreLiga']),
+          value: liga.id,
+          child: Text(liga.nombreLiga),
         )),
       ],
       onChanged: (value) {

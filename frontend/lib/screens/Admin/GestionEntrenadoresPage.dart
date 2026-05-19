@@ -84,6 +84,143 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with 
     }
   }
 
+  Future<void> _mostrarDialogoCrearEntrenador() async {
+    String? codigoGenerado;
+    try {
+      codigoGenerado = await EntrenadorService.generarCodigo();
+    } catch (e) {
+      _mostrarError('Error generando código: $e');
+      return;
+    }
+
+    final nombreCtrl = TextEditingController();
+    final apellidoCtrl = TextEditingController();
+    final usernameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    final edadCtrl = TextEditingController();
+    final telefonoCtrl = TextEditingController();
+    final experienciaCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Crear Entrenador'),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nombreCtrl,
+                  decoration: const InputDecoration(labelText: 'Nombre *'),
+                  validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                ),
+                TextFormField(
+                  controller: apellidoCtrl,
+                  decoration: const InputDecoration(labelText: 'Apellido'),
+                ),
+                TextFormField(
+                  controller: usernameCtrl,
+                  decoration: const InputDecoration(labelText: 'Username *'),
+                  validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                ),
+                TextFormField(
+                  controller: emailCtrl,
+                  decoration: const InputDecoration(labelText: 'Email *'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                ),
+                TextFormField(
+                  controller: passwordCtrl,
+                  decoration: const InputDecoration(labelText: 'Contraseña *'),
+                  obscureText: true,
+                  validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                ),
+                TextFormField(
+                  controller: edadCtrl,
+                  decoration: const InputDecoration(labelText: 'Edad *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v?.isEmpty ?? true) return 'Requerido';
+                    if (int.tryParse(v!) == null) return 'Número inválido';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: telefonoCtrl,
+                  decoration: const InputDecoration(labelText: 'Teléfono'),
+                  keyboardType: TextInputType.phone,
+                ),
+                TextFormField(
+                  controller: experienciaCtrl,
+                  decoration: const InputDecoration(labelText: 'Experiencia'),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.naranja.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.naranja),
+                  ),
+                  child: Text(
+                    'Código: $codigoGenerado',
+                    style: const TextStyle(color: AppColors.naranja, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.pop(context);
+              await _crearEntrenador({
+                'nombre': nombreCtrl.text.trim(),
+                'apellido': apellidoCtrl.text.trim().isEmpty ? null : apellidoCtrl.text.trim(),
+                'username': usernameCtrl.text.trim(),
+                'email': emailCtrl.text.trim(),
+                'password': passwordCtrl.text,
+                'edad': int.parse(edadCtrl.text.trim()),
+                'codigoEntrenador': codigoGenerado,
+                'telefono': telefonoCtrl.text.trim().isEmpty ? null : telefonoCtrl.text.trim(),
+                'experiencia': experienciaCtrl.text.trim().isEmpty ? null : experienciaCtrl.text.trim(),
+              });
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.naranja),
+            child: const Text('Crear', style: TextStyle(color: AppColors.blanco)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _crearEntrenador(Map<String, dynamic> data) async {
+    setState(() => _isLoading = true);
+    try {
+      await EntrenadorService.crearEntrenador(data);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entrenador creado correctamente'), backgroundColor: Colors.green),
+        );
+        await _cargarDatos();
+      }
+    } catch (e) {
+      _mostrarError('Error al crear entrenador: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _generarCodigo() async {
     try {
       final codigo = await EntrenadorService.generarCodigo();
@@ -294,6 +431,21 @@ class _GestionEntrenadoresPageState extends State<GestionEntrenadoresPage> with 
               icon: const Icon(Icons.vpn_key, color: AppColors.blanco),
               label: const Text(
                 'Generar Código',
+                style: TextStyle(color: AppColors.blanco),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: _mostrarDialogoCrearEntrenador,
+              icon: const Icon(Icons.person_add, color: AppColors.blanco),
+              label: const Text(
+                'Crear Entrenador',
                 style: TextStyle(color: AppColors.blanco),
               ),
             ),

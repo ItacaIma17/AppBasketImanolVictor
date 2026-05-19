@@ -136,6 +136,19 @@ public class ArbitroController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ArbitroResponse> cambiarEstadoArbitro(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> body) {
+        Boolean activo = body.get("activo");
+        if (activo == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        log.info(" Cambiando estado del árbitro ID: {} a activo={}", id, activo);
+        return ResponseEntity.ok(arbitroService.cambiarEstado(id, activo));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ArbitroResponse> actualizarArbitro(

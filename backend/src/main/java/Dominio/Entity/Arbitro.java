@@ -34,6 +34,8 @@ public class Arbitro {
 
     private Boolean verificado = false;
 
+    private Boolean activo = true;
+
     @OneToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;

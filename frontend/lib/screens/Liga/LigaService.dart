@@ -41,6 +41,7 @@ class LigaService {
         'nombreLiga': ligaData['nombreLiga']?.trim(),
         'pais': ligaData['pais'] ?? 'España',
         'numeroEquipos': ligaData['numeroEquipos'] ?? 0,
+        'temporada': ligaData['temporada'],
       };
 
       final response = await http.post(
@@ -57,6 +58,33 @@ class LigaService {
       }
     } catch (e) {
       LoggerService.error('Error creando liga', tag: 'LIGA', error: e);
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> actualizarLiga(int id, Map<String, dynamic> ligaData) async {
+    try {
+      final requestData = {
+        'nombreLiga': ligaData['nombreLiga']?.trim(),
+        'pais': ligaData['pais'] ?? 'España',
+        'numeroEquipos': ligaData['numeroEquipos'] ?? 0,
+        'temporada': ligaData['temporada'],
+      };
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/ligas/$id'),
+        headers: _headers,
+        body: json.encode(requestData),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Error al actualizar liga');
+      }
+    } catch (e) {
+      LoggerService.error('Error actualizando liga', tag: 'LIGA', error: e);
       rethrow;
     }
   }

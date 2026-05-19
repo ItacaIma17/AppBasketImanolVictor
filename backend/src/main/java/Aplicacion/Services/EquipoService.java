@@ -2,6 +2,7 @@ package Aplicacion.Services;
 
 import Dominio.Entity.*;
 import Dominio.Repositorys.*;
+import jakarta.mail.MessagingException;
 import Presentacion.DTOS.Equipo.EquipoRequest;
 import Presentacion.DTOS.Equipo.EquipoResponse;
 import Presentacion.DTOS.Equipo.SolicitarEquipoDTO;
@@ -35,6 +36,7 @@ public class EquipoService {
     private static final SecureRandom random = new SecureRandom();
 
     private final PartidoRepository partidoRepository;
+    private final EmailService emailService;
 
     private String generarCodigoSolicitud() {
         String codigo;
@@ -172,6 +174,13 @@ public class EquipoService {
 
             log.info(" Solicitud APROBADA: Entrenador {} asignado a equipo {}",
                     entrenador.getUsername(), equipo.getNombre());
+
+            try {
+                emailService.enviarSolicitudAprobada(
+                        entrenador.getEmail(), entrenador.getNombre(), equipo.getNombre());
+            } catch (MessagingException e) {
+                log.warn("Email de aprobación no enviado al entrenador {}: {}", entrenador.getEmail(), e.getMessage());
+            }
         } else {
 
             equipo.setSolicitudPendiente(false);
@@ -180,6 +189,13 @@ public class EquipoService {
 
             log.info(" Solicitud RECHAZADA para entrenador {} en equipo {}",
                     entrenador.getUsername(), equipo.getNombre());
+
+            try {
+                emailService.enviarSolicitudRechazada(
+                        entrenador.getEmail(), entrenador.getNombre(), equipo.getNombre());
+            } catch (MessagingException e) {
+                log.warn("Email de rechazo no enviado al entrenador {}: {}", entrenador.getEmail(), e.getMessage());
+            }
         }
 
         return EquipoResponse.fromEntity(equipo);

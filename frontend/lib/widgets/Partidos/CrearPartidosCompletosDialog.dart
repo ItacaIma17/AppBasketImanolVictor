@@ -1114,7 +1114,7 @@ class _CrearPartidoCompletoDialogState
           'pabellon': _pabellonIdaCtrl.text.trim(),
           'ubicacion': _ubicacionIdaCtrl.text.trim(),
           'jornada': _jornadaIda,
-          'ligaId': _ligaId,
+          'ligaId': _ligaEfectiva,
         };
         if (_arbitro != null) {
           updateData['arbitroId'] = _arbitro!.id;
@@ -1140,7 +1140,7 @@ class _CrearPartidoCompletoDialogState
           'pabellonIda': _pabellonIdaCtrl.text.trim(),
           'ubicacionIda': _ubicacionIdaCtrl.text.trim(),
           'jornadaIda': _jornadaIda,
-          'ligaId': _ligaId,
+          'ligaId': _ligaEfectiva,
           'crearVuelta': _crearVuelta,
         };
 

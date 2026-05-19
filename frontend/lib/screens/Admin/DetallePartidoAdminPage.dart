@@ -39,6 +39,79 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
     }
   }
 
+  Future<void> _editarResultado() async {
+    resultadoLocal = widget.partido.puntosLocal;
+    resultadoVisitante = widget.partido.puntosVisitante;
+
+    final resultado = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Editar Resultado', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Resultado Local',
+                labelStyle: const TextStyle(color: Colors.white),
+              ),
+              style: const TextStyle(color: Colors.white),
+              keyboardType: TextInputType.number,
+              controller: TextEditingController(text: resultadoLocal.toString()),
+              onChanged: (v) => resultadoLocal = int.tryParse(v) ?? 0,
+            ),
+            TextField(
+              decoration: const InputDecoration(labelText: 'Resultado Visitante', labelStyle: TextStyle(color: Colors.white)),
+              style: const TextStyle(color: Colors.white),
+              keyboardType: TextInputType.number,
+              controller: TextEditingController(text: resultadoVisitante.toString()),
+              onChanged: (v) => resultadoVisitante = int.tryParse(v) ?? 0,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, {'local': resultadoLocal, 'visitante': resultadoVisitante}),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (resultado != null && mounted) {
+      setState(() => _cargando = true);
+      try {
+        await PartidoService.actualizarResultado(
+          widget.partido.id,
+          {
+            'puntosLocal': resultado['local']!,
+            'puntosVisitante': resultado['visitante']!,
+          },
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Resultado actualizado correctamente'), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _cargando = false);
+      }
+    }
+  }
+
   Future<void> _finalizarPartido() async {
     resultadoLocal = 0;
     resultadoVisitante = 0;
@@ -154,7 +227,6 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue),
               tooltip: 'Editar partido',
-
               onPressed: _editarPartido,
             ),
           if (esProgramado)
@@ -162,6 +234,12 @@ class _DetallePartidoAdminPageState extends State<DetallePartidoAdminPage> {
               icon: const Icon(Icons.sports_score, color: Colors.green),
               onPressed: _finalizarPartido,
               tooltip: 'Finalizar partido',
+            ),
+          if (esFinalizado)
+            IconButton(
+              icon: const Icon(Icons.edit_note, color: Colors.orange),
+              onPressed: _editarResultado,
+              tooltip: 'Editar resultado',
             ),
         ],
       ),
