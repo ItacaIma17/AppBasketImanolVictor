@@ -372,38 +372,6 @@ class _RegistroPageState extends State<Registro> {
 
                     _buildRegisterButton(),
 
-                    const SizedBox(height: 16),
-
-                    const Row(
-                      children: [
-                        Expanded(child: Divider(color: AppColors.blancoOpacidad54)),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'O',
-                            style: TextStyle(color: AppColors.blanco),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: AppColors.blancoOpacidad54)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _socialButton(
-                      text: 'Continuar con Google',
-                      icon: Icons.g_mobiledata,
-                      onPressed: _handleGoogleSignIn,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _socialButton(
-                      text: 'Continuar con Facebook',
-                      icon: Icons.facebook,
-                      onPressed: _handleFacebookSignIn,
-                    ),
-
                     const SizedBox(height: 24),
 
                     Center(
@@ -874,28 +842,6 @@ class _RegistroPageState extends State<Registro> {
     }
   }
 
-  Widget _socialButton({
-    required String text,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.blanco),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        onPressed: onPressed,
-        icon: Icon(icon, color: AppColors.blanco),
-        label: Text(
-          text,
-          style: const TextStyle(color: AppColors.blanco),
-        ),
-      ),
-    );
-  }
-
   void _mostrarInfoTipoUsuario() {
     showDialog(
       context: context,
@@ -1129,32 +1075,6 @@ class _RegistroPageState extends State<Registro> {
         },
       ),
     );
-  }
-
-  void _handleGoogleSignIn() async {
-    setState(() => isLoading = true);
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google Sign In - Próximamente')),
-      );
-    } catch (e) {
-      _mostrarError('Error con Google: $e');
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  void _handleFacebookSignIn() async {
-    setState(() => isLoading = true);
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Facebook Sign In - Próximamente')),
-      );
-    } catch (e) {
-      _mostrarError('Error con Facebook: $e');
-    } finally {
-      setState(() => isLoading = false);
-    }
   }
 
   Role _mapRole(String tipoUsuarioStr) {

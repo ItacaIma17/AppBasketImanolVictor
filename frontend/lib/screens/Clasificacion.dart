@@ -189,7 +189,7 @@ class _ClasificacionPageState extends State<ClasificacionPage>
 
     final jornadasMap = <int?, List<Partido>>{};
     for (var partido in _partidos) {
-      final jornada = partido.jornada ?? 0;
+      final jornada = (partido.jornada != null && partido.jornada! >= 1) ? partido.jornada! : 1;
       if (!jornadasMap.containsKey(jornada)) {
         jornadasMap[jornada] = [];
       }

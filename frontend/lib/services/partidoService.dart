@@ -327,7 +327,7 @@ class PartidoService {
     final Map<int, List<Partido>> mapa = {};
 
     for (var partido in partidos) {
-      int jornada = partido.jornada ?? 0;
+      int jornada = (partido.jornada != null && partido.jornada! >= 1) ? partido.jornada! : 1;
       mapa.putIfAbsent(jornada, () => []).add(partido);
     }
 

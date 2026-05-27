@@ -13,7 +13,9 @@ class MarcadorPartido extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool localGano = partido.puntosLocal > partido.puntosVisitante;
+    final bool esFinalizado = partido.esFinalizado;
+    final bool localGano = esFinalizado && partido.puntosLocal > partido.puntosVisitante;
+    final bool visitanteGano = esFinalizado && partido.puntosVisitante > partido.puntosLocal;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -50,11 +52,12 @@ class MarcadorPartido extends StatelessWidget {
               _ResultadoWidget(
                 local: partido.puntosLocal,
                 visitante: partido.puntosVisitante,
+                estado: partido.estado,
               ),
               _EquipoWidget(
                 nombre: partido.nombreVisitante,
                 color: AppColors.amarilloAragon,
-                esGanador: !localGano,
+                esGanador: visitanteGano,
                 onTap: partido.equipoVisitanteId == null
                     ? null
                     : () => Navigator.push(
@@ -140,14 +143,30 @@ class _EquipoWidget extends StatelessWidget {
 class _ResultadoWidget extends StatelessWidget {
   final int local;
   final int visitante;
+  final String estado;
 
   const _ResultadoWidget({
     required this.local,
     required this.visitante,
+    required this.estado,
   });
 
   @override
   Widget build(BuildContext context) {
+    final String etiqueta;
+    final String marcador;
+
+    if (estado == 'FINALIZADO') {
+      etiqueta = 'FINAL';
+      marcador = '$local - $visitante';
+    } else if (estado == 'EN_CURSO') {
+      etiqueta = 'EN CURSO';
+      marcador = '$local - $visitante';
+    } else {
+      etiqueta = 'VS';
+      marcador = '-';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
@@ -157,7 +176,7 @@ class _ResultadoWidget extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '$local - $visitante',
+            marcador,
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -165,9 +184,9 @@ class _ResultadoWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'FINAL',
-            style: TextStyle(
+          Text(
+            etiqueta,
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.blanco,

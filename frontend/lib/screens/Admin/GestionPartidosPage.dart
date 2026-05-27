@@ -100,7 +100,7 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
   Map<int, List<Partido>> get _partidosPorJornada {
     final mapa = <int, List<Partido>>{};
     for (var partido in _partidosFiltrados) {
-      final jornada = partido.jornada ?? 0;
+      final jornada = (partido.jornada != null && partido.jornada! >= 1) ? partido.jornada! : 1;
       mapa.putIfAbsent(jornada, () => []).add(partido);
     }
     return Map.fromEntries(

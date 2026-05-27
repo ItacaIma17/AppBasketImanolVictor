@@ -175,34 +175,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
-
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: AppColors.blancoOpacidad54)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'O',
-                        style: TextStyle(color: AppColors.blanco),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: AppColors.blancoOpacidad54)),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: _socialButton(
-                    text: "Continuar con Google",
-                    icon: Icons.g_mobiledata,
-                    onPressed: () {
-                    },
-                  ),
-                ),
-
                 const SizedBox(height: 30),
 
                 Center(
@@ -268,28 +240,6 @@ class _InicioSesionPageState extends State<InicioSesionPage> {
       ),
       focusedBorder: const UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.blanco),
-      ),
-    );
-  }
-
-  Widget _socialButton({
-    required String text,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.blanco),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        onPressed: onPressed,
-        icon: Icon(icon, color: AppColors.blanco),
-        label: Text(
-          text,
-          style: const TextStyle(color: AppColors.blanco),
-        ),
       ),
     );
   }

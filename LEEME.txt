@@ -1,0 +1,167 @@
+============================================================
+  FEDERACION ARAGONESA DE BALONCESTO - APP TFG
+  Instrucciones de instalacion local
+============================================================
+
+REQUISITOS PREVIOS
+------------------
+  - Docker Desktop (con Docker Compose)
+  - Flutter SDK (Dart >= 3.9.2)
+  - Git
+
+Verificar instalaciones:
+  docker --version
+  docker compose version
+  flutter --version
+
+
+ESTRUCTURA DEL PROYECTO
+------------------------
+  App90/
+    backend/         -> API REST (Spring Boot 3 + PostgreSQL)
+    frontend/        -> App movil (Flutter)
+    .env             -> Variables de entorno raiz
+
+
+============================================================
+  PASO 1 - BACKEND (Docker)
+============================================================
+
+1. Entrar en la carpeta del backend:
+
+     cd backend
+
+2. Levantar todos los servicios (BD + API + pgAdmin):
+
+     docker compose up -d
+
+   Esto arranca:
+     - PostgreSQL 15       -> localhost:5432
+     - Backend Spring Boot -> localhost:8080
+     - pgAdmin 4           -> http://localhost:5050
+
+3. Comprobar que los contenedores estan corriendo:
+
+     docker compose ps
+
+4. Ver logs del backend:
+
+     docker compose logs -f backend
+
+   Esperar a ver: "Started SatelApplication" antes de usar la app.
+
+PARAR el backend:
+     docker compose down
+
+Parar y BORRAR datos (resetear BD):
+     docker compose down -v
+
+
+============================================================
+  PASO 2 - FRONTEND (Flutter)
+============================================================
+
+1. Entrar en la carpeta del frontend:
+
+     cd frontend
+
+2. Instalar dependencias:
+
+     flutter pub get
+
+3. Verificar dispositivos disponibles:
+
+     flutter devices
+
+4. Ejecutar la app (emulador Android, iOS o Chrome):
+
+     flutter run
+
+   Para Chrome/web:
+     flutter run -d chrome
+
+   Para un dispositivo concreto:
+     flutter run -d <device_id>
+
+NOTA: El frontend apunta a http://localhost:8080 por defecto.
+      Si se ejecuta en emulador Android fisico, cambiar la IP
+      del backend en frontend/lib/services/ por la IP de tu maquina.
+
+
+============================================================
+  CREDENCIALES DE PRUEBA (cargadas automaticamente al iniciar)
+============================================================
+
+  ADMINISTRADOR
+  -------------
+  Usuario: admin          Contrasena: Admin123456
+
+  ENTRENADORES (Contrasena: Entrenador123)
+  -----------------------------------------
+  Usuario           | Nombre              | Equipo
+  ------------------|---------------------|------------------
+  entrenador        | Carlos Lopez        | Real Madrid
+  entrenador2       | Juan Martinez       | (sin equipo)
+  entrenador3       | Pablo Garcia        | Unicaja
+  imanol            | Imanol Lapizondo    | (sin equipo)
+  joan.penarroya    | Joan Penarroya      | FC Barcelona
+
+  ARBITROS (Contrasena: Arbitro123)
+  ----------------------------------
+  Usuario   | Nombre
+  ----------|-------------------
+  arbitro   | Juan Garcia
+  arbitro2  | Pedro Martinez
+  arbitro3  | Luis Sanchez
+
+  JUGADORES (Contrasena: Jugador123)
+  ------------------------------------
+  Usuario            | Nombre              | Equipo
+  -------------------|---------------------|------------------
+  luka.doncic        | Luka Doncic         | Real Madrid
+  rudy.fernandez     | Rudy Fernandez      | Real Madrid
+  sergio.llull       | Sergio Llull        | Real Madrid
+  edgar.vives        | Edgar Vives         | Real Madrid
+  alberto.abalde     | Alberto Abalde      | Real Madrid
+  ricky.rubio        | Ricky Rubio         | FC Barcelona
+  niko.mirotic       | Niko Mirotic        | FC Barcelona
+  alex.abrines       | Alex Abrines        | FC Barcelona
+  jan.vesely         | Jan Vesely          | FC Barcelona
+  tomas.satoransky   | Tomas Satoransky    | FC Barcelona
+  kyle.kuric         | Kyle Kuric          | FC Barcelona
+  dario.brizuela     | Dario Brizuela      | Unicaja
+  kendrick.perry     | Kendrick Perry      | Unicaja
+  markus.howard      | Markus Howard       | Baskonia
+  damien.inglis      | Damien Inglis       | Valencia Basket
+  antonia.dawson     | Antonia Dawson      | Joventut
+
+pgAdmin (http://localhost:5050):
+  Email:      admin@admin.com
+  Contrasena: admin123
+
+  Conexion a PostgreSQL desde pgAdmin:
+    Host:     postgres
+    Puerto:   5432
+    BD:       fabaragon_db
+    Usuario:  admin
+    Pass:     Admin17#
+
+API Swagger/OpenAPI:
+  http://localhost:8080/swagger-ui/index.html
+
+
+============================================================
+  RESUMEN RAPIDO
+============================================================
+
+  # Terminal 1 - Backend
+  cd backend
+  docker compose up -d
+
+  # Terminal 2 - Frontend
+  cd frontend
+  flutter pub get
+  flutter run
+
+
+============================================================
