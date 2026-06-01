@@ -15,10 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +31,6 @@ public class UserController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/registro")
@@ -200,7 +195,6 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         log.info("========================================");
         log.info(" Intento login para: {}", loginRequest.getUsername());
-        log.info(" Password recibida: {}", loginRequest.getPassword());
 
         try {
 
@@ -213,30 +207,33 @@ public class UserController {
                 return ResponseEntity.status(401).body(error);
             }
 
-            log.info(" Usuario encontrado: {}", usuario.getUsername());
-            log.info(" Email: {}", usuario.getEmail());
-            log.info(" Rol: {}", usuario.getRole());
-            log.info(" Verificado: {}", usuario.isVerificado());
-            log.info(" Bloqueado: {}", usuario.isBloqueado());
-            log.info(" Usuario tiene contraseña registrada: {}", usuario.getPassword() != null);
-
-            boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword());
-            log.info(" ¿Coinciden las contraseñas? {}", passwordMatches);
-
-            if (!passwordMatches) {
-                log.error(" Contraseña incorrecta para: {}", loginRequest.getUsername());
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Contraseña incorrecta");
-                error.put("message", "Las credenciales son incorrectas");
-                return ResponseEntity.status(401).body(error);
-            }
-
+            // Comprobar bloqueo antes que nada
             if (usuario.isBloqueado()) {
                 log.error(" Usuario bloqueado: {}", loginRequest.getUsername());
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Usuario bloqueado");
-                error.put("message", "Tu cuenta ha sido bloqueada. Contacta con soporte.");
+                error.put("message", "Tu cuenta ha sido bloqueada tras demasiados intentos fallidos. Contacta con soporte.");
                 return ResponseEntity.status(403).body(error);
+            }
+
+            boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword());
+
+            if (!passwordMatches) {
+                int intentos = usuario.getIntentosFallidos() + 1;
+                usuario.setIntentosFallidos(intentos);
+                if (intentos >= 5) {
+                    usuario.setBloqueado(true);
+                    log.warn(" Cuenta bloqueada por {} intentos fallidos: {}", intentos, loginRequest.getUsername());
+                } else {
+                    log.warn(" Contraseña incorrecta para: {} ({}/5 intentos)", loginRequest.getUsername(), intentos);
+                }
+                userService.guardarUsuario(usuario);
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Credenciales incorrectas");
+                error.put("message", intentos >= 5
+                        ? "Cuenta bloqueada tras 5 intentos fallidos. Contacta con soporte."
+                        : "Las credenciales son incorrectas (" + intentos + "/5 intentos)");
+                return ResponseEntity.status(401).body(error);
             }
 
             if (!usuario.isVerificado() && usuario.getRole() != Roles.ADMIN) {
@@ -247,27 +244,14 @@ public class UserController {
                 return ResponseEntity.status(403).body(error);
             }
 
-            try {
-                Authentication authentication = authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                loginRequest.getUsername(),
-                                loginRequest.getPassword()
-                        )
-                );
-                log.info(" Autenticación Spring Security exitosa");
-            } catch (AuthenticationException e) {
-                log.error(" Falló autenticación Spring Security: {}", e.getMessage());
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Error de autenticación");
-                error.put("message", "Credenciales inválidas");
-                return ResponseEntity.status(401).body(error);
-            }
+            // Login correcto: resetear intentos fallidos
+            usuario.setIntentosFallidos(0);
+            userService.guardarUsuario(usuario);
 
             String token = jwtTokenProvider.generateToken(usuario);
             String refreshToken = jwtTokenProvider.generateRefreshToken(usuario);
 
             log.info(" Token generado para: {}", usuario.getUsername());
-            log.info(" Refresh token generado");
 
             userService.actualizarRefreshToken(usuario.getUsername(), refreshToken);
 
@@ -386,13 +370,4 @@ public class UserController {
         }
     }
 
-    @GetMapping("/test-auth")
-    public ResponseEntity<?> testAuth(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info(" Test de autenticación - Usuario: {}", userDetails != null ? userDetails.getUsername() : "none");
-        return ResponseEntity.ok(Map.of(
-                "authenticated", userDetails != null,
-                "username", userDetails != null ? userDetails.getUsername() : "none",
-                "message", "Autenticación funcionando correctamente"
-        ));
-    }
 }

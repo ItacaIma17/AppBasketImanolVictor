@@ -64,7 +64,7 @@ public class SecurityConfig {
                                 "/api/usuarios/verificar",
                                 "/api/usuarios/reenviar-codigo",
                                 "/api/usuarios/login",
-                                "/api/usuarios/refresh",
+                                "/api/usuarios/refresh-token",
                                 "/api/usuarios/forgot-password",
                                 "/api/usuarios/reset-password",
                                 "/api/usuarios/logout",

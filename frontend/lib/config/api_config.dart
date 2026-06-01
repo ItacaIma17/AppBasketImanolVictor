@@ -6,14 +6,16 @@ import '../services/autenticacion_service.dart';
 import '../services/loggerService.dart';
 
 class AppConfig {
+  // URL de producción: pásala con --dart-define=API_URL=https://tu-app.onrender.com
+  // Si no se define, usa la URL local según la plataforma.
+  static const String _productionUrl =
+      String.fromEnvironment('API_URL', defaultValue: '');
+
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8080';
-    } else {
-      return 'http://192.168.1.145:8080';
-    }
+    if (_productionUrl.isNotEmpty) return _productionUrl;
+    if (kIsWeb) return 'http://localhost:8080';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
+    return 'http://192.168.1.145:8080';
   }
 
   static String get apiUrl => '$baseUrl/api';

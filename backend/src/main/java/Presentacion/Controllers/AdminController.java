@@ -99,19 +99,15 @@ public class AdminController {
     }
 
     @GetMapping("/estadisticas")
-    public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticas(HttpServletRequest request) {
+        requireAdmin(request);
         log.info(" Obteniendo estadísticas del dashboard");
         return ResponseEntity.ok(adminService.obtenerEstadisticas());
     }
 
-    @GetMapping("/estadisticas/usuarios")
-    public ResponseEntity<Map<String, Object>> obtenerEstadisticasUsuarios() {
-        log.info(" Obteniendo estadísticas de usuarios");
-        return ResponseEntity.ok(adminService.obtenerEstadisticas());
-    }
-
     @GetMapping("/actividad-reciente")
-    public ResponseEntity<List<Map<String, Object>>> obtenerActividadReciente() {
+    public ResponseEntity<List<Map<String, Object>>> obtenerActividadReciente(HttpServletRequest request) {
+        requireAdmin(request);
         log.info(" Obteniendo actividad reciente");
         return ResponseEntity.ok(adminService.obtenerActividadReciente());
     }

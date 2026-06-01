@@ -84,7 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.equals("/api/usuarios/registro") ||
                 path.equals("/api/usuarios/verificar") ||
                 path.equals("/api/usuarios/reenviar-codigo") ||
-                path.equals("/api/usuarios/refresh") ||
+                path.equals("/api/usuarios/refresh-token") ||
                 path.equals("/api/usuarios/logout") ||
                 path.equals("/api/ligas/listar") ||
                 path.equals("/api/equipos/listar");

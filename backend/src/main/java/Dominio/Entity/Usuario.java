@@ -35,6 +35,9 @@ public class Usuario {
     private boolean verificado;
     private boolean bloqueado;
 
+    @Column(columnDefinition = "integer default 0")
+    private int intentosFallidos;
+
     private String codigoVerificacion;
     private LocalDateTime expiracionCodigo;
 

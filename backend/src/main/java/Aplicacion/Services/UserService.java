@@ -630,6 +630,11 @@ public class UserService {
                 .build();
     }
 
+    @Transactional
+    public void guardarUsuario(Usuario usuario) {
+        usuarioRepository.save(usuario);
+    }
+
     private String generarCodigo() {
         return String.valueOf(100000 + new SecureRandom().nextInt(900000));
     }

@@ -59,7 +59,6 @@ public class PartidoController {
     }
 
     @GetMapping("/listar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENTRENADOR', 'ARBITRO', 'JUGADOR')")
     public ResponseEntity<List<PartidoResponse>> listarPartidos() {
         log.info(" Listando todos los partidos");
         return ResponseEntity.ok(partidoService.listarTodosPartidos());
@@ -236,15 +235,17 @@ public class PartidoController {
 
     @PostMapping("/{partidoId}/finalizar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ARBITRO')")
-    public ResponseEntity<PartidoResponse> finalizarPartido(
+    public ResponseEntity<?> finalizarPartido(
             @PathVariable Long partidoId,
             @RequestBody Map<String, Integer> resultado) {
-        log.info(" Finalizando partido {}: {} - {}", partidoId,
-                resultado.get("resultadoLocal"), resultado.get("resultadoVisitante"));
-        return ResponseEntity.ok(partidoService.finalizarPartido(
-                partidoId,
-                resultado.get("resultadoLocal"),
-                resultado.get("resultadoVisitante")));
+        Integer resLocal = resultado.get("resultadoLocal");
+        Integer resVisitante = resultado.get("resultadoVisitante");
+        if (resLocal == null || resVisitante == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "resultadoLocal y resultadoVisitante son obligatorios"));
+        }
+        log.info(" Finalizando partido {}: {} - {}", partidoId, resLocal, resVisitante);
+        return ResponseEntity.ok(partidoService.finalizarPartido(partidoId, resLocal, resVisitante));
     }
 
     @GetMapping("/equipo/{equipoId}/historial")

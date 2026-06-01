@@ -1,0 +1,87 @@
+databases:
+  - name: aragonbasket-db
+    databaseName: fabaragon_db
+    user: aragonbasket_user
+    plan: free
+    region: frankfurt
+
+services:
+  - type: web
+    name: aragonbasket-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    envVars:
+      # Base de datos — rellena con los valores de la BD creada arriba
+      - key: SPRING_DATASOURCE_URL
+        sync: false        # lo introduces tú en el dashboard tras crear la BD
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: aragonbasket-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: aragonbasket-db
+          property: password
+
+      # JPA
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+
+      # JWT
+      - key: JWT_SECRET
+        value: miClaveSecretaParaJWT123456789012345678901234567890
+      - key: JWT_EXPIRATION
+        value: "86400000"
+
+      # Admin por defecto
+      - key: ADMIN_SECRET_KEY
+        value: ADMIN_SECRET_KEY_2024
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_EMAIL
+        value: admin@admin.com
+      - key: ADMIN_PASSWORD
+        value: Admin123456
+      - key: ADMIN_NOMBRE
+        value: Administrador
+      - key: ADMIN_APELLIDO
+        value: Sistema
+
+      # Entrenador por defecto
+      - key: DEFAULT_ENTRENADOR_USERNAME
+        value: entrenador
+      - key: DEFAULT_ENTRENADOR_EMAIL
+        value: entrenador@test.com
+      - key: DEFAULT_ENTRENADOR_PASSWORD
+        value: Entrenador123
+      - key: DEFAULT_ENTRENADOR_CODIGO
+        value: ENT-100001
+
+      # Árbitro por defecto
+      - key: DEFAULT_ARBITRO_USERNAME
+        value: arbitro
+      - key: DEFAULT_ARBITRO_EMAIL
+        value: arbitro@test.com
+      - key: DEFAULT_ARBITRO_PASSWORD
+        value: Arbitro123
+      - key: DEFAULT_ARBITRO_CODIGO
+        value: ARB-100001
+
+      # Jugador por defecto
+      - key: DEFAULT_JUGADOR_USERNAME
+        value: jugador
+      - key: DEFAULT_JUGADOR_EMAIL
+        value: jugador@test.com
+      - key: DEFAULT_JUGADOR_PASSWORD
+        value: Jugador123
+      - key: DEFAULT_JUGADOR_CODIGO
+        value: JUG-100001
+
+      # Logs — reducir en producción
+      - key: LOGGING_LEVEL_APLICACION
+        value: INFO
+      - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY
+        value: WARN

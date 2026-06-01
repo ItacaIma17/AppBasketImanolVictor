@@ -1,0 +1,28 @@
+# ── Secretos — NUNCA subir al repositorio ─────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE ───────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# ── Backend (Maven / Spring Boot) ─────────────────────────────────
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/logs/
+
+# ── Frontend (Flutter / Dart) ─────────────────────────────────────
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/pubspec.lock
+
+# ── Sistema operativo ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log

@@ -167,6 +167,7 @@ public class AdminService {
     public void desbloquearUsuario(Long id) {
         Usuario usuario = findUsuario(id);
         usuario.setBloqueado(false);
+        usuario.setIntentosFallidos(0);
         userRepository.save(usuario);
 
         try {
