@@ -389,29 +389,31 @@ public class DataLoader implements CommandLineRunner {
                 .findFirst()
                 .orElse(null);
 
-        if (partidoRealBarça != null && partidoRealBarça.getActaPartido() == null) {
+        if (partidoRealBarça != null
+                && partidoRealBarça.getActaPartido() == null
+                && !actaRepository.existsByPartidoId(partidoRealBarça.getId())) {
 
-                Arbitro arbitro = partidoRealBarça.getArbitro();
+            Arbitro arbitro = partidoRealBarça.getArbitro();
 
-                ActaPartido acta = new ActaPartido();
-                acta.setPartido(partidoRealBarça);
-                acta.setArbitro(arbitro);
-                acta.setFechaActa(LocalDateTime.now());
-                acta.setResultadoLocal("95");
-                acta.setResultadoVisitante("88");
-                acta.setObservaciones("Gran partido con mucha intensidad");
+            ActaPartido acta = new ActaPartido();
+            acta.setPartido(partidoRealBarça);
+            acta.setArbitro(arbitro);
+            acta.setFechaActa(LocalDateTime.now());
+            acta.setResultadoLocal("95");
+            acta.setResultadoVisitante("88");
+            acta.setObservaciones("Gran partido con mucha intensidad");
 
-                partidoRealBarça.setResultadoLocal(95);
-                partidoRealBarça.setResultadoVisitante(88);
-                partidoRealBarça.setEstado("FINALIZADO");
+            partidoRealBarça.setResultadoLocal(95);
+            partidoRealBarça.setResultadoVisitante(88);
+            partidoRealBarça.setEstado("FINALIZADO");
 
-                actaRepository.save(acta);
-                partidoRepository.save(partidoRealBarça);
+            actaRepository.save(acta);
+            partidoRepository.save(partidoRealBarça);
 
-                log.info(" Acta creada para Real Madrid vs FC Barcelona: 95-88");
+            log.info(" Acta creada para Real Madrid vs FC Barcelona: 95-88");
 
         } else {
-            log.warn(" No se encontró el partido Real Madrid vs FC Barcelona");
+            log.info(" Acta de Real Madrid vs FC Barcelona ya existe o partido no encontrado, omitiendo.");
         }
     }
 
