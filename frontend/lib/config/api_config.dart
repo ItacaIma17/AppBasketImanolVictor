@@ -6,16 +6,15 @@ import '../services/autenticacion_service.dart';
 import '../services/loggerService.dart';
 
 class AppConfig {
-  // URL de producción: pásala con --dart-define=API_URL=https://tu-app.onrender.com
-  // Si no se define, usa la URL local según la plataforma.
-  static const String _productionUrl =
-      String.fromEnvironment('API_URL', defaultValue: '');
+  // URL del backend en producción (Render)
+  static const String _renderUrl = 'https://aragonbasket-backend.onrender.com';
 
+  // En modo release apunta a Render, en debug a local
   static String get baseUrl {
-    if (_productionUrl.isNotEmpty) return _productionUrl;
-    if (kIsWeb) return 'http://localhost:8080';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-    return 'http://192.168.1.145:8080';
+    if (!kDebugMode) return _renderUrl;           // APK release → Render
+    if (kIsWeb) return 'http://localhost:8080';   // Flutter web local
+    if (Platform.isAndroid) return 'http://10.0.2.2:8080'; // emulador Android
+    return 'http://localhost:8080';               // iOS / desktop local
   }
 
   static String get apiUrl => '$baseUrl/api';
