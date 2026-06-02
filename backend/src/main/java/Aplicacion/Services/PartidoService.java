@@ -112,7 +112,7 @@ public class PartidoService {
         log.info(" Partido creado con ID: {}", saved.getId());
         log.info("========================================");
 
-        return PartidoResponse.fromEntity(saved);
+        return enriquecer(saved);
     }
 
     @Transactional
@@ -201,7 +201,7 @@ public class PartidoService {
         }
 
         return partidosCreados.stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -245,7 +245,7 @@ public class PartidoService {
     public List<PartidoResponse> listarTodosPartidos() {
         log.info(" Listando todos los partidos");
         return partidoRepository.findAll().stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -253,7 +253,7 @@ public class PartidoService {
     public List<PartidoResponse> listarPartidosPorEstado(String estado) {
         log.info(" Listando partidos con estado: {}", estado);
         return partidoRepository.findByEstado(estado).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -261,7 +261,7 @@ public class PartidoService {
     public List<PartidoResponse> listarPartidosPendientes() {
         log.info(" Listando partidos pendientes");
         return partidoRepository.findPartidosPendientes().stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -269,7 +269,7 @@ public class PartidoService {
     public List<PartidoResponse> listarPartidosFuturos() {
         log.info(" Listando partidos futuros");
         return partidoRepository.findPartidosFuturos(LocalDateTime.now()).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -283,7 +283,7 @@ public class PartidoService {
         }
 
         return partidoRepository.findByEquipoIdAndEstado(equipoId, estado).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -297,7 +297,7 @@ public class PartidoService {
         }
 
         return partidoRepository.findProximosPartidosByEquipo(equipoId, LocalDateTime.now()).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -318,20 +318,7 @@ public class PartidoService {
         log.info("Entrenador {} tiene equipo ID: {}", username, equipoId);
 
         return partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId).stream()
-                .map(p -> {
-                    PartidoResponse r = PartidoResponse.fromEntity(p);
-                    if (p.getEquipoLocal() != null) {
-                        var alLocal = alineacionRepository.findByPartidoIdAndEquipoId(p.getId(), p.getEquipoLocal().getId());
-                        r.setTieneAlineacionLocal(alLocal.isPresent());
-                        r.setAlineacionLocalConfirmada(alLocal.map(a -> a.isConfirmada()).orElse(false));
-                    }
-                    if (p.getEquipoVisitante() != null) {
-                        var alVis = alineacionRepository.findByPartidoIdAndEquipoId(p.getId(), p.getEquipoVisitante().getId());
-                        r.setTieneAlineacionVisitante(alVis.isPresent());
-                        r.setAlineacionVisitanteConfirmada(alVis.map(a -> a.isConfirmada()).orElse(false));
-                    }
-                    return r;
-                })
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -363,14 +350,14 @@ public class PartidoService {
         List<Partido> partidos = partidoRepository.findByArbitroId(arbitro.getId());
 
         return partidos.stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
     public PartidoResponse getPartidoById(Long partidoId) {
         Partido partido = partidoRepository.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
-        return PartidoResponse.fromEntity(partido);
+        return enriquecer(partido);
     }
 
     @Transactional(readOnly = true)
@@ -383,7 +370,7 @@ public class PartidoService {
         }
 
         return partidoRepository.findByLigaId(ligaId).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -395,7 +382,7 @@ public class PartidoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Partido no encontrado con ID: " + id));
 
-        return PartidoResponse.fromEntity(partido);
+        return enriquecer(partido);
     }
 
     @Transactional
@@ -472,7 +459,7 @@ public class PartidoService {
         Partido saved = partidoRepository.save(partido);
         log.info(" Partido actualizado: {}", saved.getId());
 
-        return PartidoResponse.fromEntity(saved);
+        return enriquecer(saved);
     }
 
     @Transactional
@@ -498,7 +485,7 @@ public class PartidoService {
         Partido saved = partidoRepository.save(partido);
         log.info(" Resultado actualizado: {} - {}", resultadoLocal, resultadoVisitante);
 
-        return PartidoResponse.fromEntity(saved);
+        return enriquecer(saved);
     }
 
         @Transactional
@@ -537,7 +524,7 @@ public class PartidoService {
                 }
             }
 
-            return PartidoResponse.fromEntity(saved);
+            return enriquecer(saved);
         }
 
     @Transactional
@@ -577,7 +564,7 @@ public class PartidoService {
         Partido saved = partidoRepository.save(partido);
         log.info(" Estado del partido {} cambiado a {}", saved.getId(), nuevoEstado);
 
-        return PartidoResponse.fromEntity(saved);
+        return enriquecer(saved);
     }
 
     @Transactional(readOnly = true)
@@ -590,7 +577,7 @@ public class PartidoService {
         }
 
         return partidoRepository.findByEquipoLocalIdOrEquipoVisitanteId(equipoId).stream()
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList());
     }
 
@@ -605,7 +592,7 @@ public class PartidoService {
         ActaPartido acta = actaPartidoRepository.findByPartidoId(partidoId).orElse(null);
 
         Map<String, Object> detalle = new HashMap<>();
-        detalle.put("partido", PartidoResponse.fromEntity(partido));
+        detalle.put("partido", enriquecer(partido));
         detalle.put("estado", partido.getEstado());
         detalle.put("tieneActa", acta != null);
         detalle.put("resultadoFinal", acta != null ?
@@ -692,7 +679,7 @@ public class PartidoService {
             }
         }
 
-        return PartidoResponse.fromEntity(saved);
+        return enriquecer(saved);
     }
 
     @Transactional(readOnly = true)
@@ -736,7 +723,7 @@ public class PartidoService {
         historial.put("ultimosPartidos", partidos.stream()
                 .sorted((a, b) -> b.getFecha().compareTo(a.getFecha()))
                 .limit(5)
-                .map(PartidoResponse::fromEntity)
+                .map(this::enriquecer)
                 .collect(Collectors.toList()));
 
         return historial;
@@ -756,5 +743,38 @@ public class PartidoService {
         }
 
         equipoRepository.save(equipo);
+    }
+
+    /**
+     * Construye un PartidoResponse enriquecido con el estado real de las
+     * alineaciones. Usar siempre en lugar de PartidoResponse.fromEntity().
+     */
+    private PartidoResponse enriquecer(Partido p) {
+        PartidoResponse r = PartidoResponse.fromEntity(p);
+        if (p.getEquipoLocal() != null) {
+            alineacionRepository
+                    .findByPartidoIdAndEquipoId(p.getId(), p.getEquipoLocal().getId())
+                    .ifPresentOrElse(al -> {
+                        r.setTieneAlineacionLocal(true);
+                        r.setAlineacionLocalConfirmada(al.isConfirmada());
+                        r.setAlineacionLocalId(al.getId());
+                    }, () -> {
+                        r.setTieneAlineacionLocal(false);
+                        r.setAlineacionLocalConfirmada(false);
+                    });
+        }
+        if (p.getEquipoVisitante() != null) {
+            alineacionRepository
+                    .findByPartidoIdAndEquipoId(p.getId(), p.getEquipoVisitante().getId())
+                    .ifPresentOrElse(al -> {
+                        r.setTieneAlineacionVisitante(true);
+                        r.setAlineacionVisitanteConfirmada(al.isConfirmada());
+                        r.setAlineacionVisitanteId(al.getId());
+                    }, () -> {
+                        r.setTieneAlineacionVisitante(false);
+                        r.setAlineacionVisitanteConfirmada(false);
+                    });
+        }
+        return r;
     }
 }

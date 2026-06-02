@@ -24,6 +24,8 @@ import 'package:tfg_appfede/services/autenticacion_service.dart';
 import 'package:tfg_appfede/widgets/CerrarSesion.dart';
 
 import '../screens/Entrenador/ListadoEquipoPage.dart';
+import '../screens/PanelJugadorPage.dart';
+import '../screens/MisPartidosJugadorPage.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
@@ -178,22 +180,28 @@ class MenuLateral extends StatelessWidget {
 
                   if (rol == Role.JUGADOR && jugador != null) ...[
                     _buildSeparador('JUGADOR'),
+                    _buildDrawerItem(context,
+                        icono: Icons.dashboard_outlined,
+                        iconoActivo: Icons.dashboard,
+                        titulo: 'Mi Panel',
+                        accentColor: AppColors.naranja,
+                        onTap: () => _navegar(context, const PanelJugadorPage())),
                     if (jugador.tieneEquipo) ...[
                       _buildDrawerItem(context,
                           icono: Icons.sports_basketball_outlined,
                           iconoActivo: Icons.sports_basketball,
                           titulo: 'Mi Equipo',
-                          onTap: () {}),
+                          onTap: () => _navegar(context, const PanelJugadorPage())),
                       _buildDrawerItem(context,
                           icono: Icons.calendar_month_outlined,
                           iconoActivo: Icons.calendar_month,
                           titulo: 'Mis Partidos',
-                          onTap: () {}),
+                          onTap: () => _navegar(context, const MisPartidosJugadorPage())),
                       _buildDrawerItem(context,
                           icono: Icons.assessment_outlined,
                           iconoActivo: Icons.assessment,
                           titulo: 'Mis Estadísticas',
-                          onTap: () {}),
+                          onTap: () => _navegar(context, const PanelJugadorPage())),
                     ] else
                       _buildDrawerItem(context,
                           icono: Icons.sports_basketball_outlined,

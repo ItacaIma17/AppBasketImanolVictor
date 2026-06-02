@@ -3,6 +3,7 @@ import '../config/common/resources/colores.dart';
 import '../services/autenticacion_service.dart';
 import 'Admin/PanelAdminPage.dart';
 import 'Entrenador/PanelEntrenadorPage.dart';
+import 'arbitros/panelArbitroPage.dart';
 import 'InicioApp.dart';
 import 'Inicio/InicioSesion.dart';
 
@@ -45,6 +46,12 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const PanelEntrenadorPage()),
+        );
+      } else if (usuario?.isArbitro == true) {
+        print(' Redirigiendo a Panel Árbitro');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PanelArbitroPage()),
         );
       } else if (usuario?.isJugador == true) {
         print(' Redirigiendo a Panel Jugador');

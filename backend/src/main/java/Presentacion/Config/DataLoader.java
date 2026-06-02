@@ -316,12 +316,12 @@ public class DataLoader implements CommandLineRunner {
         Entrenador entrenador1 = entrenadorRepository.findByUsername("entrenador").orElse(null);
         Entrenador entrenadorBarca = entrenadorRepository.findByUsername("joan.penarroya").orElse(null);
         Entrenador entrenador3 = entrenadorRepository.findByUsername("entrenador3").orElse(null);
-        Entrenador entrenador4 = entrenadorRepository.findByUsername("entrenador4").orElse(null);
+        Entrenador entrenador2 = entrenadorRepository.findByUsername("entrenador2").orElse(null);
 
         asignarEntrenadorAEquipo(entrenador1, real);
         asignarEntrenadorAEquipo(entrenadorBarca, barca);
         asignarEntrenadorAEquipo(entrenador3, unicaja);
-        asignarEntrenadorAEquipo(entrenador4, baskonia);
+        asignarEntrenadorAEquipo(entrenador2, baskonia);
         log.info(">>> [FC BARCELONA] Entrenador Joan Peñarroya asignado al equipo FC Barcelona");
     }
 
@@ -349,14 +349,14 @@ public class DataLoader implements CommandLineRunner {
 
         LocalDateTime now = LocalDateTime.now();
 
-        crearPartido(real, barca, now.minusDays(14), "WiZink Center", arbitro1);
-        crearPartido(barca, real, now.minusDays(7), "Palau Blaugrana", arbitro2);
-        crearPartido(real, unicaja, now.plusDays(7), "WiZink Center", arbitro1);
-        crearPartido(barca, baskonia, now.plusDays(14), "Palau Blaugrana", arbitro2);
-        crearPartido(valencia, joventut, now.plusDays(21), "Fuente de San Luis", arbitro3);
+        crearPartido(real, barca, now.minusDays(14), "WiZink Center", "Av. de Felipe II, s/n, Madrid", arbitro1);
+        crearPartido(barca, real, now.minusDays(7), "Palau Blaugrana", "C/ d'Arístides Maillol, s/n, Barcelona", arbitro2);
+        crearPartido(real, unicaja, now.plusDays(7), "WiZink Center", "Av. de Felipe II, s/n, Madrid", arbitro1);
+        crearPartido(barca, baskonia, now.plusDays(14), "Palau Blaugrana", "C/ d'Arístides Maillol, s/n, Barcelona", arbitro2);
+        crearPartido(valencia, joventut, now.plusDays(21), "Fuente de San Luis", "C/ Dels Tarongers, s/n, Valencia", arbitro3);
     }
 
-    private void crearPartido(Equipo local, Equipo visitante, LocalDateTime fecha, String ubicacion, Arbitro arbitro) {
+    private void crearPartido(Equipo local, Equipo visitante, LocalDateTime fecha, String pabellon, String ubicacion, Arbitro arbitro) {
         if (local == null || visitante == null) return;
         if (partidoRepository.existsPartidoEntreEquipos(local.getId(), visitante.getId())) return;
 
@@ -364,6 +364,7 @@ public class DataLoader implements CommandLineRunner {
         partido.setEquipoLocal(local);
         partido.setEquipoVisitante(visitante);
         partido.setFecha(fecha);
+        partido.setPabellon(pabellon);
         partido.setUbicacion(ubicacion);
         partido.setEstado("PROGRAMADO");
         partido.setArbitro(arbitro);

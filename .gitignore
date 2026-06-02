@@ -22,6 +22,12 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 frontend/pubspec.lock
 
+# ── Archivos generados (documentación TFG) ────────────────────────
+*.pdf
+*.pptx
+*.docx
+email_automation/
+
 # ── Sistema operativo ─────────────────────────────────────────────
 .DS_Store
 Thumbs.db

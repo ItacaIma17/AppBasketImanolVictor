@@ -26,6 +26,8 @@ public class PartidoResponse {
     private Boolean tieneAlineacionVisitante;
     private Boolean alineacionLocalConfirmada;
     private Boolean alineacionVisitanteConfirmada;
+    private Long alineacionLocalId;
+    private Long alineacionVisitanteId;
     private Boolean tieneActa;
     private Long actaId;
 

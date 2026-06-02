@@ -14,14 +14,24 @@ services:
     plan: free
     region: frankfurt
     envVars:
-      # Base de datos — rellena con los valores de la BD creada arriba
-      - key: SPRING_DATASOURCE_URL
-        sync: false        # lo introduces tú en el dashboard tras crear la BD
-      - key: SPRING_DATASOURCE_USERNAME
+      # Base de datos — Render inyecta automáticamente desde aragonbasket-db
+      - key: DB_HOST
+        fromDatabase:
+          name: aragonbasket-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: aragonbasket-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: aragonbasket-db
+          property: database
+      - key: DB_USER
         fromDatabase:
           name: aragonbasket-db
           property: user
-      - key: SPRING_DATASOURCE_PASSWORD
+      - key: DB_PASSWORD
         fromDatabase:
           name: aragonbasket-db
           property: password
@@ -29,12 +39,20 @@ services:
       # JPA
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
+      - key: JPA_SHOW_SQL
+        value: "false"
 
       # JWT
       - key: JWT_SECRET
         value: miClaveSecretaParaJWT123456789012345678901234567890
       - key: JWT_EXPIRATION
         value: "86400000"
+
+      # Email
+      - key: MAIL_USERNAME
+        value: imanollapiozondo@gmail.com
+      - key: MAIL_PASSWORD
+        value: oxrscakwredlmuxn
 
       # Admin por defecto
       - key: ADMIN_SECRET_KEY
@@ -80,7 +98,7 @@ services:
       - key: DEFAULT_JUGADOR_CODIGO
         value: JUG-100001
 
-      # Logs — reducir en producción
+      # Logs
       - key: LOGGING_LEVEL_APLICACION
         value: INFO
       - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY
