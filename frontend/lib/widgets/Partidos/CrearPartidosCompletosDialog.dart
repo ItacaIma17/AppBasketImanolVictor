@@ -58,8 +58,8 @@ class _CrearPartidoCompletoDialogState
   void initState() {
     super.initState();
     _ligaId = widget.ligaIdInicial;
-    _cargarArbitros();
     _cargarDatosParaEdicion();
+    _cargarArbitros();
   }
 
   void _cargarDatosParaEdicion() {

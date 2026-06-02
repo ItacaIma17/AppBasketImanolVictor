@@ -145,6 +145,7 @@ public class ArbitroService {
         return alineacionService.getAlineacionesParaActa(partidoId);
     }
 
+    @Transactional(readOnly = true)
     public List<PartidoResponse> getPartidosFinalizados(Long arbitroId) {
         Arbitro arbitro = arbitroRepository.findById(arbitroId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -155,24 +156,28 @@ public class ArbitroService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ArbitroResponse> listarTodosArbitros() {
         return arbitroRepository.findAll().stream()
                 .map(ArbitroResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ArbitroResponse> listarArbitrosDisponibles() {
         return arbitroRepository.findArbitrosSinPartidos().stream()
                 .map(ArbitroResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ArbitroResponse> getArbitrosSinPartidos() {
         return arbitroRepository.findArbitrosSinPartidos().stream()
                 .map(ArbitroResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ArbitroResponse obtenerArbitroPorId(Long id) {
         Arbitro arbitro = arbitroRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -180,6 +185,7 @@ public class ArbitroService {
         return ArbitroResponse.fromEntity(arbitro);
     }
 
+    @Transactional(readOnly = true)
     public ArbitroResponse obtenerArbitroPorUsername(String username) {
         Arbitro arbitro = arbitroRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -187,6 +193,7 @@ public class ArbitroService {
         return ArbitroResponse.fromEntity(arbitro);
     }
 
+    @Transactional(readOnly = true)
     public List<ArbitroResponse> buscarArbitros(String query) {
         String lowerQuery = query.toLowerCase();
         return arbitroRepository.findAll().stream()
@@ -198,6 +205,7 @@ public class ArbitroService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ArbitroEstadisticasResponse obtenerEstadisticas(Long id) {
         Arbitro arbitro = arbitroRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

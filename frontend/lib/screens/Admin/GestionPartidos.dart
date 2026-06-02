@@ -483,6 +483,23 @@ class _GestionPartidosPageState extends State<GestionPartidosPage> {
                       ),
                     ],
                   ),
+                  if (partido.nombreArbitro != null && partido.nombreArbitro!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.sports, size: 14, color: Colors.white54),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Árbitro: ${partido.nombreArbitro}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
 
